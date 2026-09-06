@@ -1,0 +1,24 @@
+commit_msg_file=$1
+commit_source=$2
+
+# 사용자가 직접 입력하는 커밋(-m 없이 에디터를 여는 경우)에만 가이드 삽입
+if [ -z "$commit_source" ]; then
+  cat >> "$commit_msg_file" <<'EOF'
+
+# 커밋 메시지 형식: <이모지 타입>: <작업내용>
+#
+#   ✨ update  : 해당 파일에 새로운 기능이 생김
+#   🎉 add     : 없던 파일을 생성함, 초기 세팅
+#   🐛 bugfix  : 버그 수정
+#   ♻️ refactor: 코드 리팩토링
+#   🔧 fix     : 코드 수정
+#   🚚 move    : 파일 옮김/정리
+#   🔥 del     : 기능/파일을 삭제
+#   ✅ test    : 테스트 코드를 작성
+#   💄 style   : css
+#   🙈 gitfix  : gitignore 수정
+#   📦 script  : package.json 변경(npm 설치 등)
+#
+# 예: 🎉 add: 로그인 페이지 생성
+EOF
+fi
