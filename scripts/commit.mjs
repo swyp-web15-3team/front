@@ -1,4 +1,5 @@
 import { execSync, spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import * as p from '@clack/prompts';
 
 const TYPES = [
@@ -15,53 +16,91 @@ const TYPES = [
   { emoji: '📦', type: 'script', desc: 'package.json 변경(npm 설치 등)' },
 ];
 
-const staged = execSync('git diff --cached --name-only').toString().trim();
-if (!staged) {
-  p.log.error('스테이징된 변경 사항이 없습니다. git add 후 다시 실행해주세요.');
+if (process.argv[2] === '--verify') {
+  verifyCommitMsg(process.argv[3]);
+} else {
+  await promptCommit();
+}
+
+function verifyCommitMsg(commitMsgFile) {
+  const commitMsg = readFileSync(commitMsgFile, 'utf8').trim();
+
+  if (/^(Merge|Revert) /.test(commitMsg)) {
+    process.exit(0);
+  }
+
+  const pattern = new RegExp(
+    `^(${TYPES.map((t) => t.emoji).join('|')}) (${TYPES.map((t) => t.type).join('|')}): .+`,
+    'u'
+  );
+
+  if (pattern.test(commitMsg)) {
+    process.exit(0);
+  }
+
+  console.error('❌ 커밋 메시지 형식이 올바르지 않습니다.');
+  console.error('');
+  console.error('형식: <이모지 타입>: <작업내용>');
+  console.error('');
+  for (const t of TYPES) {
+    console.error(`  ${t.emoji} ${t.type.padEnd(9)}: ${t.desc}`);
+  }
+  console.error('');
+  console.error('예: 🎉 add: 로그인 페이지 생성');
   process.exit(1);
 }
 
-p.intro('커밋 메시지 작성');
+async function promptCommit() {
+  const staged = execSync('git diff --cached --name-only').toString().trim();
+  if (!staged) {
+    p.log.error(
+      '스테이징된 변경 사항이 없습니다. git add 후 다시 실행해주세요.'
+    );
+    process.exit(1);
+  }
 
-const type = await p.select({
-  message: '어떤 작업인가요?',
-  options: TYPES.map((t) => ({
-    value: t,
-    label: `${t.emoji} ${t.type}`,
-    hint: t.desc,
-  })),
-});
+  p.intro('커밋 메시지 작성');
 
-if (p.isCancel(type)) {
-  p.cancel('취소되었습니다.');
-  process.exit(1);
+  const type = await p.select({
+    message: '어떤 작업인가요?',
+    options: TYPES.map((t) => ({
+      value: t,
+      label: `${t.emoji} ${t.type}`,
+      hint: t.desc,
+    })),
+  });
+
+  if (p.isCancel(type)) {
+    p.cancel('취소되었습니다.');
+    process.exit(1);
+  }
+
+  const description = await p.text({
+    message: '작업 내용을 입력하세요:',
+    validate: (value) => {
+      if (!value || !value.trim()) return '작업 내용을 입력해주세요.';
+    },
+  });
+
+  if (p.isCancel(description)) {
+    p.cancel('취소되었습니다.');
+    process.exit(1);
+  }
+
+  const message = `${type.emoji} ${type.type}: ${description.trim()}`;
+
+  const confirm = await p.confirm({
+    message: `다음 메시지로 커밋할까요?\n\n  ${message}\n`,
+  });
+
+  if (p.isCancel(confirm) || !confirm) {
+    p.cancel('취소되었습니다.');
+    process.exit(1);
+  }
+
+  const result = spawnSync('git', ['commit', '-m', message], {
+    stdio: 'inherit',
+  });
+
+  process.exit(result.status ?? 0);
 }
-
-const description = await p.text({
-  message: '작업 내용을 입력하세요:',
-  validate: (value) => {
-    if (!value || !value.trim()) return '작업 내용을 입력해주세요.';
-  },
-});
-
-if (p.isCancel(description)) {
-  p.cancel('취소되었습니다.');
-  process.exit(1);
-}
-
-const message = `${type.emoji} ${type.type}: ${description.trim()}`;
-
-const confirm = await p.confirm({
-  message: `다음 메시지로 커밋할까요?\n\n  ${message}\n`,
-});
-
-if (p.isCancel(confirm) || !confirm) {
-  p.cancel('취소되었습니다.');
-  process.exit(1);
-}
-
-const result = spawnSync('git', ['commit', '-m', message], {
-  stdio: 'inherit',
-});
-
-process.exit(result.status ?? 0);
