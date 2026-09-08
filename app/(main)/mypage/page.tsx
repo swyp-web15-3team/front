@@ -1,4 +1,4 @@
-import ProfileImage from '@/app/(main)/mypage/_components/ProfileImage';
+import { ProfileImage } from '@/app/(main)/mypage/_components/ProfileImage';
 
 export default function MyPage() {
   return (

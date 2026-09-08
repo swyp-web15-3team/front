@@ -5,7 +5,7 @@ export default function MainLayout({ children }: LayoutProps<'/'>) {
   return (
     <>
       <Header />
-      <div className="px-2">{children}</div>
+      <div className="px-2 py-3">{children}</div>
       <Footer />
     </>
   );
