@@ -8,14 +8,18 @@ function fireTransitionEnd(node: Element) {
 }
 
 describe('Modal', () => {
-  it('isOpen이 false면 렌더링하지 않는다', () => {
+  it('isOpen이 false면 오버레이가 보이지 않는 상태로 렌더링된다', () => {
     render(
       <Modal isOpen={false} onClose={vi.fn()}>
         내용
       </Modal>
     );
 
-    expect(screen.queryByText('내용')).not.toBeInTheDocument();
+    const panel = screen.getByText('내용');
+    const overlay = panel.parentElement as HTMLElement;
+
+    expect(overlay.className).toContain('opacity-0');
+    expect(overlay.className).toContain('pointer-events-none');
   });
 
   it('isOpen이 true면 children을 렌더링한다', () => {
@@ -77,7 +81,7 @@ describe('Modal', () => {
     expect(screen.getByText('내용')).toBeInTheDocument();
   });
 
-  it('패널의 transitionend 이후 children이 사라진다', () => {
+  it('패널의 transitionend 이후에도 children은 DOM에 남아있다(언마운트하지 않음)', () => {
     const { rerender } = render(
       <Modal isOpen={true} onClose={vi.fn()}>
         내용
@@ -96,7 +100,7 @@ describe('Modal', () => {
       fireTransitionEnd(panel);
     });
 
-    expect(screen.queryByText('내용')).not.toBeInTheDocument();
+    expect(screen.getByText('내용')).toBeInTheDocument();
   });
 
   it('overlayClassName/panelClassName을 병합한다', () => {
