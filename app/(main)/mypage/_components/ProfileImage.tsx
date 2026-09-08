@@ -8,7 +8,7 @@ interface ProfileImageProps {
   size?: number;
 }
 
-export default function ProfileImage({ src, size = 50 }: ProfileImageProps) {
+export function ProfileImage({ src, size = 50 }: ProfileImageProps) {
   const [hasError, setHasError] = useState(false);
 
   if (!src || hasError) {
