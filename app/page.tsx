@@ -1,7 +1,11 @@
 'use client';
 import * as Sentry from '@sentry/nextjs';
 
+import { SampleModal, useSampleModal } from '@/components/common/SampleModal';
+
 export default function Home() {
+  const { open: openSampleModal } = useSampleModal();
+
   const errorTestHandler = () => {
     Sentry.captureException(new Error('GlitchTip 브라우저 테스트 에러'));
   };
@@ -34,8 +38,15 @@ export default function Home() {
           >
             edge 에러 전송 버튼
           </button>
+          <button
+            onClick={openSampleModal}
+            className="border-2 bg-amber-50 text-black"
+          >
+            샘플 모달 열기
+          </button>
         </div>
       </main>
+      <SampleModal />
     </div>
   );
 }
