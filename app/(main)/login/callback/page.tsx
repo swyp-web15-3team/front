@@ -13,11 +13,23 @@ export default function LoginCallbackPage() {
   useEffect(() => {
     const accessToken = searchParams.get('accessToken');
 
-    // ponytail: 백엔드 미연동 상태라 accessToken 없이 와도 인가된 것으로 간주하고,
-    // 신규/기존 회원 구분 없이 항상 약관 동의부터 보여준다.
-    // 백엔드 연동 후에는 accessToken 없으면 /login으로 되돌리고, isNewUser 등으로 분기할 것.
-    setAccessToken(accessToken ?? 'mock-access-token');
-    router.replace('/signup/terms');
+    if (accessToken) {
+      // ponytail: 백엔드 미연동 상태라 신규/기존 회원 구분 없이 항상 약관 동의부터 보여준다.
+      // 백엔드 연동 후에는 isNewUser 등으로 분기할 것.
+      setAccessToken(accessToken);
+      router.replace('/signup/terms');
+      return;
+    }
+
+    if (process.env.NODE_ENV !== 'production') {
+      // ponytail: 백엔드 미연동 상태에서 /login/callback을 직접 열어 개발할 때만 쓰는 mock 경로.
+      // 프로덕션에서는 accessToken 없이 이 페이지에 온 것이므로 로그인 실패로 처리한다.
+      setAccessToken('mock-access-token');
+      router.replace('/signup/terms');
+      return;
+    }
+
+    router.replace('/login');
   }, [searchParams, setAccessToken, router]);
 
   return null;
