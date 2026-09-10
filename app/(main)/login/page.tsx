@@ -1,11 +1,9 @@
-const KAKAO_AUTH_URL = `https://kauth.kakao.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI}&response_type=code`;
-
 export default function LoginPage() {
   return (
     <div className="flex min-h-full flex-1 flex-col items-center justify-center gap-10 px-6">
       <h1 className="text-2xl font-bold">로그인</h1>
       <a
-        href="/signup"
+        href="/api/auth/kakao"
         className="flex w-full max-w-sm items-center justify-center gap-2 rounded-md bg-[#FEE500] py-3 font-medium text-black/85"
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
