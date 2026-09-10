@@ -1,45 +1,58 @@
 'use client';
 
-import { VerticalCard } from '@/components/ui/VerticalCard';
+import { ProductGrid } from '@/app/(main)/search/_components/ProductGrid';
+import { useProductListQuery } from '@/hooks/queries/use-product';
 
 export default function SearchPage() {
-  const products = {
-    imageUrl: 'https://placehold.co/200x150.png',
-    name: '야마자키 12년',
-    originalName: '山崎 | Yamazaki 12yo',
-    discountRate: -42,
-    krPrice: 298000,
-    jpPrice: 168500,
-    jpPriceYen: 18500,
-  };
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useProductListQuery();
 
-  const items = Array.from({ length: 50 }, (_, i) => ({
-    ...products,
-    name: `${i + 1} ${products.name}`,
-  }));
+  const items = data?.pages.flatMap((page) => page.items) ?? [];
+
   return (
-    <>
-      <div className="mx-auto max-w-300">
-        <input
-          type="text"
-          placeholder="검색하세요"
-          className="mb-4 w-full bg-gray-200 p-2"
-        />
-        {items.length === 0 ? (
-          <div className="flex min-h-100 items-center justify-center">
-            <p>상품이 없습니다</p>
-          </div>
-        ) : (
-          <>
-            <p>{items.length}개</p>
-            <div className="grid grid-cols-2 gap-4 bg-blue-100 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {items.map((item, i) => (
-                <VerticalCard key={i} product={item} />
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-    </>
+    <div className="mx-auto max-w-300">
+      <input
+        type="text"
+        placeholder="검색하세요"
+        className="mb-4 w-full bg-gray-200 p-2"
+      />
+      {isLoading ? (
+        <div className="flex min-h-100 items-center justify-center">
+          <p>불러오는 중...</p>
+        </div>
+      ) : isError ? (
+        <div className="flex min-h-100 flex-col items-center justify-center gap-2">
+          <p>일시적인 오류가 발생했습니다</p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="text-sm underline"
+          >
+            다시 시도
+          </button>
+        </div>
+      ) : items.length === 0 ? (
+        <div className="flex min-h-100 items-center justify-center">
+          <p>상품이 없습니다</p>
+        </div>
+      ) : (
+        <>
+          <p>{items.length}개 불러옴</p>
+          <ProductGrid
+            items={items}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onLoadMore={fetchNextPage}
+          />
+        </>
+      )}
+    </div>
   );
 }
