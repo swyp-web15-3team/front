@@ -14,10 +14,9 @@ export default function LoginCallbackPage() {
     const accessToken = searchParams.get('accessToken');
 
     if (accessToken) {
-      // ponytail: 백엔드 미연동 상태라 신규/기존 회원 구분 없이 항상 약관 동의부터 보여준다.
-      // 백엔드 연동 후에는 isNewUser 등으로 분기할 것.
+      const isNewUser = searchParams.get('isNewUser') === 'true';
       setAccessToken(accessToken);
-      router.replace('/signup/terms');
+      router.replace(isNewUser ? '/signup/terms' : '/');
       return;
     }
 

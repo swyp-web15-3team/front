@@ -3,3 +3,7 @@ export interface TokenPair {
   refreshToken: string;
   expiresIn: number;
 }
+
+export interface KakaoLoginResponse extends TokenPair {
+  isNewUser: boolean;
+}
