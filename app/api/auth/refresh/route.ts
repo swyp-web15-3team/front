@@ -25,8 +25,9 @@ export async function POST() {
       { refreshToken }
     );
 
-    const response = NextResponse.json(data);
-    response.cookies.set(REFRESH_TOKEN_COOKIE, data.refreshToken, {
+    const { refreshToken: newRefreshToken, ...tokenResponse } = data;
+    const response = NextResponse.json(tokenResponse);
+    response.cookies.set(REFRESH_TOKEN_COOKIE, newRefreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
