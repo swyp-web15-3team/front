@@ -7,7 +7,6 @@ import type { TokenPair } from '@/types/auth';
 
 const REFRESH_TOKEN_COOKIE = 'refreshToken';
 
-// TODO: 백엔드 /auth/refresh 연동 완료 후 응답 형식(TokenPair) 재확인
 export async function POST() {
   const cookieStore = await cookies();
   const refreshToken = cookieStore.get(REFRESH_TOKEN_COOKIE)?.value;
@@ -20,12 +19,12 @@ export async function POST() {
   }
 
   try {
-    const { data } = await axios.post<TokenPair>(
+    const { data } = await axios.post<{ data: TokenPair }>(
       `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
       { refreshToken }
     );
 
-    const { refreshToken: newRefreshToken, ...tokenResponse } = data;
+    const { refreshToken: newRefreshToken, ...tokenResponse } = data.data;
     const response = NextResponse.json(tokenResponse);
     response.cookies.set(REFRESH_TOKEN_COOKIE, newRefreshToken, {
       httpOnly: true,

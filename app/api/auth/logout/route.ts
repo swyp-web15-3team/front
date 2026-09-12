@@ -5,7 +5,6 @@ import { NextResponse } from 'next/server';
 
 const REFRESH_TOKEN_COOKIE = 'refreshToken';
 
-// TODO: 백엔드 /auth/logout 연동 완료 후 응답 형식 재확인
 export async function POST() {
   const cookieStore = await cookies();
   const refreshToken = cookieStore.get(REFRESH_TOKEN_COOKIE)?.value;

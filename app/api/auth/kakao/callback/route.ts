@@ -14,12 +14,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { data } = await axios.post<KakaoLoginResponse>(
+    const { data } = await axios.post<{ data: KakaoLoginResponse }>(
       `${process.env.NEXT_PUBLIC_API_URL}/auth/kakao`,
       { code }
     );
 
-    const { accessToken, refreshToken, isNewUser } = data;
+    const { accessToken, refreshToken, isNewUser } = data.data;
 
     const redirectUrl = new URL('/login/callback', request.url);
     redirectUrl.searchParams.set('accessToken', accessToken);
