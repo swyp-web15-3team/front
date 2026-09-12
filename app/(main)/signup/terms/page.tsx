@@ -1,7 +1,10 @@
 'use client';
 
+import * as Sentry from '@sentry/nextjs';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+
+import { useAgreeTermsMutation } from '@/hooks/queries/use-user';
 
 const TERMS = [
   { id: 'age', label: '(필수) 만 14세 이상입니다', required: true },
@@ -13,6 +16,7 @@ const TERMS = [
 export default function TermsPage() {
   const router = useRouter();
   const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const { mutate: agreeTerms, isPending } = useAgreeTermsMutation();
 
   const allChecked = TERMS.every((term) => checked[term.id]);
   const requiredChecked = TERMS.filter((term) => term.required).every(
@@ -52,8 +56,22 @@ export default function TermsPage() {
 
       <button
         type="button"
-        disabled={!requiredChecked}
-        onClick={() => router.push('/')}
+        disabled={!requiredChecked || isPending}
+        onClick={() =>
+          agreeTerms(
+            {
+              termsAgreed: TERMS.filter((term) => checked[term.id]).map(
+                (term) => term.id
+              ),
+            },
+            {
+              onSuccess: () => router.push('/'),
+              onError: (error) => {
+                Sentry.captureException(error);
+              },
+            }
+          )
+        }
         className="rounded-md bg-black py-3 font-medium text-white disabled:bg-black/30"
       >
         동의하고 계속하기
