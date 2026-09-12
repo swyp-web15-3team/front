@@ -1,4 +1,4 @@
-import { HeroBannerCarousel } from '@/app/_components/HeroBannerCarousel';
+import { HeroBannerCarousel } from '@/app/(main)/_components/HeroBannerCarousel';
 import { DUMMY_BANNERS } from '@/constants/banner';
 
 export default function Home() {

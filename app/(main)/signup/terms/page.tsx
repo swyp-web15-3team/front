@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { useAgreeTermsMutation } from '@/hooks/queries/use-user';
+import { useAuthStore } from '@/store/use-auth-store';
 
 const TERMS = [
   { id: 'age', label: '(필수) 만 14세 이상입니다', required: true },
@@ -17,6 +18,7 @@ export default function TermsPage() {
   const router = useRouter();
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const { mutate: agreeTerms, isPending } = useAgreeTermsMutation();
+  const setAccessToken = useAuthStore((state) => state.setAccessToken);
 
   const allChecked = TERMS.every((term) => checked[term.id]);
   const requiredChecked = TERMS.filter((term) => term.required).every(
@@ -65,7 +67,14 @@ export default function TermsPage() {
               ),
             },
             {
-              onSuccess: () => router.push('/'),
+              onSuccess: () => {
+                if (process.env.NODE_ENV !== 'production') {
+                  // ponytail: 백엔드 로그인 응답 없이 개발 중 화면 확인을 위한 더미 로그인 처리.
+                  // 백엔드 연동되면 이 분기는 삭제한다.
+                  setAccessToken('dev-dummy-token');
+                }
+                router.push('/');
+              },
               onError: (error) => {
                 Sentry.captureException(error);
               },
