@@ -1,6 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { AuthNavAction } from '@/components/ui/AuthNavAction';
+
 export default function Header() {
   return (
     <header className="flex items-center justify-between bg-yellow-50 px-6 py-2">
@@ -9,7 +11,7 @@ export default function Header() {
       </Link>
       <nav className="flex gap-4">
         <Link href="/mypage">마이페이지</Link>
-        <Link href="/login">로그인</Link>
+        <AuthNavAction />
       </nav>
     </header>
   );
