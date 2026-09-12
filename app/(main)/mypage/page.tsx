@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import { ProfileImage } from '@/app/(main)/mypage/_components/ProfileImage';
 
 export default function MyPage() {
@@ -16,7 +18,7 @@ export default function MyPage() {
       <div>컬렉션</div>
       <div>댓글</div>
       <div>로그인정보</div>
-      <div>회원탈퇴</div>
+      <Link href="/mypage/withdraw">회원탈퇴</Link>
     </>
   );
 }
