@@ -1,11 +1,11 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 
 import { useAuthStore } from '@/store/use-auth-store';
 
-export default function LoginCallbackPage() {
+function LoginCallback() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setAccessToken = useAuthStore((state) => state.setAccessToken);
@@ -24,4 +24,12 @@ export default function LoginCallbackPage() {
   }, [searchParams, setAccessToken, router]);
 
   return null;
+}
+
+export default function LoginCallbackPage() {
+  return (
+    <Suspense>
+      <LoginCallback />
+    </Suspense>
+  );
 }
