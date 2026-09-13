@@ -123,3 +123,16 @@ interface WhiskyRelatedListData {
 
 export type WhiskyRelatedListResponse =
   ApiSuccessResponse<WhiskyRelatedListData>;
+
+// ── GET /api/v1/curations ─────────────────────────
+export interface Curation {
+  id: number;
+  title: string;
+  whiskies: WhiskyCard[];
+}
+
+interface CurationListData {
+  curations: Curation[];
+}
+
+export type CurationListResponse = ApiSuccessResponse<CurationListData>;
