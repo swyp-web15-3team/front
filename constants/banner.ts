@@ -1,4 +1,4 @@
-import { Banner } from '@/app/_components/HeroBannerCarousel';
+import { Banner } from '@/app/(main)/_components/HeroBannerCarousel';
 
 export const DUMMY_BANNERS: Banner[] = [
   {

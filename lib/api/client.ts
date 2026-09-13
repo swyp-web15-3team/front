@@ -31,8 +31,10 @@ function onTokenRefreshed(accessToken: string) {
 }
 
 async function reissueAccessToken(): Promise<string> {
-  // TODO: 백엔드 API 확정 후 재발급 Route Handler(app/api/auth/reissue/route.ts) 연동
-  throw new Error('Not implemented');
+  const { data } = await axios.post<{ accessToken: string }>(
+    '/api/auth/refresh'
+  );
+  return data.accessToken;
 }
 
 function redirectToLogin() {

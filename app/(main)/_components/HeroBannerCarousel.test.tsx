@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   Banner,
   HeroBannerCarousel,
-} from '@/app/_components/HeroBannerCarousel';
+} from '@/app/(main)/_components/HeroBannerCarousel';
 
 function makeBanner(overrides: Partial<Banner> = {}): Banner {
   return {
