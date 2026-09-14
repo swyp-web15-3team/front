@@ -6,6 +6,7 @@ import { Modal } from '@/components/ui/Modal';
 import { MODAL_ID } from '@/constants/modal';
 import type { useCreateCollectionMutation } from '@/hooks/queries/use-collection';
 import { useModal } from '@/hooks/use-modal';
+import { COLLECTION_NAME_MAX_LENGTH } from '@/lib/api/test-collection';
 
 interface CreateCollectionModalProps {
   createCollectionMutation: ReturnType<typeof useCreateCollectionMutation>;
@@ -52,9 +53,13 @@ export function CreateCollectionModal({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="컬렉션 이름을 입력하세요"
+          maxLength={COLLECTION_NAME_MAX_LENGTH}
           autoFocus
           className="mt-4 w-full rounded-md border px-3 py-2 text-sm"
         />
+        <p className="mt-1 text-right text-xs text-gray-400">
+          {name.length}/{COLLECTION_NAME_MAX_LENGTH}
+        </p>
         <div className="mt-4 flex gap-2">
           <button
             type="button"

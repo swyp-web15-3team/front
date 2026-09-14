@@ -2,6 +2,7 @@ import { Collection, CollectionListResponse } from '@/types/collection';
 import { ApiErrorResponse } from '@/types/common';
 
 const MOCK_NETWORK_DELAY_MS = 400;
+export const COLLECTION_NAME_MAX_LENGTH = 20;
 
 const MOCK_COLLECTIONS: Collection[] = [
   { id: 1, name: '기본 관심 목록', isDefault: true },
@@ -42,8 +43,15 @@ export async function createCollection(rawName: string): Promise<Collection> {
 
   const name = rawName.trim();
 
-  if (!name || name.length > 100) {
+  if (!name) {
     throw new MockApiError(400, '관심 그룹 이름을 입력해 주세요.');
+  }
+
+  if (name.length > COLLECTION_NAME_MAX_LENGTH) {
+    throw new MockApiError(
+      400,
+      `관심 그룹 이름은 ${COLLECTION_NAME_MAX_LENGTH}자 이하로 입력해 주세요.`
+    );
   }
 
   if (MOCK_COLLECTIONS.some((c) => c.name === name)) {
