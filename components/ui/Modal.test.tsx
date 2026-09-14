@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { Modal } from '@/components/common/Modal';
+import { Modal } from '@/components/ui/Modal';
 
 function fireTransitionEnd(node: Element) {
   node.dispatchEvent(new Event('transitionend', { bubbles: true }));

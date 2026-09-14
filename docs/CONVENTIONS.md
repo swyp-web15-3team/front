@@ -83,6 +83,15 @@ constants/                # 상수, enum
 - 리페칭, 페이지네이션, 사용자 액션에 의한 재조회는 Client Component에서 TanStack Query로 처리한다
 - 최초 데이터는 서버에서 한 번 로드하고, 이후 상호작용은 TanStack Query가 이어받는 구조를 기본 패턴으로 한다
 
+## 모달 / 바텀시트 Escape 처리
+
+모달, 바텀시트 등 오버레이가 겹쳐 열릴 때 Escape는 가장 나중에 열린 오버레이만 닫아야 한다. 이를 위해 `lib/escape-stack.ts`의 `pushEscapeLayer()`/`isTopLayer()` 공유 스택을 사용한다 (`components/ui/Modal.tsx`, `components/ui/BottomSheet.tsx` 참고).
+
+새 esc 리스너를 추가할 때:
+
+- 기본: `document.addEventListener('keydown', ...)`에 등록하고 `pushEscapeLayer()`/`isTopLayer()` 조합을 그대로 따른다. (`document` 레벨 리스너끼리는 버블링 경로가 없어 `stopPropagation` 불필요)
+- 부득이하게 패널 등 특정 DOM 노드에 `onKeyDown`으로 걸어야 한다면, 반드시 `stopPropagation()`을 호출해 상위(`document` 리스너 등)로 전파되어 중복 처리되는 것을 막는다
+
 ## Import 규칙
 
 - 모듈 참조는 `@/` alias를 사용한다 (예: `import { Button } from "@/components/ui/Button"`)
