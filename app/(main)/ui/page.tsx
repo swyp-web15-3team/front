@@ -8,17 +8,12 @@ import {
   useSampleModal1,
 } from '@/components/common/SampleModal1';
 import {
-  SampleModal2,
-  useSampleModal2,
-} from '@/components/common/SampleModal2';
-import {
   SaveItemBottomSheet,
   useSaveItemBottomSheet,
 } from '@/components/common/SaveItemBottomSheet';
 
 export default function UiPage() {
   const { open: openSampleModal1 } = useSampleModal1();
-  const { open: openSampleModal2 } = useSampleModal2();
   const { open: openSaveItemBottomSheet } = useSaveItemBottomSheet();
 
   const errorTestHandler = () => {
@@ -57,12 +52,6 @@ export default function UiPage() {
           className="border-2 bg-amber-50 text-black"
         >
           샘플 모달 열기1
-        </button>{' '}
-        <button
-          onClick={openSampleModal2}
-          className="border-2 bg-amber-50 text-black"
-        >
-          샘플 모달 열기2
         </button>
         <button
           onClick={() => console.log('콘솔로그 테스트')}
@@ -85,7 +74,6 @@ export default function UiPage() {
         </button>
       </div>
       <SampleModal1 />
-      <SampleModal2 />
       <SaveItemBottomSheet />
       <VerticalCard
         className="w-60"
