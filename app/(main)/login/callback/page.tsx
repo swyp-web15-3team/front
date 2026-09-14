@@ -6,6 +6,7 @@ import { Suspense, useEffect } from 'react';
 import { useAuthStore } from '@/store/use-auth-store';
 
 function LoginCallback() {
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const setAccessToken = useAuthStore((state) => state.setAccessToken);
@@ -33,3 +34,4 @@ export default function LoginCallbackPage() {
     </Suspense>
   );
 }
+
