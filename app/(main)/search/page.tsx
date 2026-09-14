@@ -18,11 +18,6 @@ export default function SearchPage() {
 
   return (
     <div className="mx-auto max-w-300">
-      <input
-        type="text"
-        placeholder="검색하세요"
-        className="mb-4 w-full bg-gray-200 p-2"
-      />
       {isLoading ? (
         <div className="flex min-h-100 items-center justify-center">
           <p>불러오는 중...</p>

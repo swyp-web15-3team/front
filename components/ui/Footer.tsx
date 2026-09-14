@@ -1,17 +1,32 @@
+import { PROJECT_NAME, PROJECT_TEAM } from '@/constants/name';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="flex flex-col gap-2 bg-yellow-50 px-6">
+    <footer className="flex flex-col gap-4 bg-[#EBEBEB] p-5">
       <div className="flex w-full justify-between">
-        <p>LOGO</p>
-        <Link href="/privacy">개인정보처리방침</Link>
+        <div className="flex flex-col gap-2">
+          {/* Logo */}
+          <Image
+            src="https://placehold.co/120x31.png"
+            alt="Logo"
+            width={120}
+            height={31}
+          />
+          <div className="flex gap-1.5">
+            <span>{PROJECT_NAME}</span>
+            <span className="text-[#D9D9D9]">|</span>
+            <span>{PROJECT_TEAM}</span>
+          </div>
+        </div>
+        <div className="flex flex-col gap-1 text-right text-sm">
+          <Link href="/privacy">개인정보처리방침↗</Link>
+          <Link href="/terms">이용약관↗</Link>
+        </div>
       </div>
-      <div className="flex gap-4">
-        <span>프로젝트 이름</span>
-        <span>스위프웹 15기 3팀</span>
-      </div>
-      <div>Copyright ⓒ 프로젝트이름</div>
+
+      <div>Copyright ⓒ {PROJECT_NAME}</div>
     </footer>
   );
 }
