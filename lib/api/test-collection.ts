@@ -1,4 +1,8 @@
-import { Collection, CollectionListResponse } from '@/types/collection';
+import {
+  AddCollectionItemResponse,
+  Collection,
+  CollectionListResponse,
+} from '@/types/collection';
 import { ApiErrorResponse } from '@/types/common';
 
 const MOCK_NETWORK_DELAY_MS = 400;
@@ -70,4 +74,19 @@ export async function createCollection(rawName: string): Promise<Collection> {
   };
   MOCK_COLLECTIONS.push(newCollection);
   return newCollection;
+}
+
+// TODO: 컬렉션 API 연동 후 apiClient.put<AddCollectionItemResponse['data']>(`/api/v1/collections/${collectionId}/items/${whiskyId}`)로 교체한다.
+// 명세서(관심 그룹에 위스키 추가) 기준 403/404 에러 케이스를 목업으로 재현한다.
+export async function addCollectionItem(
+  collectionId: number,
+  whiskyId: number
+): Promise<AddCollectionItemResponse['data']> {
+  await delay();
+
+  if (!MOCK_COLLECTIONS.some((c) => c.id === collectionId)) {
+    throw new MockApiError(404, '관심 그룹을 찾을 수 없습니다.');
+  }
+
+  return { collectionId, whiskyId, saved: true };
 }

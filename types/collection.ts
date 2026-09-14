@@ -9,3 +9,9 @@ export interface Collection {
 export type CollectionListResponse = ApiSuccessResponse<{
   collections: Collection[];
 }>;
+
+export type AddCollectionItemResponse = ApiSuccessResponse<{
+  collectionId: number;
+  whiskyId: number;
+  saved: boolean;
+}>;

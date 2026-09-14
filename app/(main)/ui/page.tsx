@@ -73,6 +73,7 @@ export default function UiPage() {
         <button
           onClick={() =>
             openSaveItemBottomSheet({
+              id: 101,
               name: '야마자키 12년(더미)',
               originalName: '山崎 | Yamazaki 12yo',
               imageUrl: 'https://placehold.co/200x150.png',

@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { createCollection, fetchCollections } from '@/lib/api/test-collection';
+import {
+  addCollectionItem,
+  createCollection,
+  fetchCollections,
+} from '@/lib/api/test-collection';
 
 export const collectionKeys = {
   all: ['collections'] as const,
@@ -22,5 +26,17 @@ export function useCreateCollectionMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: collectionKeys.lists() });
     },
+  });
+}
+
+export function useAddCollectionItemMutation() {
+  return useMutation({
+    mutationFn: ({
+      collectionId,
+      whiskyId,
+    }: {
+      collectionId: number;
+      whiskyId: number;
+    }) => addCollectionItem(collectionId, whiskyId),
   });
 }

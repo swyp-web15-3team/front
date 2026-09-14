@@ -10,6 +10,7 @@ import {
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { BOTTOM_SHEET_ID } from '@/constants/bottom-sheet';
 import {
+  useAddCollectionItemMutation,
   useCollectionListQuery,
   useCreateCollectionMutation,
 } from '@/hooks/queries/use-collection';
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils';
 const OPTIMISTIC_ERROR_DISMISS_MS = 3000;
 
 export interface SaveItemWhisky {
+  id: number;
   name: string;
   originalName: string;
   imageUrl?: string;
@@ -35,6 +37,7 @@ export function SaveItemBottomSheet() {
   const collections = data?.collections ?? [];
   const { open: openCreateCollectionModal } = useCreateCollectionModal();
   const createCollectionMutation = useCreateCollectionMutation();
+  const addCollectionItemMutation = useAddCollectionItemMutation();
   const {
     isPending: isCreatingCollection,
     isError: isCreateCollectionError,
@@ -54,6 +57,15 @@ export function SaveItemBottomSheet() {
   }, [isCreateCollectionError, resetCreateCollectionMutation]);
 
   const showOptimisticItem = isCreatingCollection || isCreateCollectionError;
+
+  function handleComplete() {
+    if (!selectedId || !whisky) return;
+
+    addCollectionItemMutation.mutate(
+      { collectionId: selectedId, whiskyId: whisky.id },
+      { onSuccess: close }
+    );
+  }
 
   return (
     <>
@@ -129,8 +141,8 @@ export function SaveItemBottomSheet() {
           </button>
           <button
             type="button"
-            disabled={!selectedId}
-            onClick={close}
+            disabled={!selectedId || addCollectionItemMutation.isPending}
+            onClick={handleComplete}
             className="mt-4 w-full rounded-md border-2 bg-amber-50 px-3 py-1.5 text-sm text-black disabled:opacity-50"
           >
             완료
