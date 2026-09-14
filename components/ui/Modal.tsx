@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { pushEscapeLayer } from '@/lib/escape-stack';
 import { cn } from '@/lib/utils';
 
 interface ModalProps {
@@ -31,16 +32,20 @@ export function Modal({
   panelClassName,
 }: ModalProps) {
   useEffect(() => {
+    if (!isOpen) return;
+
+    const layer = pushEscapeLayer();
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && layer.isTopLayer()) {
         onClose();
       }
     };
     document.addEventListener('keydown', handleEscape);
     return () => {
       document.removeEventListener('keydown', handleEscape);
+      layer.pop();
     };
-  }, [onClose]);
+  }, [isOpen, onClose]);
 
   return (
     <div

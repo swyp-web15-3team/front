@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 
+import { pushEscapeLayer } from '@/lib/escape-stack';
 import { cn } from '@/lib/utils';
 
 interface BottomSheetProps {
@@ -32,16 +33,20 @@ export function BottomSheet({
   panelClassName,
 }: BottomSheetProps) {
   useEffect(() => {
+    if (!isOpen) return;
+
+    const layer = pushEscapeLayer();
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && layer.isTopLayer()) {
         onClose();
       }
     };
     document.addEventListener('keydown', handleEscape);
     return () => {
       document.removeEventListener('keydown', handleEscape);
+      layer.pop();
     };
-  }, [onClose]);
+  }, [isOpen, onClose]);
 
   return (
     <div

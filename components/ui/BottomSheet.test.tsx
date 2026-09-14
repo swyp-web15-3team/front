@@ -2,6 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { BottomSheet } from '@/components/ui/BottomSheet';
+import { Modal } from '@/components/ui/Modal';
 
 describe('BottomSheet', () => {
   it('isOpen이 false면 오버레이가 보이지 않는 상태로 렌더링된다', () => {
@@ -90,6 +91,28 @@ describe('BottomSheet', () => {
     });
 
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('바텀시트 위에 모달이 열려있으면 Escape는 모달만 닫는다', () => {
+    const onCloseSheet = vi.fn();
+    const onCloseModal = vi.fn();
+    render(
+      <>
+        <BottomSheet isOpen={true} onClose={onCloseSheet}>
+          시트 내용
+        </BottomSheet>
+        <Modal isOpen={true} onClose={onCloseModal}>
+          모달 내용
+        </Modal>
+      </>
+    );
+
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+
+    expect(onCloseModal).toHaveBeenCalled();
+    expect(onCloseSheet).not.toHaveBeenCalled();
   });
 
   it('overlayClassName/panelClassName을 병합한다', () => {
