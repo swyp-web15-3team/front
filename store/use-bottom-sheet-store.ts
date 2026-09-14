@@ -4,17 +4,20 @@ import type { BottomSheetId } from '@/constants/bottom-sheet';
 
 interface BottomSheetState {
   activeBottomSheet: BottomSheetId | null;
-  open: (bottomSheetId: BottomSheetId) => void;
+  payload: unknown;
+  open: (bottomSheetId: BottomSheetId, payload?: unknown) => void;
   close: (bottomSheetId: BottomSheetId) => void;
 }
 
 export const useBottomSheetStore = create<BottomSheetState>((set) => ({
   activeBottomSheet: null,
-  open: (bottomSheetId) => set({ activeBottomSheet: bottomSheetId }),
+  payload: null,
+  open: (bottomSheetId, payload) =>
+    set({ activeBottomSheet: bottomSheetId, payload: payload ?? null }),
   close: (bottomSheetId) =>
     set((state) =>
       state.activeBottomSheet === bottomSheetId
-        ? { activeBottomSheet: null }
+        ? { activeBottomSheet: null, payload: null }
         : state
     ),
 }));

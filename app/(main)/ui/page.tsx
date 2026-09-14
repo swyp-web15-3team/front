@@ -71,7 +71,13 @@ export default function UiPage() {
           콘솔로그
         </button>
         <button
-          onClick={openSaveItemBottomSheet}
+          onClick={() =>
+            openSaveItemBottomSheet({
+              name: '야마자키 12년(더미)',
+              originalName: '山崎 | Yamazaki 12yo',
+              imageUrl: 'https://placehold.co/200x150.png',
+            })
+          }
           className="border-2 bg-amber-50 text-black"
         >
           저장 바텀시트 열기
