@@ -1,6 +1,6 @@
 'use client';
 
-import { Modal } from '@/components/common/Modal';
+import { Modal } from '@/components/ui/Modal';
 import { MODAL_ID } from '@/constants/modal';
 import { useModal } from '@/hooks/use-modal';
 
