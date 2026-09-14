@@ -12,3 +12,8 @@ export function pushEscapeLayer() {
     },
   };
 }
+
+// 테스트에서 cleanup 누락으로 잔여 레이어가 다음 테스트로 새는 것을 막기 위한 리셋.
+export function resetEscapeStack() {
+  stack.length = 0;
+}
