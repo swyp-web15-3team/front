@@ -11,10 +11,15 @@ import {
   SampleModal2,
   useSampleModal2,
 } from '@/components/common/SampleModal2';
+import {
+  SaveItemBottomSheet,
+  useSaveItemBottomSheet,
+} from '@/components/common/SaveItemBottomSheet';
 
 export default function UiPage() {
   const { open: openSampleModal1 } = useSampleModal1();
   const { open: openSampleModal2 } = useSampleModal2();
+  const { open: openSaveItemBottomSheet } = useSaveItemBottomSheet();
 
   const errorTestHandler = () => {
     Sentry.captureException(new Error('GlitchTip 브라우저 테스트 에러'));
@@ -65,9 +70,16 @@ export default function UiPage() {
         >
           콘솔로그
         </button>
+        <button
+          onClick={openSaveItemBottomSheet}
+          className="border-2 bg-amber-50 text-black"
+        >
+          저장 바텀시트 열기
+        </button>
       </div>
       <SampleModal1 />
       <SampleModal2 />
+      <SaveItemBottomSheet />
       <VerticalCard
         className="w-60"
         product={{
