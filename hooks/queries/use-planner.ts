@@ -17,9 +17,10 @@ export function useAddPlannerItemMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: addPlannerItem,
+    mutationFn: (saleProductIds: number[]) =>
+      Promise.all(saleProductIds.map((id) => addPlannerItem(id))),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: plannerKeys.all });
+      return queryClient.invalidateQueries({ queryKey: plannerKeys.all });
     },
   });
 }

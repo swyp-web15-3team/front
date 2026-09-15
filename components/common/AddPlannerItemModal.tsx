@@ -113,13 +113,14 @@ export function AddPlannerItemModal() {
   }
 
   function handleComplete() {
-    const requests = Array.from(counts.entries()).flatMap(
+    const saleProductIds = Array.from(counts.entries()).flatMap(
       ([saleProductId, count]) => Array(count).fill(saleProductId)
     );
-    requests.forEach((saleProductId) => {
-      addPlannerItemMutation.mutate(saleProductId);
+    // 리스트 갱신(invalidate)이 끝난 뒤에 모달을 닫아야
+    // 모달이 사라지는 시점에 플래너 리스트도 함께 갱신되어 보인다.
+    addPlannerItemMutation.mutate(saleProductIds, {
+      onSuccess: handleClose,
     });
-    handleClose();
   }
 
   function filterByKeyword(items: PlannerCandidate[]) {
@@ -285,11 +286,13 @@ export function AddPlannerItemModal() {
         </button>
         <button
           type="button"
-          disabled={totalSelectedCount === 0}
+          disabled={
+            totalSelectedCount === 0 || addPlannerItemMutation.isPending
+          }
           onClick={handleComplete}
           className="w-full rounded-md border-2 bg-amber-50 px-3 py-1.5 text-sm text-black disabled:opacity-50"
         >
-          완료
+          {addPlannerItemMutation.isPending ? '추가 중...' : '완료'}
         </button>
       </div>
     </Modal>
