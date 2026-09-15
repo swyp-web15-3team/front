@@ -69,9 +69,15 @@ function LimitBar({
 function PlannerCard({
   item,
   section,
+  isDragging,
+  onDragStart,
+  onDragEnd,
 }: {
   item: PlannerItem;
   section: BoardSection;
+  isDragging: boolean;
+  onDragStart: (plannerItemId: number) => void;
+  onDragEnd: () => void;
 }) {
   return (
     <li
@@ -80,8 +86,13 @@ function PlannerCard({
         e.dataTransfer.setData('text/plain', String(item.plannerItemId));
         e.dataTransfer.setData('application/x-planner-from', section);
         e.dataTransfer.effectAllowed = 'move';
+        onDragStart(item.plannerItemId);
       }}
-      className="cursor-grab active:cursor-grabbing"
+      onDragEnd={onDragEnd}
+      className={cn(
+        'cursor-grab transition-all duration-150 ease-out active:cursor-grabbing',
+        isDragging && 'scale-95 opacity-40'
+      )}
     >
       <HorizontalCard product={toProduct(item)} />
     </li>
@@ -92,12 +103,14 @@ function DropZone({
   title,
   count,
   section,
+  accentClassName,
   onDrop,
   children,
 }: {
   title: string;
   count: number;
   section: BoardSection;
+  accentClassName: string;
   onDrop: (plannerItemId: number, from: BoardSection) => void;
   children: React.ReactNode;
 }) {
@@ -109,7 +122,10 @@ function DropZone({
         e.preventDefault();
         setIsOver(true);
       }}
-      onDragLeave={() => setIsOver(false)}
+      onDragLeave={(e) => {
+        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+        setIsOver(false);
+      }}
       onDrop={(e) => {
         e.preventDefault();
         setIsOver(false);
@@ -121,9 +137,9 @@ function DropZone({
         onDrop(plannerItemId, from);
       }}
       className={cn(
-        'rounded-xl border border-gray-200 bg-white p-4 transition-colors',
-        isOver &&
-          'border-gray-400 bg-gray-50 outline-2 outline-gray-300 outline-dashed'
+        'rounded-xl border border-gray-200 bg-white p-3 transition-colors duration-150 sm:p-4',
+        accentClassName,
+        isOver && 'border-gray-400 bg-gray-50'
       )}
     >
       <h2 className="mb-3 flex items-center gap-1.5 text-base font-semibold text-gray-900">
@@ -140,6 +156,7 @@ export default function PlanPage() {
   const { open: openAddPlannerItemModal } = useAddPlannerItemModal();
   const { purchaseIds, moveToPurchase, moveToCandidate } =
     usePlannerBoardStore();
+  const [draggingId, setDraggingId] = useState<number | null>(null);
 
   const items = useMemo(() => data?.items ?? [], [data]);
 
@@ -162,9 +179,14 @@ export default function PlanPage() {
   function handleDrop(plannerItemId: number, from: BoardSection) {
     if (from === 'candidate') {
       moveToPurchase(plannerItemId);
-    } else {
+    } else if (from === 'purchase') {
       moveToCandidate(plannerItemId);
     }
+    setDraggingId(null);
+  }
+
+  function handleDragEnd() {
+    setDraggingId(null);
   }
 
   return (
@@ -189,7 +211,7 @@ export default function PlanPage() {
           {isOverLimit && (
             <p className="text-sm text-red-500">구매 한도를 초과했어요.</p>
           )}
-          <div className="flex gap-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-6">
             <LimitBar
               value={totalKrw}
               limit={PLANNER_PURCHASE_LIMIT_USD}
@@ -206,14 +228,18 @@ export default function PlanPage() {
             title="구매 리스트"
             count={purchaseItems.length}
             section="purchase"
+            accentClassName="border-t-4 border-t-gray-900"
             onDrop={handleDrop}
           >
-            <ul className="grid grid-cols-2 gap-2">
+            <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {purchaseItems.map((item) => (
                 <PlannerCard
                   key={item.plannerItemId}
                   item={item}
                   section="purchase"
+                  isDragging={draggingId === item.plannerItemId}
+                  onDragStart={setDraggingId}
+                  onDragEnd={handleDragEnd}
                 />
               ))}
             </ul>
@@ -228,14 +254,18 @@ export default function PlanPage() {
             title="후보"
             count={candidateItems.length}
             section="candidate"
+            accentClassName="border-t-4 border-t-gray-300"
             onDrop={handleDrop}
           >
-            <ul className="grid grid-cols-2 gap-2">
+            <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {candidateItems.map((item) => (
                 <PlannerCard
                   key={item.plannerItemId}
                   item={item}
                   section="candidate"
+                  isDragging={draggingId === item.plannerItemId}
+                  onDragStart={setDraggingId}
+                  onDragEnd={handleDragEnd}
                 />
               ))}
             </ul>
