@@ -2,6 +2,9 @@
 
 /* 임시 스타일 */
 @layer base {
+  button:is([type='submit'], [type='button']) {
+    @apply cursor-pointer;
+  }
   input {
     @apply border border-dashed border-transparent outline-none;
   }
