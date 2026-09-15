@@ -51,6 +51,8 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-${{ matrix.arch }}
           build-args: |
             NEXT_PUBLIC_SENTRY_DSN=${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
+            NEXT_PUBLIC_API_URL=https://sulchedule-server.sunghoyaaa.com/api/v1
+            NEXT_PUBLIC_APP_URL=https://sulchedule.sunghoyaaa.com
 
   merge-manifest:
     needs: build-and-push
