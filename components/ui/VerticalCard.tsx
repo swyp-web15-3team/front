@@ -21,6 +21,7 @@ export function VerticalCard({
     krPrice,
     jpPrice,
     jpPriceYen,
+    volumeMl,
   } = product;
 
   return (
@@ -53,8 +54,11 @@ export function VerticalCard({
             <span>일본가</span>
             <span>{jpPrice?.toLocaleString('ko-KR')}원</span>
           </div>
-          <p className="text-right text-xs text-gray-500">
+          {/* <p className="text-right text-xs text-gray-500">
             (¥{jpPriceYen?.toLocaleString('ko-KR')})
+          </p> */}
+          <p className="text-left text-xs text-gray-500">
+            {volumeMl ? `${volumeMl.toLocaleString('ko-KR')}ml` : ''}
           </p>
         </div>
       </div>
