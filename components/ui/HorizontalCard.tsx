@@ -23,6 +23,7 @@ export function HorizontalCard({
     discountRate = 0,
     krPrice,
     jpPrice,
+    volumeMl,
   } = product;
   const [hasError, setHasError] = useState(false);
 
@@ -65,6 +66,9 @@ export function HorizontalCard({
         <p>
           {krPrice?.toLocaleString('ko-KR')}원
           <span className="text-gray-500">(한국 최저가)</span>
+          {volumeMl != null && (
+            <span className="text-gray-500"> · {volumeMl}ml</span>
+          )}
         </p>
       </div>
     </div>
