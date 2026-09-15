@@ -4,13 +4,16 @@ export interface CursorPageResponse<T> {
 }
 
 export interface ApiSuccessResponse<T> {
-  success: true;
   data: T;
 }
 
+// ProblemDetail(RFC 7807(최신 RFC 9457))
 export interface ApiErrorResponse {
-  success: false;
-  message: string;
+  type: string;
+  title: string;
+  status: number;
+  detail: string;
+  instance: string;
 }
 
 export type CountryCode = 'KR' | 'JP';

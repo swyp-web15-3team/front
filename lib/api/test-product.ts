@@ -16,6 +16,7 @@ const MOCK_PRODUCT: Product = {
   krPrice: 298000,
   jpPrice: 168500,
   jpPriceYen: 18500,
+  volumeMl: 700,
 };
 
 const MOCK_TOTAL_COUNT = 237;

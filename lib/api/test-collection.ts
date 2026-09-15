@@ -28,7 +28,13 @@ export class MockApiError extends Error {
   constructor(status: number, message: string) {
     super(message);
     this.status = status;
-    this.data = { success: false, message };
+    this.data = {
+      type: 'about:blank',
+      title: message,
+      status,
+      detail: message,
+      instance: '',
+    };
   }
 }
 
