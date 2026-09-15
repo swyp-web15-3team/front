@@ -6,3 +6,9 @@ export interface TokenPair {
 export interface KakaoLoginResponse extends TokenPair {
   isNewUser: boolean;
 }
+
+export interface SignUpRequest {
+  termsAgreed: string[];
+}
+
+export type SignUpResponse = TokenPair;

@@ -31,12 +31,16 @@ export async function GET(request: NextRequest) {
     redirectUrl.searchParams.set('isNewUser', String(isNewUser));
 
     const response = NextResponse.redirect(redirectUrl);
-    response.cookies.set(REFRESH_TOKEN_COOKIE, refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-    });
+
+    // 신규 유저는 회원가입(sign-up) 완료 전까지 로그인 상태로 만들지 않는다.
+    if (!isNewUser) {
+      response.cookies.set(REFRESH_TOKEN_COOKIE, refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+      });
+    }
 
     return response;
   } catch (error) {
