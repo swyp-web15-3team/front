@@ -104,7 +104,7 @@ export default function Header() {
       </div>
       <nav className="flex gap-2 sm:gap-4">
         <Link href="/search">탐색</Link>
-        <Link href="/">플랜</Link>
+        <Link href="/plan">플랜</Link>
         <Link href="/mypage">마이페이지</Link>
         <AuthNavAction />
       </nav>
