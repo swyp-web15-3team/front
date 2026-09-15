@@ -1,6 +1,8 @@
+import { findCandidateBySaleProductId } from '@/lib/api/test-collection';
 import { PlannerItem, PlannerResponse } from '@/types/planner';
 
 const MOCK_NETWORK_DELAY_MS = 400;
+let nextPlannerItemId = 100;
 
 const MOCK_PLANNER_ITEMS: PlannerItem[] = [
   {
@@ -57,4 +59,37 @@ export async function fetchPlanner(): Promise<PlannerResponse['data']> {
   await new Promise((resolve) => setTimeout(resolve, MOCK_NETWORK_DELAY_MS));
 
   return { items: MOCK_PLANNER_ITEMS };
+}
+
+// TODO: 플래너 API 연동 후 apiClient.post<AddPlannerItemResponse['data']>('/api/v1/planners/items', { saleProductId })로 교체한다.
+// 명세: 수량 컬럼이 없어 같은 saleProductId를 다시 보내면 새 플래너 항목이 또 생성된다.
+export async function addPlannerItem(
+  saleProductId: number
+): Promise<PlannerItem> {
+  await new Promise((resolve) => setTimeout(resolve, MOCK_NETWORK_DELAY_MS));
+
+  const candidate = findCandidateBySaleProductId(saleProductId);
+  if (!candidate) {
+    throw new Error('판매 상품을 찾을 수 없습니다.');
+  }
+
+  const newItem: PlannerItem = {
+    plannerItemId: nextPlannerItemId++,
+    saleProductId: candidate.saleProductId,
+    whiskyId: candidate.whiskyId,
+    whiskyName: candidate.whiskyName,
+    volumeMl: candidate.volumeMl,
+    abv: null,
+    retailerId: 0,
+    retailerName: '',
+    countryCode: 'JP',
+    isDutyFree: false,
+    productUrl: '',
+    isSoldOut: false,
+    price: candidate.price,
+    exchange: null,
+    computable: candidate.price !== null,
+  };
+  MOCK_PLANNER_ITEMS.push(newItem);
+  return newItem;
 }

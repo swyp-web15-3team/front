@@ -1,4 +1,5 @@
 import { ApiSuccessResponse } from '@/types/common';
+import { PlannerCandidate } from '@/types/planner';
 
 export interface Collection {
   id: number;
@@ -8,6 +9,11 @@ export interface Collection {
 
 export type CollectionListResponse = ApiSuccessResponse<{
   collections: Collection[];
+}>;
+
+// 컬렉션에 담긴, 플래너에 추가 가능한 위스키 후보 목록
+export type CollectionItemListResponse = ApiSuccessResponse<{
+  items: PlannerCandidate[];
 }>;
 
 export type AddCollectionItemResponse = ApiSuccessResponse<{

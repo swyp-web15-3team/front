@@ -1,5 +1,9 @@
 'use client';
 
+import {
+  AddPlannerItemModal,
+  useAddPlannerItemModal,
+} from '@/components/common/AddPlannerItemModal';
 import { HorizontalCard } from '@/components/ui/HorizontalCard';
 import { usePlannerQuery } from '@/hooks/queries/use-planner';
 import { PlannerItem } from '@/types/planner';
@@ -19,6 +23,7 @@ function toProduct(item: PlannerItem): Product {
 
 export default function PlanPage() {
   const { data, isLoading, isError, refetch } = usePlannerQuery();
+  const { open: openAddPlannerItemModal } = useAddPlannerItemModal();
 
   const items = data?.items ?? [];
 
@@ -39,12 +44,8 @@ export default function PlanPage() {
             다시 시도
           </button>
         </div>
-      ) : items.length === 0 ? (
-        <div className="flex min-h-100 items-center justify-center">
-          <p>플래너에 담긴 상품이 없습니다</p>
-        </div>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="grid grid-cols-2 gap-2">
           {items.map((item) => (
             <li key={item.plannerItemId}>
               <HorizontalCard product={toProduct(item)} />
@@ -52,6 +53,16 @@ export default function PlanPage() {
           ))}
         </ul>
       )}
+
+      <button
+        type="button"
+        onClick={() => openAddPlannerItemModal()}
+        className="mt-2 w-full rounded-md border border-dashed border-gray-300 py-3 text-sm text-gray-500"
+      >
+        + 추가하기 / 옮기기
+      </button>
+
+      <AddPlannerItemModal />
     </div>
   );
 }
