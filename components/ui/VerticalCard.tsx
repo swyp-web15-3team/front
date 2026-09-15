@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Product } from '@/types/product';
@@ -23,6 +26,7 @@ export function VerticalCard({
     jpPriceYen,
     volumeMl,
   } = product;
+  const [hasError, setHasError] = useState(false);
 
   return (
     <>
@@ -33,14 +37,22 @@ export function VerticalCard({
         )}
       >
         <div className="relative aspect-4/3 w-full">
-          <Image
-            src={imageUrl}
-            alt={`${name} ${originalName}` || ''}
-            fill
-            sizes="(max-width: 768px) 50vw, 240px"
-            loading={loading}
-            className="rounded-xl object-cover"
-          />
+          {imageUrl && !hasError ? (
+            <Image
+              src={imageUrl}
+              alt={`${name} ${originalName}` || ''}
+              fill
+              sizes="(max-width: 768px) 50vw, 240px"
+              loading={loading}
+              className="rounded-xl object-cover"
+              onError={() => setHasError(true)}
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center rounded-xl bg-gray-100 text-center text-gray-400">
+              {/* TODO: 이미지 로딩 실패 시 표시할 내용 추가 */}
+              이미지 로딩 실패
+            </div>
+          )}
         </div>
         <div className="p-4">
           <p className="text-lg">{name}</p>
