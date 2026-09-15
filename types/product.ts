@@ -5,5 +5,6 @@ export interface Product {
   discountRate: number;
   krPrice: number;
   jpPrice: number;
-  jpPriceYen: number;
+  jpPriceYen?: number;
+  volumeMl?: number;
 }
