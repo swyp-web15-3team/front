@@ -32,6 +32,7 @@ export function AddPlannerItemModal() {
   // saleProductId -> 선택 개수. 동일한 술을 다시 클릭하면 개수만 늘어난다.
   const [counts, setCounts] = useState<Map<number, number>>(new Map());
   const [isConfirmingClose, setIsConfirmingClose] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const { data: collectionData } = useCollectionListQuery();
   const collections = useMemo(
@@ -99,6 +100,7 @@ export function AddPlannerItemModal() {
     setKeyword('');
     setCounts(new Map());
     setIsConfirmingClose(false);
+    setErrorMessage('');
     close();
   }
 
@@ -116,10 +118,13 @@ export function AddPlannerItemModal() {
     const saleProductIds = Array.from(counts.entries()).flatMap(
       ([saleProductId, count]) => Array(count).fill(saleProductId)
     );
-    // 리스트 갱신(invalidate)이 끝난 뒤에 모달을 닫아야
-    // 모달이 사라지는 시점에 플래너 리스트도 함께 갱신되어 보인다.
+    setErrorMessage('');
+    // mutate에 넘긴 onSuccess는 훅(use-planner.ts)의 onSuccess가 반환한
+    // invalidateQueries Promise가 끝난 뒤에 실행된다. 그래서 이 순서만으로도
+    // "리스트 갱신 → 모달 닫힘" 순서가 보장된다.
     addPlannerItemMutation.mutate(saleProductIds, {
       onSuccess: handleClose,
+      onError: () => setErrorMessage('추가에 실패했어요. 다시 시도해주세요.'),
     });
   }
 
@@ -275,6 +280,10 @@ export function AddPlannerItemModal() {
           </button>
         )}
       </div>
+
+      {errorMessage && (
+        <p className="mt-2 text-xs text-red-500">{errorMessage}</p>
+      )}
 
       <div className="mt-4 flex gap-2">
         <button

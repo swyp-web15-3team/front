@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Product } from '@/types/product';
@@ -20,8 +23,8 @@ export function HorizontalCard({
     discountRate = 0,
     krPrice,
     jpPrice,
-    jpPriceYen,
   } = product;
+  const [hasError, setHasError] = useState(false);
 
   return (
     <div
@@ -31,29 +34,37 @@ export function HorizontalCard({
       )}
     >
       <div className="relative aspect-square w-32 shrink-0">
-        <Image
-          src={imageUrl}
-          alt={`${name} ${originalName}` || ''}
-          fill
-          sizes="128px"
-          loading={loading}
-          className="rounded-xl object-cover"
-        />
+        {imageUrl && !hasError ? (
+          <Image
+            src={imageUrl}
+            alt={`${name} ${originalName}` || ''}
+            fill
+            sizes="128px"
+            loading={loading}
+            className="rounded-xl object-cover"
+            onError={() => setHasError(true)}
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center rounded-xl bg-gray-100 text-center text-xs text-gray-400">
+            이미지 로딩 실패
+          </div>
+        )}
       </div>
       <div className="min-w-0 flex-1 p-4">
-        <p className="text-lg">{name}</p>
-        <p className="text-gray-500">{originalName}</p>
-        {/* <p className="text-lg text-[#EC4B4B]">{discountRate}%</p> */}
-        <div className="justify-be mt-2 flex">
-          <span>한국가</span>
-          <span>{krPrice?.toLocaleString('ko-KR')}원</span>
+        <p className="truncate text-lg">{name}</p>
+        <p className="truncate text-gray-500">{originalName}</p>
+        <div className="mt-2">
+          {discountRate > 0 && (
+            <span className="mr-1 text-[#EC4B4B]">-{discountRate}%</span>
+          )}
+          <span>
+            {jpPrice?.toLocaleString('ko-KR')}원
+            <span className="text-gray-500">(일본 최저가)</span>
+          </span>
         </div>
-        <div className="flex justify-between">
-          <span>일본가</span>
-          <span>{jpPrice?.toLocaleString('ko-KR')}원</span>
-        </div>
-        <p className="text-right text-xs text-gray-500">
-          (¥{jpPriceYen?.toLocaleString('ko-KR')})
+        <p>
+          {krPrice?.toLocaleString('ko-KR')}원
+          <span className="text-gray-500">(한국 최저가)</span>
         </p>
       </div>
     </div>
