@@ -85,6 +85,7 @@ export default function UiPage() {
           krPrice: 298000,
           jpPrice: 168500,
           jpPriceYen: 18500,
+          volumeMl: 700,
         }}
       />
       <HorizontalCard

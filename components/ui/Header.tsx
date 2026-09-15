@@ -57,7 +57,7 @@ export default function Header() {
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 flex items-center justify-between border-b border-transparent bg-white px-6 py-4',
+        'sticky top-0 z-50 flex items-center justify-between border-b border-transparent bg-white px-2 py-4 sm:px-6',
         isScrolled && 'border-gray-300'
       )}
     >
@@ -102,10 +102,9 @@ export default function Header() {
           <path d="m21 21-4.3-4.3" />
         </svg>
       </div>
-      <nav className="flex gap-2 sm:gap-4">
-        <Link href="/search">탐색</Link>
-        <Link href="/plan">플랜</Link>
-        <Link href="/mypage">마이페이지</Link>
+      <nav className="hidden gap-2 sm:flex sm:gap-4">
+        <Link href="/">관심 목록</Link>
+        <Link href="/planner">플래너</Link>
         <AuthNavAction />
       </nav>
       <SearchModal />
