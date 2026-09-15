@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="flex flex-col gap-4 bg-[#EBEBEB] p-5">
+    <footer className="flex flex-col gap-4 bg-[#EBEBEB] px-5 pt-5 pb-20 md:pb-5">
       <div className="flex w-full justify-between">
         <div className="flex flex-col gap-2">
           {/* Logo */}
