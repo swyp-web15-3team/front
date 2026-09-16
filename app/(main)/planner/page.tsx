@@ -7,6 +7,7 @@ import {
   useAddPlannerItemModal,
 } from '@/components/common/AddPlannerItemModal';
 import { HorizontalCard } from '@/components/ui/HorizontalCard';
+import { Modal } from '@/components/ui/Modal';
 import {
   PLANNER_PURCHASE_LIMIT_ML,
   PLANNER_PURCHASE_LIMIT_USD,
@@ -138,12 +139,50 @@ function PlannerCard({
   );
 }
 
+function ConfirmModal({
+  isOpen,
+  message,
+  confirmLabel,
+  onCancel,
+  onConfirm,
+}: {
+  isOpen: boolean;
+  message: string;
+  confirmLabel: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <Modal isOpen={isOpen} onClose={onCancel} panelClassName="max-w-[360px]">
+      <p className="text-center text-sm font-medium">{message}</p>
+      <div className="mt-4 flex gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="w-full rounded-md border-2 bg-amber-50 px-3 py-1.5 text-sm text-black"
+        >
+          취소
+        </button>
+        <button
+          type="button"
+          onClick={onConfirm}
+          className="w-full rounded-md border-2 bg-amber-50 px-3 py-1.5 text-sm text-black"
+        >
+          {confirmLabel}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
 function DropZone({
   title,
   count,
   section,
   accentClassName,
   onDrop,
+  onReset,
+  resetLabel,
   children,
 }: {
   title: string;
@@ -151,6 +190,8 @@ function DropZone({
   section: BoardSection;
   accentClassName: string;
   onDrop: (plannerItemId: number, from: BoardSection) => void;
+  onReset: () => void;
+  resetLabel: string;
   children: React.ReactNode;
 }) {
   const [isOver, setIsOver] = useState(false);
@@ -181,10 +222,21 @@ function DropZone({
         isOver && 'border-gray-400 bg-gray-50'
       )}
     >
-      <h2 className="mb-3 flex items-center gap-1.5 text-base font-semibold text-gray-900">
-        {title}
-        <span className="text-sm font-normal text-gray-400">{count}</span>
-      </h2>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="flex items-center gap-1.5 text-base font-semibold text-gray-900">
+          {title}
+          <span className="text-sm font-normal text-gray-400">{count}</span>
+        </h2>
+        {count > 0 && (
+          <button
+            type="button"
+            onClick={onReset}
+            className="text-xs text-gray-400 hover:text-gray-600"
+          >
+            {resetLabel}
+          </button>
+        )}
+      </div>
       {children}
     </div>
   );
@@ -198,6 +250,9 @@ export default function PlanPage() {
     useUpdatePlannerItemQuantityMutation();
   const [purchaseIds, setPurchaseIds] = useState<Set<number>>(new Set());
   const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [confirmAction, setConfirmAction] = useState<
+    'resetPurchase' | 'resetCandidates' | 'resetAll' | null
+  >(null);
 
   const items = useMemo(() => data?.items ?? [], [data]);
 
@@ -252,6 +307,36 @@ export default function PlanPage() {
     });
   }
 
+  function handleConfirmReset() {
+    if (confirmAction === 'resetPurchase') {
+      setPurchaseIds(new Set());
+    } else if (confirmAction === 'resetCandidates') {
+      candidateItems.forEach((item) => deletePlannerItem(item.plannerItemId));
+    } else if (confirmAction === 'resetAll') {
+      items.forEach((item) => deletePlannerItem(item.plannerItemId));
+      setPurchaseIds(new Set());
+    }
+    setConfirmAction(null);
+  }
+
+  const confirmModalContent: Record<
+    'resetPurchase' | 'resetCandidates' | 'resetAll',
+    { message: string; confirmLabel: string }
+  > = {
+    resetPurchase: {
+      message: '구매 리스트의 상품을 모두 후보로 이동할까요?',
+      confirmLabel: '이동',
+    },
+    resetCandidates: {
+      message: '후보 상품이 전체 삭제됩니다. 동의하시나요?',
+      confirmLabel: '삭제',
+    },
+    resetAll: {
+      message: '플래너의 모든 상품이 삭제됩니다. 동의하시나요?',
+      confirmLabel: '초기화',
+    },
+  };
+
   return (
     <div className="mx-auto max-w-300">
       {isLoading ? (
@@ -293,6 +378,8 @@ export default function PlanPage() {
             section="purchase"
             accentClassName="border-t-4 border-t-gray-900"
             onDrop={handleDrop}
+            onReset={() => setConfirmAction('resetPurchase')}
+            resetLabel="초기화"
           >
             <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {purchaseItems.map((item) => (
@@ -321,6 +408,8 @@ export default function PlanPage() {
             section="candidate"
             accentClassName="border-t-4 border-t-gray-300"
             onDrop={handleDrop}
+            onReset={() => setConfirmAction('resetCandidates')}
+            resetLabel="전체 삭제"
           >
             <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {candidateItems.map((item) => (
@@ -343,17 +432,39 @@ export default function PlanPage() {
             )}
           </DropZone>
 
-          <button
-            type="button"
-            onClick={() => openAddPlannerItemModal()}
-            className="w-full rounded-md border border-dashed border-gray-300 py-3 text-sm text-gray-500"
-          >
-            + 추가하기 / 옮기기
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => openAddPlannerItemModal()}
+              className="w-full rounded-md border border-dashed border-gray-300 py-3 text-sm text-gray-500"
+            >
+              + 추가하기 / 옮기기
+            </button>
+            {items.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setConfirmAction('resetAll')}
+                className="shrink-0 rounded-md border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-500"
+              >
+                플래너 초기화
+              </button>
+            )}
+          </div>
         </div>
       )}
 
       <AddPlannerItemModal />
+      <ConfirmModal
+        isOpen={confirmAction !== null}
+        message={
+          confirmAction ? confirmModalContent[confirmAction].message : ''
+        }
+        confirmLabel={
+          confirmAction ? confirmModalContent[confirmAction].confirmLabel : ''
+        }
+        onCancel={() => setConfirmAction(null)}
+        onConfirm={handleConfirmReset}
+      />
     </div>
   );
 }
