@@ -31,6 +31,7 @@ export interface PlannerItem {
   price: PlannerItemPrice | null;
   exchange: PlannerItemExchange | null;
   computable: boolean;
+  quantity: number;
 }
 
 export interface PlannerResponse {
@@ -49,10 +50,11 @@ export interface PlannerCandidate {
   price: PlannerItemPrice | null;
 }
 
-// POST /api/v1/planners/items 요청/응답. saleProductId만 전달하며,
-// 같은 saleProductId를 다시 보내면 새 플래너 항목이 또 생성된다(수량 컬럼 없음).
+// POST /api/v1/planners/items 요청/응답. 같은 saleProductId를 다시 보내면
+// 새 항목을 만들지 않고 기존 항목의 quantity를 늘린다.
 export interface AddPlannerItemRequest {
   saleProductId: number;
+  quantity: number;
 }
 
 export type AddPlannerItemResponse = ApiSuccessResponse<PlannerItem>;

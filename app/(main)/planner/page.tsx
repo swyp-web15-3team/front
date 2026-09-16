@@ -11,7 +11,11 @@ import {
   PLANNER_PURCHASE_LIMIT_ML,
   PLANNER_PURCHASE_LIMIT_USD,
 } from '@/constants/planner';
-import { usePlannerQuery } from '@/hooks/queries/use-planner';
+import {
+  useDeletePlannerItemMutation,
+  usePlannerQuery,
+  useUpdatePlannerItemQuantityMutation,
+} from '@/hooks/queries/use-planner';
 import { cn } from '@/lib/utils';
 import { PlannerItem } from '@/types/planner';
 import { Product } from '@/types/product';
@@ -71,12 +75,16 @@ function PlannerCard({
   isDragging,
   onDragStart,
   onDragEnd,
+  onDelete,
+  onQuantityChange,
 }: {
   item: PlannerItem;
   section: BoardSection;
   isDragging: boolean;
   onDragStart: (plannerItemId: number) => void;
   onDragEnd: () => void;
+  onDelete: (plannerItemId: number) => void;
+  onQuantityChange: (plannerItemId: number, quantity: number) => void;
 }) {
   return (
     <li
@@ -89,11 +97,43 @@ function PlannerCard({
       }}
       onDragEnd={onDragEnd}
       className={cn(
-        'cursor-grab transition-all duration-150 ease-out active:cursor-grabbing',
+        'relative cursor-grab transition-all duration-150 ease-out active:cursor-grabbing',
         isDragging && 'scale-95 opacity-40'
       )}
     >
       <HorizontalCard product={toProduct(item)} />
+      <button
+        type="button"
+        onClick={() => onDelete(item.plannerItemId)}
+        aria-label="삭제"
+        className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-gray-500 shadow-sm hover:text-gray-900"
+      >
+        ✕
+      </button>
+      <div className="absolute right-2 bottom-2 flex items-center gap-1.5 rounded-full border border-gray-200 bg-white/90 px-1 py-0.5 shadow-sm">
+        <button
+          type="button"
+          aria-label="개수 줄이기"
+          disabled={item.quantity <= 1}
+          onClick={() =>
+            onQuantityChange(item.plannerItemId, item.quantity - 1)
+          }
+          className="flex size-6 items-center justify-center rounded-full text-sm disabled:opacity-30"
+        >
+          −
+        </button>
+        <span className="w-4 text-center text-sm">{item.quantity}</span>
+        <button
+          type="button"
+          aria-label="개수 늘리기"
+          onClick={() =>
+            onQuantityChange(item.plannerItemId, item.quantity + 1)
+          }
+          className="flex size-6 items-center justify-center rounded-full text-sm"
+        >
+          +
+        </button>
+      </div>
     </li>
   );
 }
@@ -153,6 +193,9 @@ function DropZone({
 export default function PlanPage() {
   const { data, isLoading, isError, refetch } = usePlannerQuery();
   const { open: openAddPlannerItemModal } = useAddPlannerItemModal();
+  const { mutate: deletePlannerItem } = useDeletePlannerItemMutation();
+  const { mutate: updatePlannerItemQuantity } =
+    useUpdatePlannerItemQuantityMutation();
   const [purchaseIds, setPurchaseIds] = useState<Set<number>>(new Set());
   const [draggingId, setDraggingId] = useState<number | null>(null);
 
@@ -166,10 +209,13 @@ export default function PlanPage() {
   );
 
   const totalKrw = purchaseItems.reduce(
-    (sum, item) => sum + (item.price?.amountKrw ?? 0),
+    (sum, item) => sum + (item.price?.amountKrw ?? 0) * item.quantity,
     0
   );
-  const totalMl = purchaseItems.reduce((sum, item) => sum + item.volumeMl, 0);
+  const totalMl = purchaseItems.reduce(
+    (sum, item) => sum + item.volumeMl * item.quantity,
+    0
+  );
   const isOverLimit =
     totalKrw > PLANNER_PURCHASE_LIMIT_USD ||
     totalMl > PLANNER_PURCHASE_LIMIT_ML;
@@ -189,6 +235,21 @@ export default function PlanPage() {
 
   function handleDragEnd() {
     setDraggingId(null);
+  }
+
+  function handleQuantityChange(plannerItemId: number, quantity: number) {
+    if (quantity < 1) return;
+    updatePlannerItemQuantity({ plannerItemId, quantity });
+  }
+
+  function handleDelete(plannerItemId: number) {
+    deletePlannerItem(plannerItemId);
+    setPurchaseIds((prev) => {
+      if (!prev.has(plannerItemId)) return prev;
+      const next = new Set(prev);
+      next.delete(plannerItemId);
+      return next;
+    });
   }
 
   return (
@@ -242,6 +303,8 @@ export default function PlanPage() {
                   isDragging={draggingId === item.plannerItemId}
                   onDragStart={setDraggingId}
                   onDragEnd={handleDragEnd}
+                  onDelete={handleDelete}
+                  onQuantityChange={handleQuantityChange}
                 />
               ))}
             </ul>
@@ -268,6 +331,8 @@ export default function PlanPage() {
                   isDragging={draggingId === item.plannerItemId}
                   onDragStart={setDraggingId}
                   onDragEnd={handleDragEnd}
+                  onDelete={handleDelete}
+                  onQuantityChange={handleQuantityChange}
                 />
               ))}
             </ul>

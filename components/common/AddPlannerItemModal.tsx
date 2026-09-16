@@ -115,14 +115,14 @@ export function AddPlannerItemModal() {
   }
 
   function handleComplete() {
-    const saleProductIds = Array.from(counts.entries()).flatMap(
-      ([saleProductId, count]) => Array(count).fill(saleProductId)
+    const items = Array.from(counts.entries()).map(
+      ([saleProductId, quantity]) => ({ saleProductId, quantity })
     );
     setErrorMessage('');
     // mutate에 넘긴 onSuccess는 훅(use-planner.ts)의 onSuccess가 반환한
     // invalidateQueries Promise가 끝난 뒤에 실행된다. 그래서 이 순서만으로도
     // "리스트 갱신 → 모달 닫힘" 순서가 보장된다.
-    addPlannerItemMutation.mutate(saleProductIds, {
+    addPlannerItemMutation.mutate(items, {
       onSuccess: handleClose,
       onError: () => setErrorMessage('추가에 실패했어요. 다시 시도해주세요.'),
     });
