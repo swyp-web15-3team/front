@@ -1,3 +1,5 @@
+import { getAllCandidates } from '@/lib/api/test-collection';
+import { PlannerCandidate } from '@/types/planner';
 import {
   SaleProduct,
   WhiskyCard,
@@ -146,4 +148,21 @@ export async function fetchRelatedWhiskies(
   }));
 
   return { whiskies };
+}
+
+// TODO: 위스키 검색 API 연동 후 apiClient.get<WhiskyListResponse>('/api/v1/whiskies', { params: { query } })로 교체한다.
+// 플래너 추가 모달의 "전체" 탭에서 쓰는, 플래너에 추가 가능한 위스키 후보 검색.
+export async function searchWhiskyCandidates(
+  query: string
+): Promise<PlannerCandidate[]> {
+  await delay();
+
+  const keyword = query.trim().toLowerCase();
+  if (!keyword) return getAllCandidates();
+
+  return getAllCandidates().filter(
+    (item) =>
+      item.whiskyName.toLowerCase().includes(keyword) ||
+      item.whiskyOriginalName.toLowerCase().includes(keyword)
+  );
 }
