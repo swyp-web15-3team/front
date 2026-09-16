@@ -5,6 +5,7 @@ import {
   fetchWhiskies,
   fetchWhiskyCategories,
   fetchWhiskyDetail,
+  searchWhiskyCandidates,
 } from '@/lib/api/test-whisky';
 import { WhiskyListRequest } from '@/types/whisky';
 
@@ -20,6 +21,8 @@ export const whiskyKeys = {
   detail: (whiskyId: number) => [...whiskyKeys.details(), whiskyId] as const,
   related: (whiskyId: number) =>
     [...whiskyKeys.detail(whiskyId), 'related'] as const,
+  candidates: (query: string) =>
+    [...whiskyKeys.all, 'candidates', query] as const,
 };
 
 export function useWhiskyListQuery(filters: WhiskyListFilters = {}) {
@@ -50,5 +53,13 @@ export function useRelatedWhiskyListQuery(whiskyId: number) {
   return useQuery({
     queryKey: whiskyKeys.related(whiskyId),
     queryFn: () => fetchRelatedWhiskies(whiskyId),
+  });
+}
+
+// 플래너 추가 모달의 "전체" 탭 검색
+export function useWhiskyCandidateSearchQuery(query: string) {
+  return useQuery({
+    queryKey: whiskyKeys.candidates(query),
+    queryFn: () => searchWhiskyCandidates(query),
   });
 }
