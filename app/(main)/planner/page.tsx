@@ -13,7 +13,6 @@ import {
 } from '@/constants/planner';
 import { usePlannerQuery } from '@/hooks/queries/use-planner';
 import { cn } from '@/lib/utils';
-import { usePlannerBoardStore } from '@/store/use-planner-board-store';
 import { PlannerItem } from '@/types/planner';
 import { Product } from '@/types/product';
 
@@ -154,8 +153,7 @@ function DropZone({
 export default function PlanPage() {
   const { data, isLoading, isError, refetch } = usePlannerQuery();
   const { open: openAddPlannerItemModal } = useAddPlannerItemModal();
-  const { purchaseIds, moveToPurchase, moveToCandidate } =
-    usePlannerBoardStore();
+  const [purchaseIds, setPurchaseIds] = useState<Set<number>>(new Set());
   const [draggingId, setDraggingId] = useState<number | null>(null);
 
   const items = useMemo(() => data?.items ?? [], [data]);
@@ -177,11 +175,15 @@ export default function PlanPage() {
     totalMl > PLANNER_PURCHASE_LIMIT_ML;
 
   function handleDrop(plannerItemId: number, from: BoardSection) {
-    if (from === 'candidate') {
-      moveToPurchase(plannerItemId);
-    } else if (from === 'purchase') {
-      moveToCandidate(plannerItemId);
-    }
+    setPurchaseIds((prev) => {
+      const next = new Set(prev);
+      if (from === 'candidate') {
+        next.add(plannerItemId);
+      } else {
+        next.delete(plannerItemId);
+      }
+      return next;
+    });
     setDraggingId(null);
   }
 
