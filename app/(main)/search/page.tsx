@@ -1,5 +1,6 @@
 'use client';
 
+import { FilterBar } from '@/app/(main)/search/_components/FilterBar';
 import { ProductGrid } from '@/app/(main)/search/_components/ProductGrid';
 import { useProductListQuery } from '@/hooks/queries/use-product';
 
@@ -18,6 +19,7 @@ export default function SearchPage() {
 
   return (
     <div className="mx-auto max-w-300">
+      <FilterBar />
       {isLoading ? (
         <div className="flex min-h-100 items-center justify-center">
           <p>불러오는 중...</p>
