@@ -21,3 +21,5 @@ export type AddCollectionItemResponse = ApiSuccessResponse<{
   whiskyId: number;
   saved: boolean;
 }>;
+
+export type RemoveCollectionItemResponse = AddCollectionItemResponse;

@@ -8,8 +8,11 @@ import {
 import {
   addCollectionItem,
   createCollection,
+  deleteCollection,
   fetchCollectionItems,
   fetchCollections,
+  removeCollectionItem,
+  renameCollection,
 } from '@/lib/api/test-collection';
 
 export const collectionKeys = {
@@ -56,7 +59,37 @@ export function useCreateCollectionMutation() {
   });
 }
 
+export function useRenameCollectionMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      collectionId,
+      name,
+    }: {
+      collectionId: number;
+      name: string;
+    }) => renameCollection(collectionId, name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: collectionKeys.lists() });
+    },
+  });
+}
+
+export function useDeleteCollectionMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (collectionId: number) => deleteCollection(collectionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: collectionKeys.lists() });
+    },
+  });
+}
+
 export function useAddCollectionItemMutation() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: ({
       collectionId,
@@ -65,5 +98,29 @@ export function useAddCollectionItemMutation() {
       collectionId: number;
       whiskyId: number;
     }) => addCollectionItem(collectionId, whiskyId),
+    onSuccess: (_data, { collectionId }) => {
+      queryClient.invalidateQueries({
+        queryKey: collectionKeys.item(collectionId),
+      });
+    },
+  });
+}
+
+export function useRemoveCollectionItemMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      collectionId,
+      whiskyId,
+    }: {
+      collectionId: number;
+      whiskyId: number;
+    }) => removeCollectionItem(collectionId, whiskyId),
+    onSuccess: (_data, { collectionId }) => {
+      queryClient.invalidateQueries({
+        queryKey: collectionKeys.item(collectionId),
+      });
+    },
   });
 }

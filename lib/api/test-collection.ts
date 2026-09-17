@@ -3,12 +3,13 @@ import {
   Collection,
   CollectionItemListResponse,
   CollectionListResponse,
+  RemoveCollectionItemResponse,
 } from '@/types/collection';
 import { ApiErrorResponse } from '@/types/common';
 import { PlannerCandidate } from '@/types/planner';
 
 const MOCK_NETWORK_DELAY_MS = 400;
-export const COLLECTION_NAME_MAX_LENGTH = 20;
+export const COLLECTION_NAME_MAX_LENGTH = 100;
 
 const MOCK_COLLECTIONS: Collection[] = [
   { id: 1, name: '기본 관심 목록', isDefault: true },
@@ -191,6 +192,63 @@ export async function createCollection(rawName: string): Promise<Collection> {
   return newCollection;
 }
 
+// TODO: 관심 그룹 이름 변경 API 연동 후 apiClient.patch<Collection>(`/api/v1/collections/${collectionId}`, { name })로 교체한다.
+export async function renameCollection(
+  collectionId: number,
+  rawName: string
+): Promise<Collection> {
+  await delay();
+
+  const name = rawName.trim();
+  const target = MOCK_COLLECTIONS.find((c) => c.id === collectionId);
+
+  if (!target) {
+    throw new MockApiError(404, '관심 그룹을 찾을 수 없습니다.');
+  }
+
+  if (target.isDefault) {
+    throw new MockApiError(400, '기본 그룹은 이름을 바꿀 수 없습니다.');
+  }
+
+  if (!name) {
+    throw new MockApiError(400, '관심 그룹 이름을 입력해 주세요.');
+  }
+
+  if (name.length > COLLECTION_NAME_MAX_LENGTH) {
+    throw new MockApiError(
+      400,
+      `관심 그룹 이름은 ${COLLECTION_NAME_MAX_LENGTH}자 이하로 입력해 주세요.`
+    );
+  }
+
+  if (MOCK_COLLECTIONS.some((c) => c.id !== collectionId && c.name === name)) {
+    throw new MockApiError(409, '이미 사용 중인 관심 그룹 이름입니다.');
+  }
+
+  target.name = name;
+  return target;
+}
+
+// TODO: 관심 그룹 삭제 API 연동 후 apiClient.delete<{ id: number }>(`/api/v1/collections/${collectionId}`)로 교체한다.
+export async function deleteCollection(
+  collectionId: number
+): Promise<{ id: number }> {
+  await delay();
+
+  const index = MOCK_COLLECTIONS.findIndex((c) => c.id === collectionId);
+
+  if (index === -1) {
+    throw new MockApiError(404, '관심 그룹을 찾을 수 없습니다.');
+  }
+
+  if (MOCK_COLLECTIONS[index].isDefault) {
+    throw new MockApiError(400, '기본 그룹은 삭제할 수 없습니다.');
+  }
+
+  MOCK_COLLECTIONS.splice(index, 1);
+  return { id: collectionId };
+}
+
 // TODO: 컬렉션 API 연동 후 apiClient.put<AddCollectionItemResponse['data']>(`/api/v1/collections/${collectionId}/items/${whiskyId}`)로 교체한다.
 // 명세서(관심 그룹에 위스키 추가) 기준 403/404 에러 케이스를 목업으로 재현한다.
 export async function addCollectionItem(
@@ -203,5 +261,54 @@ export async function addCollectionItem(
     throw new MockApiError(404, '관심 그룹을 찾을 수 없습니다.');
   }
 
+  const candidate = MOCK_CANDIDATES.find((c) => c.whiskyId === whiskyId);
+  if (candidate) {
+    const itemIds = MOCK_COLLECTION_ITEM_IDS[collectionId] ?? [];
+    if (!itemIds.includes(candidate.saleProductId)) {
+      MOCK_COLLECTION_ITEM_IDS[collectionId] = [
+        ...itemIds,
+        candidate.saleProductId,
+      ];
+    }
+  }
+
   return { collectionId, whiskyId, saved: true };
+}
+
+// TODO: 컬렉션 API 연동 후 apiClient.delete<RemoveCollectionItemResponse['data']>(`/api/v1/collections/${collectionId}/items/${whiskyId}`)로 교체한다.
+// 명세서(관심 그룹에서 위스키 제거) 기준 403/404 에러 케이스를 목업으로 재현한다.
+export async function removeCollectionItem(
+  collectionId: number,
+  whiskyId: number
+): Promise<RemoveCollectionItemResponse['data']> {
+  await delay();
+
+  if (!MOCK_COLLECTIONS.some((c) => c.id === collectionId)) {
+    throw new MockApiError(404, '관심 그룹을 찾을 수 없습니다.');
+  }
+
+  const itemIds = MOCK_COLLECTION_ITEM_IDS[collectionId] ?? [];
+  const candidate = findCandidateBySaleProductId(
+    itemIds.find(
+      (saleProductId) =>
+        findCandidateBySaleProductId(saleProductId)?.whiskyId === whiskyId
+    ) ?? -1
+  );
+
+  if (candidate) {
+    MOCK_COLLECTION_ITEM_IDS[collectionId] = itemIds.filter(
+      (saleProductId) => saleProductId !== candidate.saleProductId
+    );
+  }
+
+  const saved = Object.entries(MOCK_COLLECTION_ITEM_IDS).some(
+    ([id, saleProductIds]) =>
+      Number(id) !== collectionId &&
+      saleProductIds.some(
+        (saleProductId) =>
+          findCandidateBySaleProductId(saleProductId)?.whiskyId === whiskyId
+      )
+  );
+
+  return { collectionId, whiskyId, saved };
 }

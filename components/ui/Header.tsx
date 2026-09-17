@@ -103,7 +103,7 @@ export default function Header() {
         </svg>
       </div>
       <nav className="hidden gap-2 sm:flex sm:gap-4">
-        <Link href="/">관심 목록</Link>
+        <Link href="/mypage/collection">관심 목록</Link>
         <Link href="/planner">플래너</Link>
         <AuthNavAction />
       </nav>
