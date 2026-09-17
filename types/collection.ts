@@ -21,3 +21,6 @@ export type AddCollectionItemResponse = ApiSuccessResponse<{
   whiskyId: number;
   saved: boolean;
 }>;
+
+// 응답 형태가 추가와 동일하다 (collectionId, whiskyId, 다른 그룹에도 남아있는지 여부).
+export type RemoveCollectionItemResponse = AddCollectionItemResponse;
