@@ -4,9 +4,13 @@ import {
   addPlannerItem,
   deletePlannerItem,
   fetchPlanner,
-  updatePlannerItemListType,
+  movePlannerItems,
 } from '@/lib/api/test-planner';
-import { PlannerListType, PlannerResponse } from '@/types/planner';
+import {
+  MovePlannerItemsRequest,
+  PlannerListType,
+  PlannerResponse,
+} from '@/types/planner';
 
 export const plannerKeys = {
   all: ['planners'] as const,
@@ -41,18 +45,12 @@ export function useAddPlannerItemMutation() {
   });
 }
 
-export function useUpdatePlannerItemListTypeMutation() {
+export function useMovePlannerItemsMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      plannerItemId,
-      listType,
-    }: {
-      plannerItemId: number;
-      listType: PlannerListType;
-    }) => updatePlannerItemListType(plannerItemId, listType),
-    onMutate: async ({ plannerItemId, listType }) => {
+    mutationFn: (body: MovePlannerItemsRequest) => movePlannerItems(body),
+    onMutate: async ({ fromListType, toListType, saleProductId }) => {
       await queryClient.cancelQueries({ queryKey: plannerKeys.all });
 
       const previous = queryClient.getQueryData<PlannerResponse['data']>(
@@ -62,9 +60,16 @@ export function useUpdatePlannerItemListTypeMutation() {
       if (previous) {
         queryClient.setQueryData<PlannerResponse['data']>(plannerKeys.all, {
           ...previous,
-          items: previous.items.map((item) =>
-            item.plannerItemId === plannerItemId ? { ...item, listType } : item
-          ),
+          items: previous.items.map((item) => {
+            if (item.listType !== fromListType) return item;
+            if (
+              saleProductId !== undefined &&
+              item.saleProductId !== saleProductId
+            ) {
+              return item;
+            }
+            return { ...item, listType: toListType };
+          }),
         });
       }
 

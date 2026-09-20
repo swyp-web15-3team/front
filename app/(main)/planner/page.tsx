@@ -15,8 +15,8 @@ import {
 import {
   useAddPlannerItemMutation,
   useDeletePlannerItemMutation,
+  useMovePlannerItemsMutation,
   usePlannerQuery,
-  useUpdatePlannerItemListTypeMutation,
 } from '@/hooks/queries/use-planner';
 import { cn } from '@/lib/utils';
 import { PlannerItem, PlannerListType } from '@/types/planner';
@@ -282,8 +282,7 @@ export default function PlanPage() {
   const { open: openAddPlannerItemModal } = useAddPlannerItemModal();
   const { mutate: addPlannerItem } = useAddPlannerItemMutation();
   const { mutate: deletePlannerItem } = useDeletePlannerItemMutation();
-  const { mutate: updatePlannerItemListType } =
-    useUpdatePlannerItemListTypeMutation();
+  const { mutate: movePlannerItems } = useMovePlannerItemsMutation();
   const [draggingSaleProductId, setDraggingSaleProductId] = useState<
     number | null
   >(null);
@@ -309,22 +308,13 @@ export default function PlanPage() {
     totalKrw > PLANNER_PURCHASE_LIMIT_USD ||
     totalMl > PLANNER_PURCHASE_LIMIT_ML;
 
-  function findGroup(saleProductId: number, from: BoardSection) {
-    return (from === 'purchase' ? purchaseGroups : candidateGroups).find(
-      (g) => g.saleProductId === saleProductId
-    );
-  }
-
   function handleDrop(saleProductId: number, from: BoardSection) {
-    const group = findGroup(saleProductId, from);
     setDraggingSaleProductId(null);
-    if (!group) return;
     const to = from === 'purchase' ? 'candidate' : 'purchase';
-    group.plannerItemIds.forEach((plannerItemId) => {
-      updatePlannerItemListType({
-        plannerItemId,
-        listType: SECTION_TO_LIST_TYPE[to],
-      });
+    movePlannerItems({
+      fromListType: SECTION_TO_LIST_TYPE[from],
+      toListType: SECTION_TO_LIST_TYPE[to],
+      saleProductId,
     });
   }
 
@@ -355,11 +345,7 @@ export default function PlanPage() {
 
   function handleConfirmReset() {
     if (confirmAction === 'resetPurchase') {
-      purchaseGroups.forEach((group) =>
-        group.plannerItemIds.forEach((plannerItemId) =>
-          updatePlannerItemListType({ plannerItemId, listType: 'CANDIDATE' })
-        )
-      );
+      movePlannerItems({ fromListType: 'PURCHASE', toListType: 'CANDIDATE' });
     } else if (confirmAction === 'resetCandidates') {
       candidateGroups.forEach((group) =>
         group.plannerItemIds.forEach((plannerItemId) =>

@@ -1,5 +1,10 @@
 import { findCandidateBySaleProductId } from '@/lib/api/test-collection';
-import { PlannerItem, PlannerListType, PlannerResponse } from '@/types/planner';
+import {
+  MovePlannerItemsRequest,
+  PlannerItem,
+  PlannerListType,
+  PlannerResponse,
+} from '@/types/planner';
 
 const MOCK_NETWORK_DELAY_MS = 400;
 let nextPlannerItemId = 100;
@@ -101,22 +106,27 @@ export async function addPlannerItem(
   return newItems;
 }
 
-// TODO: 플래너 API 연동 후 apiClient.patch(`/api/v1/planners/items/${plannerItemId}`, { listType })로 교체한다.
-// 구매 리스트 ↔ 후보 간 드래그 이동에 사용한다.
-export async function updatePlannerItemListType(
-  plannerItemId: number,
-  listType: PlannerListType
-): Promise<PlannerItem> {
+// TODO: 플래너 API 연동 후 apiClient.patch('/api/v1/planners/move', body)로 교체한다.
+// saleProductId가 있으면 그 상품의 모든 병만, 없으면 fromListType 전체를 옮긴다.
+// 대상이 없어도 성공(204)이며, fromListType === toListType이면 400이다.
+export async function movePlannerItems({
+  fromListType,
+  toListType,
+  saleProductId,
+}: MovePlannerItemsRequest): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, MOCK_NETWORK_DELAY_MS));
 
-  const item = MOCK_PLANNER_ITEMS.find(
-    (item) => item.plannerItemId === plannerItemId
-  );
-  if (!item) {
-    throw new Error('플래너 항목을 찾을 수 없습니다.');
+  if (fromListType === toListType) {
+    throw new Error('같은 리스트로는 이동할 수 없습니다.');
   }
-  item.listType = listType;
-  return item;
+
+  MOCK_PLANNER_ITEMS.forEach((item) => {
+    if (item.listType !== fromListType) return;
+    if (saleProductId !== undefined && item.saleProductId !== saleProductId) {
+      return;
+    }
+    item.listType = toListType;
+  });
 }
 
 // TODO: 플래너 API 연동 후 apiClient.delete(`/api/v1/planners/items/${plannerItemId}`)로 교체한다.

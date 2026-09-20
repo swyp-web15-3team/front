@@ -61,3 +61,11 @@ export interface AddPlannerItemRequest {
 }
 
 export type AddPlannerItemResponse = ApiSuccessResponse<PlannerItem>;
+
+// PATCH /api/v1/planners/move 요청. saleProductId가 있으면 그 상품의 모든 병만,
+// 없으면 fromListType 전체를 toListType으로 옮긴다. 성공 시 204 No Content.
+export interface MovePlannerItemsRequest {
+  fromListType: PlannerListType;
+  toListType: PlannerListType;
+  saleProductId?: number;
+}
