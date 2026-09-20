@@ -1,5 +1,7 @@
 import { ApiSuccessResponse, CountryCode } from '@/types/common';
 
+export type PlannerListType = 'PURCHASE' | 'CANDIDATE';
+
 export interface PlannerItemPrice {
   amount: number;
   currency: 'JPY';
@@ -17,6 +19,7 @@ export interface PlannerItemExchange {
 
 export interface PlannerItem {
   plannerItemId: number;
+  listType: PlannerListType;
   saleProductId: number;
   whiskyId: number;
   whiskyName: string;
@@ -26,12 +29,11 @@ export interface PlannerItem {
   retailerName: string;
   countryCode: CountryCode;
   isDutyFree: boolean;
-  productUrl: string;
+  productUrl: string | null;
   isSoldOut: boolean | null;
   price: PlannerItemPrice | null;
   exchange: PlannerItemExchange | null;
   computable: boolean;
-  quantity: number;
 }
 
 export interface PlannerResponse {
@@ -54,6 +56,7 @@ export interface PlannerCandidate {
 // 새 항목을 만들지 않고 기존 항목의 quantity를 늘린다.
 export interface AddPlannerItemRequest {
   saleProductId: number;
+  listType: PlannerListType;
   quantity: number;
 }
 

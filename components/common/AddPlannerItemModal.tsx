@@ -116,7 +116,8 @@ export function AddPlannerItemModal() {
 
   function handleComplete() {
     const items = Array.from(counts.entries()).map(
-      ([saleProductId, quantity]) => ({ saleProductId, quantity })
+      ([saleProductId, quantity]) =>
+        ({ saleProductId, listType: 'CANDIDATE', quantity }) as const
     );
     setErrorMessage('');
     // mutate에 넘긴 onSuccess는 훅(use-planner.ts)의 onSuccess가 반환한

@@ -1,12 +1,15 @@
 import { findCandidateBySaleProductId } from '@/lib/api/test-collection';
-import { PlannerItem, PlannerResponse } from '@/types/planner';
+import { PlannerItem, PlannerListType, PlannerResponse } from '@/types/planner';
 
 const MOCK_NETWORK_DELAY_MS = 400;
 let nextPlannerItemId = 100;
 
+// 서버는 행 단위로만 내려준다(수량 필드 없음). 같은 saleProductId + listType의
+// 행 개수가 프론트에서의 "수량"이다.
 const MOCK_PLANNER_ITEMS: PlannerItem[] = [
   {
     plannerItemId: 10,
+    listType: 'PURCHASE',
     saleProductId: 501,
     whiskyId: 101,
     whiskyName: 'Lagavulin 16',
@@ -32,10 +35,10 @@ const MOCK_PLANNER_ITEMS: PlannerItem[] = [
       validTo: '2026-09-08',
     },
     computable: true,
-    quantity: 1,
   },
   {
     plannerItemId: 11,
+    listType: 'CANDIDATE',
     saleProductId: 502,
     whiskyId: 102,
     whiskyName: '야마자키 12년',
@@ -50,7 +53,6 @@ const MOCK_PLANNER_ITEMS: PlannerItem[] = [
     price: null,
     exchange: null,
     computable: false,
-    quantity: 1,
   },
 ];
 
@@ -63,29 +65,23 @@ export async function fetchPlanner(): Promise<PlannerResponse['data']> {
   return { items: MOCK_PLANNER_ITEMS };
 }
 
-// TODO: 플래너 API 연동 후 apiClient.post<AddPlannerItemResponse['data']>('/api/v1/planners/items', { saleProductId, quantity })로 교체한다.
-// 같은 saleProductId가 이미 있으면 새 항목을 만들지 않고 quantity만 더한다.
+// TODO: 플래너 API 연동 후 apiClient.post<AddPlannerItemResponse['data']>('/api/v1/planners/items', { saleProductId, listType, quantity })로 교체한다.
+// quantity만큼 같은 saleProductId + listType 행을 추가한다(서버는 행 단위로 관리).
 export async function addPlannerItem(
   saleProductId: number,
+  listType: PlannerListType,
   quantity: number
-): Promise<PlannerItem> {
+): Promise<PlannerItem[]> {
   await new Promise((resolve) => setTimeout(resolve, MOCK_NETWORK_DELAY_MS));
-
-  const existing = MOCK_PLANNER_ITEMS.find(
-    (item) => item.saleProductId === saleProductId
-  );
-  if (existing) {
-    existing.quantity += quantity;
-    return existing;
-  }
 
   const candidate = findCandidateBySaleProductId(saleProductId);
   if (!candidate) {
     throw new Error('판매 상품을 찾을 수 없습니다.');
   }
 
-  const newItem: PlannerItem = {
+  const newItems: PlannerItem[] = Array.from({ length: quantity }, () => ({
     plannerItemId: nextPlannerItemId++,
+    listType,
     saleProductId: candidate.saleProductId,
     whiskyId: candidate.whiskyId,
     whiskyName: candidate.whiskyName,
@@ -95,21 +91,21 @@ export async function addPlannerItem(
     retailerName: '',
     countryCode: 'JP',
     isDutyFree: false,
-    productUrl: '',
+    productUrl: null,
     isSoldOut: false,
     price: candidate.price,
     exchange: null,
     computable: candidate.price !== null,
-    quantity,
-  };
-  MOCK_PLANNER_ITEMS.push(newItem);
-  return newItem;
+  }));
+  MOCK_PLANNER_ITEMS.push(...newItems);
+  return newItems;
 }
 
-// TODO: 플래너 API 연동 후 apiClient.patch(`/api/v1/planners/items/${plannerItemId}`, { quantity })로 교체한다.
-export async function updatePlannerItemQuantity(
+// TODO: 플래너 API 연동 후 apiClient.patch(`/api/v1/planners/items/${plannerItemId}`, { listType })로 교체한다.
+// 구매 리스트 ↔ 후보 간 드래그 이동에 사용한다.
+export async function updatePlannerItemListType(
   plannerItemId: number,
-  quantity: number
+  listType: PlannerListType
 ): Promise<PlannerItem> {
   await new Promise((resolve) => setTimeout(resolve, MOCK_NETWORK_DELAY_MS));
 
@@ -119,7 +115,7 @@ export async function updatePlannerItemQuantity(
   if (!item) {
     throw new Error('플래너 항목을 찾을 수 없습니다.');
   }
-  item.quantity = quantity;
+  item.listType = listType;
   return item;
 }
 

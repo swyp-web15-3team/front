@@ -13,13 +13,47 @@ import {
   PLANNER_PURCHASE_LIMIT_USD,
 } from '@/constants/planner';
 import {
+  useAddPlannerItemMutation,
   useDeletePlannerItemMutation,
   usePlannerQuery,
-  useUpdatePlannerItemQuantityMutation,
+  useUpdatePlannerItemListTypeMutation,
 } from '@/hooks/queries/use-planner';
 import { cn } from '@/lib/utils';
-import { PlannerItem } from '@/types/planner';
+import { PlannerItem, PlannerListType } from '@/types/planner';
 import { Product } from '@/types/product';
+
+// 서버는 행 단위(1행 = 1병)로 내려준다. 같은 saleProductId + listType을
+// 한 카드로 묶고, 그룹의 행 수를 화면상 수량으로 사용한다.
+interface PlannerGroup {
+  saleProductId: number;
+  listType: PlannerListType;
+  plannerItemIds: number[];
+  representative: PlannerItem;
+  quantity: number;
+}
+
+function groupItems(items: PlannerItem[]): PlannerGroup[] {
+  const groups = new Map<string, PlannerGroup>();
+
+  for (const item of items) {
+    const key = `${item.saleProductId}:${item.listType}`;
+    const existing = groups.get(key);
+    if (existing) {
+      existing.plannerItemIds.push(item.plannerItemId);
+      existing.quantity += 1;
+    } else {
+      groups.set(key, {
+        saleProductId: item.saleProductId,
+        listType: item.listType,
+        plannerItemIds: [item.plannerItemId],
+        representative: item,
+        quantity: 1,
+      });
+    }
+  }
+
+  return Array.from(groups.values());
+}
 
 function toProduct(item: PlannerItem): Product {
   return {
@@ -35,6 +69,11 @@ function toProduct(item: PlannerItem): Product {
 }
 
 type BoardSection = 'purchase' | 'candidate';
+
+const SECTION_TO_LIST_TYPE: Record<BoardSection, PlannerListType> = {
+  purchase: 'PURCHASE',
+  candidate: 'CANDIDATE',
+};
 
 function LimitBar({
   value,
@@ -71,7 +110,7 @@ function LimitBar({
 }
 
 function PlannerCard({
-  item,
+  group,
   section,
   isDragging,
   onDragStart,
@@ -79,22 +118,22 @@ function PlannerCard({
   onDelete,
   onQuantityChange,
 }: {
-  item: PlannerItem;
+  group: PlannerGroup;
   section: BoardSection;
   isDragging: boolean;
-  onDragStart: (plannerItemId: number) => void;
+  onDragStart: (saleProductId: number) => void;
   onDragEnd: () => void;
-  onDelete: (plannerItemId: number) => void;
-  onQuantityChange: (plannerItemId: number, quantity: number) => void;
+  onDelete: (group: PlannerGroup) => void;
+  onQuantityChange: (group: PlannerGroup, diff: 1 | -1) => void;
 }) {
   return (
     <li
       draggable
       onDragStart={(e) => {
-        e.dataTransfer.setData('text/plain', String(item.plannerItemId));
+        e.dataTransfer.setData('text/plain', String(group.saleProductId));
         e.dataTransfer.setData('application/x-planner-from', section);
         e.dataTransfer.effectAllowed = 'move';
-        onDragStart(item.plannerItemId);
+        onDragStart(group.saleProductId);
       }}
       onDragEnd={onDragEnd}
       className={cn(
@@ -102,10 +141,10 @@ function PlannerCard({
         isDragging && 'scale-95 opacity-40'
       )}
     >
-      <HorizontalCard product={toProduct(item)} />
+      <HorizontalCard product={toProduct(group.representative)} />
       <button
         type="button"
-        onClick={() => onDelete(item.plannerItemId)}
+        onClick={() => onDelete(group)}
         aria-label="삭제"
         className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-gray-500 shadow-sm hover:text-gray-900"
       >
@@ -115,21 +154,17 @@ function PlannerCard({
         <button
           type="button"
           aria-label="개수 줄이기"
-          disabled={item.quantity <= 1}
-          onClick={() =>
-            onQuantityChange(item.plannerItemId, item.quantity - 1)
-          }
+          disabled={group.quantity <= 1}
+          onClick={() => onQuantityChange(group, -1)}
           className="flex size-6 items-center justify-center rounded-full text-sm disabled:opacity-30"
         >
           −
         </button>
-        <span className="w-4 text-center text-sm">{item.quantity}</span>
+        <span className="w-4 text-center text-sm">{group.quantity}</span>
         <button
           type="button"
           aria-label="개수 늘리기"
-          onClick={() =>
-            onQuantityChange(item.plannerItemId, item.quantity + 1)
-          }
+          onClick={() => onQuantityChange(group, 1)}
           className="flex size-6 items-center justify-center rounded-full text-sm"
         >
           +
@@ -189,7 +224,7 @@ function DropZone({
   count: number;
   section: BoardSection;
   accentClassName: string;
-  onDrop: (plannerItemId: number, from: BoardSection) => void;
+  onDrop: (saleProductId: number, from: BoardSection) => void;
   onReset: () => void;
   resetLabel: string;
   children: React.ReactNode;
@@ -209,12 +244,12 @@ function DropZone({
       onDrop={(e) => {
         e.preventDefault();
         setIsOver(false);
-        const plannerItemId = Number(e.dataTransfer.getData('text/plain'));
+        const saleProductId = Number(e.dataTransfer.getData('text/plain'));
         const from = e.dataTransfer.getData(
           'application/x-planner-from'
         ) as BoardSection;
-        if (!plannerItemId || from === section) return;
-        onDrop(plannerItemId, from);
+        if (!saleProductId || from === section) return;
+        onDrop(saleProductId, from);
       }}
       className={cn(
         'rounded-xl border border-gray-200 bg-white p-3 transition-colors duration-150 sm:p-4',
@@ -245,76 +280,94 @@ function DropZone({
 export default function PlanPage() {
   const { data, isLoading, isError, refetch } = usePlannerQuery();
   const { open: openAddPlannerItemModal } = useAddPlannerItemModal();
+  const { mutate: addPlannerItem } = useAddPlannerItemMutation();
   const { mutate: deletePlannerItem } = useDeletePlannerItemMutation();
-  const { mutate: updatePlannerItemQuantity } =
-    useUpdatePlannerItemQuantityMutation();
-  const [purchaseIds, setPurchaseIds] = useState<Set<number>>(new Set());
-  const [draggingId, setDraggingId] = useState<number | null>(null);
+  const { mutate: updatePlannerItemListType } =
+    useUpdatePlannerItemListTypeMutation();
+  const [draggingSaleProductId, setDraggingSaleProductId] = useState<
+    number | null
+  >(null);
   const [confirmAction, setConfirmAction] = useState<
     'resetPurchase' | 'resetCandidates' | 'resetAll' | null
   >(null);
 
   const items = useMemo(() => data?.items ?? [], [data]);
+  const groups = useMemo(() => groupItems(items), [items]);
 
-  const purchaseItems = items.filter((item) =>
-    purchaseIds.has(item.plannerItemId)
-  );
-  const candidateItems = items.filter(
-    (item) => !purchaseIds.has(item.plannerItemId)
-  );
+  const purchaseGroups = groups.filter((g) => g.listType === 'PURCHASE');
+  const candidateGroups = groups.filter((g) => g.listType === 'CANDIDATE');
 
-  const totalKrw = purchaseItems.reduce(
-    (sum, item) => sum + (item.price?.amountKrw ?? 0) * item.quantity,
+  const totalKrw = purchaseGroups.reduce(
+    (sum, g) => sum + (g.representative.price?.amountKrw ?? 0) * g.quantity,
     0
   );
-  const totalMl = purchaseItems.reduce(
-    (sum, item) => sum + item.volumeMl * item.quantity,
+  const totalMl = purchaseGroups.reduce(
+    (sum, g) => sum + g.representative.volumeMl * g.quantity,
     0
   );
   const isOverLimit =
     totalKrw > PLANNER_PURCHASE_LIMIT_USD ||
     totalMl > PLANNER_PURCHASE_LIMIT_ML;
 
-  function handleDrop(plannerItemId: number, from: BoardSection) {
-    setPurchaseIds((prev) => {
-      const next = new Set(prev);
-      if (from === 'candidate') {
-        next.add(plannerItemId);
-      } else {
-        next.delete(plannerItemId);
-      }
-      return next;
+  function findGroup(saleProductId: number, from: BoardSection) {
+    return (from === 'purchase' ? purchaseGroups : candidateGroups).find(
+      (g) => g.saleProductId === saleProductId
+    );
+  }
+
+  function handleDrop(saleProductId: number, from: BoardSection) {
+    const group = findGroup(saleProductId, from);
+    setDraggingSaleProductId(null);
+    if (!group) return;
+    const to = from === 'purchase' ? 'candidate' : 'purchase';
+    group.plannerItemIds.forEach((plannerItemId) => {
+      updatePlannerItemListType({
+        plannerItemId,
+        listType: SECTION_TO_LIST_TYPE[to],
+      });
     });
-    setDraggingId(null);
   }
 
   function handleDragEnd() {
-    setDraggingId(null);
+    setDraggingSaleProductId(null);
   }
 
-  function handleQuantityChange(plannerItemId: number, quantity: number) {
-    if (quantity < 1) return;
-    updatePlannerItemQuantity({ plannerItemId, quantity });
+  function handleQuantityChange(group: PlannerGroup, diff: 1 | -1) {
+    if (diff === 1) {
+      addPlannerItem([
+        {
+          saleProductId: group.saleProductId,
+          listType: group.listType,
+          quantity: 1,
+        },
+      ]);
+      return;
+    }
+    if (group.quantity <= 1) return;
+    deletePlannerItem(group.plannerItemIds[group.plannerItemIds.length - 1]);
   }
 
-  function handleDelete(plannerItemId: number) {
-    deletePlannerItem(plannerItemId);
-    setPurchaseIds((prev) => {
-      if (!prev.has(plannerItemId)) return prev;
-      const next = new Set(prev);
-      next.delete(plannerItemId);
-      return next;
+  function handleDelete(group: PlannerGroup) {
+    group.plannerItemIds.forEach((plannerItemId) => {
+      deletePlannerItem(plannerItemId);
     });
   }
 
   function handleConfirmReset() {
     if (confirmAction === 'resetPurchase') {
-      setPurchaseIds(new Set());
+      purchaseGroups.forEach((group) =>
+        group.plannerItemIds.forEach((plannerItemId) =>
+          updatePlannerItemListType({ plannerItemId, listType: 'CANDIDATE' })
+        )
+      );
     } else if (confirmAction === 'resetCandidates') {
-      candidateItems.forEach((item) => deletePlannerItem(item.plannerItemId));
+      candidateGroups.forEach((group) =>
+        group.plannerItemIds.forEach((plannerItemId) =>
+          deletePlannerItem(plannerItemId)
+        )
+      );
     } else if (confirmAction === 'resetAll') {
       items.forEach((item) => deletePlannerItem(item.plannerItemId));
-      setPurchaseIds(new Set());
     }
     setConfirmAction(null);
   }
@@ -374,7 +427,7 @@ export default function PlanPage() {
 
           <DropZone
             title="구매 리스트"
-            count={purchaseItems.length}
+            count={purchaseGroups.length}
             section="purchase"
             accentClassName="border-t-4 border-t-gray-900"
             onDrop={handleDrop}
@@ -382,20 +435,20 @@ export default function PlanPage() {
             resetLabel="초기화"
           >
             <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {purchaseItems.map((item) => (
+              {purchaseGroups.map((group) => (
                 <PlannerCard
-                  key={item.plannerItemId}
-                  item={item}
+                  key={`${group.saleProductId}:${group.listType}`}
+                  group={group}
                   section="purchase"
-                  isDragging={draggingId === item.plannerItemId}
-                  onDragStart={setDraggingId}
+                  isDragging={draggingSaleProductId === group.saleProductId}
+                  onDragStart={setDraggingSaleProductId}
                   onDragEnd={handleDragEnd}
                   onDelete={handleDelete}
                   onQuantityChange={handleQuantityChange}
                 />
               ))}
             </ul>
-            {purchaseItems.length === 0 && (
+            {purchaseGroups.length === 0 && (
               <p className="py-6 text-center text-sm text-gray-400">
                 후보 상품을 이 영역으로 드래그하면 구매 리스트에 담겨요
               </p>
@@ -404,7 +457,7 @@ export default function PlanPage() {
 
           <DropZone
             title="후보"
-            count={candidateItems.length}
+            count={candidateGroups.length}
             section="candidate"
             accentClassName="border-t-4 border-t-gray-300"
             onDrop={handleDrop}
@@ -412,20 +465,20 @@ export default function PlanPage() {
             resetLabel="전체 삭제"
           >
             <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {candidateItems.map((item) => (
+              {candidateGroups.map((group) => (
                 <PlannerCard
-                  key={item.plannerItemId}
-                  item={item}
+                  key={`${group.saleProductId}:${group.listType}`}
+                  group={group}
                   section="candidate"
-                  isDragging={draggingId === item.plannerItemId}
-                  onDragStart={setDraggingId}
+                  isDragging={draggingSaleProductId === group.saleProductId}
+                  onDragStart={setDraggingSaleProductId}
                   onDragEnd={handleDragEnd}
                   onDelete={handleDelete}
                   onQuantityChange={handleQuantityChange}
                 />
               ))}
             </ul>
-            {candidateItems.length === 0 && (
+            {candidateGroups.length === 0 && (
               <p className="py-6 text-center text-sm text-gray-400">
                 구매 리스트 상품을 이 영역으로 드래그하면 후보로 옮겨져요
               </p>

@@ -4,9 +4,9 @@ import {
   addPlannerItem,
   deletePlannerItem,
   fetchPlanner,
-  updatePlannerItemQuantity,
+  updatePlannerItemListType,
 } from '@/lib/api/test-planner';
-import { PlannerResponse } from '@/types/planner';
+import { PlannerListType, PlannerResponse } from '@/types/planner';
 
 export const plannerKeys = {
   all: ['planners'] as const,
@@ -23,10 +23,16 @@ export function useAddPlannerItemMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (items: { saleProductId: number; quantity: number }[]) =>
+    mutationFn: (
+      items: {
+        saleProductId: number;
+        listType: PlannerListType;
+        quantity: number;
+      }[]
+    ) =>
       Promise.all(
-        items.map(({ saleProductId, quantity }) =>
-          addPlannerItem(saleProductId, quantity)
+        items.map(({ saleProductId, listType, quantity }) =>
+          addPlannerItem(saleProductId, listType, quantity)
         )
       ),
     onSuccess: () => {
@@ -35,18 +41,18 @@ export function useAddPlannerItemMutation() {
   });
 }
 
-export function useUpdatePlannerItemQuantityMutation() {
+export function useUpdatePlannerItemListTypeMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({
       plannerItemId,
-      quantity,
+      listType,
     }: {
       plannerItemId: number;
-      quantity: number;
-    }) => updatePlannerItemQuantity(plannerItemId, quantity),
-    onMutate: async ({ plannerItemId, quantity }) => {
+      listType: PlannerListType;
+    }) => updatePlannerItemListType(plannerItemId, listType),
+    onMutate: async ({ plannerItemId, listType }) => {
       await queryClient.cancelQueries({ queryKey: plannerKeys.all });
 
       const previous = queryClient.getQueryData<PlannerResponse['data']>(
@@ -57,7 +63,7 @@ export function useUpdatePlannerItemQuantityMutation() {
         queryClient.setQueryData<PlannerResponse['data']>(plannerKeys.all, {
           ...previous,
           items: previous.items.map((item) =>
-            item.plannerItemId === plannerItemId ? { ...item, quantity } : item
+            item.plannerItemId === plannerItemId ? { ...item, listType } : item
           ),
         });
       }
