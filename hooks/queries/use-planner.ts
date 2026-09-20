@@ -3,10 +3,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   addPlannerItem,
   deletePlannerItem,
+  deletePlannerItems,
   fetchPlanner,
   movePlannerItems,
 } from '@/lib/api/test-planner';
 import {
+  DeletePlannerItemsRequest,
   MovePlannerItemsRequest,
   PlannerListType,
   PlannerResponse,
@@ -110,6 +112,52 @@ export function useDeletePlannerItemMutation() {
       return { previous };
     },
     onError: (_err, _plannerItemId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(plannerKeys.all, context.previous);
+      }
+    },
+    onSettled: () => {
+      return queryClient.invalidateQueries({ queryKey: plannerKeys.all });
+    },
+  });
+}
+
+export function useDeletePlannerItemsMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (body: DeletePlannerItemsRequest) => deletePlannerItems(body),
+    onMutate: async ({
+      listType,
+      saleProductId,
+    }: DeletePlannerItemsRequest) => {
+      await queryClient.cancelQueries({ queryKey: plannerKeys.all });
+
+      const previous = queryClient.getQueryData<PlannerResponse['data']>(
+        plannerKeys.all
+      );
+
+      if (previous) {
+        queryClient.setQueryData<PlannerResponse['data']>(plannerKeys.all, {
+          ...previous,
+          items: previous.items.filter((item) => {
+            if (listType !== undefined && item.listType !== listType) {
+              return true;
+            }
+            if (
+              saleProductId !== undefined &&
+              item.saleProductId !== saleProductId
+            ) {
+              return true;
+            }
+            return false;
+          }),
+        });
+      }
+
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
       if (context?.previous) {
         queryClient.setQueryData(plannerKeys.all, context.previous);
       }

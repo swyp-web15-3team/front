@@ -15,6 +15,7 @@ import {
 import {
   useAddPlannerItemMutation,
   useDeletePlannerItemMutation,
+  useDeletePlannerItemsMutation,
   useMovePlannerItemsMutation,
   usePlannerQuery,
 } from '@/hooks/queries/use-planner';
@@ -282,6 +283,7 @@ export default function PlanPage() {
   const { open: openAddPlannerItemModal } = useAddPlannerItemModal();
   const { mutate: addPlannerItem } = useAddPlannerItemMutation();
   const { mutate: deletePlannerItem } = useDeletePlannerItemMutation();
+  const { mutate: deletePlannerItems } = useDeletePlannerItemsMutation();
   const { mutate: movePlannerItems } = useMovePlannerItemsMutation();
   const [draggingSaleProductId, setDraggingSaleProductId] = useState<
     number | null
@@ -338,8 +340,9 @@ export default function PlanPage() {
   }
 
   function handleDelete(group: PlannerGroup) {
-    group.plannerItemIds.forEach((plannerItemId) => {
-      deletePlannerItem(plannerItemId);
+    deletePlannerItems({
+      listType: group.listType,
+      saleProductId: group.saleProductId,
     });
   }
 
@@ -347,13 +350,9 @@ export default function PlanPage() {
     if (confirmAction === 'resetPurchase') {
       movePlannerItems({ fromListType: 'PURCHASE', toListType: 'CANDIDATE' });
     } else if (confirmAction === 'resetCandidates') {
-      candidateGroups.forEach((group) =>
-        group.plannerItemIds.forEach((plannerItemId) =>
-          deletePlannerItem(plannerItemId)
-        )
-      );
+      deletePlannerItems({ listType: 'CANDIDATE' });
     } else if (confirmAction === 'resetAll') {
-      items.forEach((item) => deletePlannerItem(item.plannerItemId));
+      deletePlannerItems({});
     }
     setConfirmAction(null);
   }

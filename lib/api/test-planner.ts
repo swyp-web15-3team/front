@@ -1,5 +1,6 @@
 import { findCandidateBySaleProductId } from '@/lib/api/test-collection';
 import {
+  DeletePlannerItemsRequest,
   MovePlannerItemsRequest,
   PlannerItem,
   PlannerListType,
@@ -130,6 +131,7 @@ export async function movePlannerItems({
 }
 
 // TODO: 플래너 API 연동 후 apiClient.delete(`/api/v1/planners/items/${plannerItemId}`)로 교체한다.
+// 개수 '-' 버튼에 사용한다. 카드 그룹의 plannerItemId 아무거나 하나면 된다.
 export async function deletePlannerItem(plannerItemId: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, MOCK_NETWORK_DELAY_MS));
 
@@ -140,4 +142,23 @@ export async function deletePlannerItem(plannerItemId: number): Promise<void> {
     throw new Error('플래너 항목을 찾을 수 없습니다.');
   }
   MOCK_PLANNER_ITEMS.splice(index, 1);
+}
+
+// TODO: 플래너 API 연동 후 apiClient.delete('/api/v1/planners/items', { params })로 교체한다.
+// listType 없으면 전체 초기화, listType만 있으면 그 리스트 전체, saleProductId까지
+// 있으면 카드 ✕(그 리스트의 해당 상품 전부) 삭제. 대상이 없어도 성공(204)이다.
+export async function deletePlannerItems({
+  listType,
+  saleProductId,
+}: DeletePlannerItemsRequest = {}): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, MOCK_NETWORK_DELAY_MS));
+
+  for (let i = MOCK_PLANNER_ITEMS.length - 1; i >= 0; i -= 1) {
+    const item = MOCK_PLANNER_ITEMS[i];
+    if (listType !== undefined && item.listType !== listType) continue;
+    if (saleProductId !== undefined && item.saleProductId !== saleProductId) {
+      continue;
+    }
+    MOCK_PLANNER_ITEMS.splice(i, 1);
+  }
 }

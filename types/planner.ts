@@ -69,3 +69,11 @@ export interface MovePlannerItemsRequest {
   toListType: PlannerListType;
   saleProductId?: number;
 }
+
+// DELETE /api/v1/planners/items 요청. listType 없으면 플래너 전체 삭제,
+// listType만 있으면 그 리스트 전체, saleProductId까지 있으면 그 리스트의
+// 해당 상품 전부 삭제. 성공 시 204 No Content.
+export interface DeletePlannerItemsRequest {
+  listType?: PlannerListType;
+  saleProductId?: number;
+}
