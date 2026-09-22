@@ -1,7 +1,7 @@
 'use client';
 
 import { FilterBar } from '@/app/(main)/search/_components/FilterBar';
-import { ProductGrid } from '@/app/(main)/search/_components/ProductGrid';
+import { ProductGrid } from '@/components/common/ProductGrid';
 import { useProductListQuery } from '@/hooks/queries/use-product';
 
 export default function SearchPage() {
