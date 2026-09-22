@@ -27,19 +27,6 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      // ponytail: 백엔드 /auth/sign-up 미연동 상태에서 회원가입 플로우를 확인하기 위한 mock 우회.
-      // 백엔드 연동되면 이 분기는 삭제한다.
-      const response = NextResponse.json({ accessToken: 'mock-access-token' });
-      response.cookies.set(REFRESH_TOKEN_COOKIE, 'mock-refresh-token', {
-        httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
-        path: '/',
-      });
-      return response;
-    }
-
     Sentry.captureException(error);
     return NextResponse.json(
       { message: '회원가입에 실패했습니다.' },

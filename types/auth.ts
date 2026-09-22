@@ -8,7 +8,10 @@ export interface KakaoLoginResponse extends TokenPair {
 }
 
 export interface SignUpRequest {
-  termsAgreed: string[];
+  ageOver14Agreed: boolean;
+  termsOfServiceAgreed: boolean;
+  privacyPolicyAgreed: boolean;
+  marketingAgreed: boolean;
 }
 
 export type SignUpResponse = TokenPair;

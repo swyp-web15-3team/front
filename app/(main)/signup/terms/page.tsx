@@ -4,17 +4,39 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { useSignUpMutation } from '@/hooks/queries/use-auth';
+import type { SignUpRequest } from '@/types/auth';
 
-const TERMS = [
-  { id: 'age', label: '(필수) 만 14세 이상입니다', required: true },
-  { id: 'service', label: '(필수) 서비스 이용약관 동의', required: true },
-  { id: 'privacy', label: '(필수) 개인정보 수집 및 이용 동의', required: true },
-  { id: 'marketing', label: '(선택) 마케팅 정보 수신 동의', required: false },
+const TERMS: Array<{
+  id: keyof SignUpRequest;
+  label: string;
+  required: boolean;
+}> = [
+  { id: 'ageOver14Agreed', label: '(필수) 만 14세 이상입니다', required: true },
+  {
+    id: 'termsOfServiceAgreed',
+    label: '(필수) 서비스 이용약관 동의',
+    required: true,
+  },
+  {
+    id: 'privacyPolicyAgreed',
+    label: '(필수) 개인정보 수집 및 이용 동의',
+    required: true,
+  },
+  {
+    id: 'marketingAgreed',
+    label: '(선택) 마케팅 정보 수신 동의',
+    required: false,
+  },
 ];
 
 export default function TermsPage() {
   const router = useRouter();
-  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [checked, setChecked] = useState<Record<keyof SignUpRequest, boolean>>({
+    ageOver14Agreed: false,
+    termsOfServiceAgreed: false,
+    privacyPolicyAgreed: false,
+    marketingAgreed: false,
+  });
   const { mutate: signUp, isPending } = useSignUpMutation();
 
   const allChecked = TERMS.every((term) => checked[term.id]);
@@ -24,10 +46,15 @@ export default function TermsPage() {
 
   const toggleAll = () => {
     const next = !allChecked;
-    setChecked(Object.fromEntries(TERMS.map((term) => [term.id, next])));
+    setChecked({
+      ageOver14Agreed: next,
+      termsOfServiceAgreed: next,
+      privacyPolicyAgreed: next,
+      marketingAgreed: next,
+    });
   };
 
-  const toggle = (id: string) => {
+  const toggle = (id: keyof SignUpRequest) => {
     setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
@@ -56,16 +83,7 @@ export default function TermsPage() {
       <button
         type="button"
         disabled={!requiredChecked || isPending}
-        onClick={() =>
-          signUp(
-            {
-              termsAgreed: TERMS.filter((term) => checked[term.id]).map(
-                (term) => term.id
-              ),
-            },
-            { onSuccess: () => router.push('/') }
-          )
-        }
+        onClick={() => signUp(checked, { onSuccess: () => router.push('/') })}
         className="rounded-md bg-black py-3 font-medium text-white disabled:bg-black/30"
       >
         동의하고 계속하기
