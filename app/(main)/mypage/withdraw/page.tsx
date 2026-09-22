@@ -4,9 +4,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { useWithdrawMutation } from '@/hooks/queries/use-auth';
-import { WithdrawReason } from '@/lib/api/auth';
 
-const REASONS: { value: WithdrawReason; label: string }[] = [
+const REASONS = [
   { value: 'DISSATISFIED', label: '맘에 안듬' },
   { value: 'NOT_HELPFUL', label: '도움 안됨' },
   { value: 'ETC', label: '기타' },
@@ -14,7 +13,7 @@ const REASONS: { value: WithdrawReason; label: string }[] = [
 
 export default function WithdrawPage() {
   const router = useRouter();
-  const [reason, setReason] = useState<WithdrawReason | null>(null);
+  const [reason, setReason] = useState<string | null>(null);
   const { mutate: withdraw, isPending } = useWithdrawMutation();
 
   const handleWithdraw = () => {

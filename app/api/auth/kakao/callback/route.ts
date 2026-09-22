@@ -21,7 +21,8 @@ export async function GET(request: NextRequest) {
   try {
     const { data } = await axios.post<{ data: KakaoLoginResponse }>(
       `${process.env.NEXT_PUBLIC_API_URL}/auth/kakao`,
-      { code }
+      { code },
+      { params: { redirectUri: process.env.KAKAO_REDIRECT_URI } }
     );
 
     const { accessToken, refreshToken, isNewUser } = data.data;
