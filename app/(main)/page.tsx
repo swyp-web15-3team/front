@@ -1,17 +1,9 @@
-import { CurationSection } from '@/app/(main)/_components/CurationSection';
-import { HeroBannerCarousel } from '@/app/(main)/_components/HeroBannerCarousel';
-import { DUMMY_BANNERS } from '@/constants/banner';
-import { fetchCurations } from '@/lib/api/test-curation';
+import { WhiskyList } from '@/app/(main)/_components/WhiskyList';
 
-export default async function Home() {
-  const { curations } = await fetchCurations();
-
+export default function Home() {
   return (
-    <>
-      {/* <HeroBannerCarousel banners={DUMMY_BANNERS} /> */}
-      {curations.map((curation) => (
-        <CurationSection key={curation.id} curation={curation} />
-      ))}
-    </>
+    <div className="mx-auto max-w-300">
+      <WhiskyList />
+    </div>
   );
 }

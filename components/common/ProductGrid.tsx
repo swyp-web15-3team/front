@@ -11,6 +11,7 @@ interface ProductGridProps {
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   onLoadMore: () => void;
+  endContent?: React.ReactNode;
 }
 
 // Tailwind 기본 브레이크포인트(md/lg/xl)와 맞춰 한 행에 들어갈 카드 수를 결정한다
@@ -57,6 +58,7 @@ export function ProductGrid({
   hasNextPage,
   isFetchingNextPage,
   onLoadMore,
+  endContent,
 }: ProductGridProps) {
   const columns = useColumnCount();
   const rows = useMemo(() => chunk(items, columns), [items, columns]);
@@ -133,7 +135,7 @@ export function ProductGrid({
       <div className="flex justify-center py-6 text-sm text-gray-500">
         {isFetchingNextPage && <p>불러오는 중...</p>}
         {!hasNextPage && !isFetchingNextPage && items.length > 0 && (
-          <p>마지막 상품입니다</p>
+          <>{endContent ?? <p>마지막 상품입니다</p>}</>
         )}
       </div>
     </div>
