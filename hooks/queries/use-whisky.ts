@@ -7,6 +7,7 @@ import {
   fetchWhiskyDetail,
   searchWhiskyCandidates,
 } from '@/lib/api/test-whisky';
+import { fetchWhiskySuggestions } from '@/lib/api/whisky';
 import { WhiskyListRequest } from '@/types/whisky';
 
 type WhiskyListFilters = Omit<WhiskyListRequest, 'page'>;
@@ -23,6 +24,8 @@ export const whiskyKeys = {
     [...whiskyKeys.detail(whiskyId), 'related'] as const,
   candidates: (query: string) =>
     [...whiskyKeys.all, 'candidates', query] as const,
+  suggestions: (query: string) =>
+    [...whiskyKeys.all, 'suggestions', query] as const,
 };
 
 export function useWhiskyListQuery(filters: WhiskyListFilters = {}) {
@@ -61,5 +64,17 @@ export function useWhiskyCandidateSearchQuery(query: string) {
   return useQuery({
     queryKey: whiskyKeys.candidates(query),
     queryFn: () => searchWhiskyCandidates(query),
+  });
+}
+
+// 검색 모달 추천 검색어
+export function useWhiskySuggestionsQuery(query: string, enabled: boolean) {
+  const trimmedQuery = query.trim();
+
+  return useQuery({
+    queryKey: whiskyKeys.suggestions(trimmedQuery),
+    queryFn: () =>
+      fetchWhiskySuggestions(trimmedQuery ? { query: trimmedQuery } : {}),
+    enabled,
   });
 }

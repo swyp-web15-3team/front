@@ -105,6 +105,22 @@ interface WhiskyListData {
 
 export type WhiskyListResponse = ApiSuccessResponse<WhiskyListData>;
 
+// ── GET /api/v1/whiskies/suggestions ──────────────
+export interface WhiskySuggestionsRequest {
+  query?: string;
+}
+
+export interface WhiskySuggestion {
+  keyword: string;
+}
+
+interface WhiskySuggestionsData {
+  suggestions: WhiskySuggestion[];
+}
+
+export type WhiskySuggestionsResponse =
+  ApiSuccessResponse<WhiskySuggestionsData>;
+
 // ── GET /api/v1/whisky-categories ─────────────────
 interface WhiskyCategoryListData {
   categories: WhiskyCategory[];
