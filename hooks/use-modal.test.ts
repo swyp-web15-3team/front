@@ -7,7 +7,6 @@ import { useModalStore } from '@/store/use-modal-store';
 
 const OTHER_MODAL_ID = MODAL_ID.SAMPLE2;
 
-
 describe('useModal', () => {
   beforeEach(() => {
     useModalStore.setState({ activeModal: null });
@@ -21,7 +20,6 @@ describe('useModal', () => {
 
   it('open()을 호출하면 isOpen이 true가 된다', () => {
     const { result } = renderHook(() => useModal(MODAL_ID.SAMPLE1));
-
 
     act(() => {
       result.current.open();
