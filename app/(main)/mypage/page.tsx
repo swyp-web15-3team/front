@@ -15,7 +15,7 @@ export default function MyPage() {
         </div>
       </div>
       <div>좋아요</div>
-      <div>컬렉션</div>
+      <Link href="/mypage/collection">관심 목록</Link>
       <div>댓글</div>
       <div>로그인정보</div>
       <Link href="/mypage/withdraw">회원탈퇴</Link>

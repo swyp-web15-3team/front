@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { MODAL_ID } from '@/constants/modal';
 import { useModal } from '@/hooks/use-modal';
@@ -53,6 +54,7 @@ export function useSearchModal() {
 }
 
 export function SearchModal() {
+  const router = useRouter();
   const { isOpen, close } = useSearchModal();
   const [keyword, setKeyword] = useState('');
   const [recentKeywords, setRecentKeywords] = useState([
@@ -67,24 +69,66 @@ export function SearchModal() {
     setRecentKeywords((prev) => prev.filter((item) => item !== target));
   };
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      inputRef.current?.focus();
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    setKeyword('');
+    close();
+  };
+
+  const handleSearch = (term: string) => {
+    const trimmed = term.trim();
+    if (!trimmed) return;
+
+    setRecentKeywords((prev) => [
+      trimmed,
+      ...prev.filter((item) => item !== trimmed),
+    ]);
+    handleClose();
+    router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    handleSearch(keyword);
+  };
+
   return (
     <Modal
       isOpen={isOpen}
-      onClose={close}
+      onClose={handleClose}
       panelClassName="max-w-[1200px] rounded-t-none"
       overlayClassName="items-start"
     >
-      <div className="flex items-center gap-3 rounded-md border border-gray-300 px-4 py-2.5">
-        <input
-          autoFocus
-          type="text"
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          placeholder="search box"
-          className="flex-1 border-none text-sm outline-none placeholder:text-gray-400 focus:border-none"
-        />
-        <SearchIcon className="size-5 text-gray-500" />
-        <button aria-label="검색 모달 닫기" onClick={close}>
+      <div className="flex justify-between gap-3">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-1 items-center gap-3 rounded-md border border-gray-300 px-4 py-2.5"
+        >
+          <label htmlFor="search-keyword" className="sr-only">
+            검색어
+          </label>
+          <input
+            ref={inputRef}
+            id="search-keyword"
+            name="keyword"
+            type="text"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            placeholder="search box"
+            className="flex-1 border-none text-sm outline-none placeholder:text-gray-400 focus:border-none"
+          />
+          <button type="submit" aria-label="검색">
+            <SearchIcon className="size-5 text-gray-500" />
+          </button>
+        </form>
+        <button type="button" aria-label="검색 모달 닫기" onClick={handleClose}>
           <CloseIcon className="size-5 text-gray-500" />
         </button>
       </div>
@@ -96,12 +140,17 @@ export function SearchModal() {
             {recentKeywords.map((item) => (
               <span
                 key={item}
-                className="flex items-center gap-1 rounded-full border border-gray-300 px-3 py-1 text-sm"
+                onClick={() => handleSearch(item)}
+                className="flex cursor-pointer items-center gap-1 rounded-full border border-gray-300 px-3 py-1 text-sm"
               >
                 {item}
                 <button
+                  type="button"
                   aria-label={`${item} 최근 검색어 삭제`}
-                  onClick={() => removeRecentKeyword(item)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeRecentKeyword(item);
+                  }}
                 >
                   <CloseIcon className="size-3 text-gray-400" />
                 </button>
@@ -117,7 +166,8 @@ export function SearchModal() {
           {RECOMMENDED_KEYWORDS.map((item) => (
             <button
               key={item}
-              onClick={() => setKeyword(item)}
+              type="button"
+              onClick={() => handleSearch(item)}
               className="rounded-full border border-gray-300 px-3 py-1 text-sm"
             >
               {item}

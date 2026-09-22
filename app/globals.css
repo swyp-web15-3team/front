@@ -1,7 +1,15 @@
 @import 'tailwindcss';
 
+@theme {
+  --color-tertiary: #f5f5f4;
+  --color-brand: #ff8904;
+}
+
 /* 임시 스타일 */
 @layer base {
+  button:is([type='submit'], [type='button']) {
+    @apply cursor-pointer;
+  }
   input {
     @apply border border-dashed border-transparent outline-none;
   }

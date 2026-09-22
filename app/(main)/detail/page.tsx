@@ -1,5 +1,8 @@
 import Image from 'next/image';
-import { CardShop } from './_components/CardShop';
+import { CardShop } from '@/app/(main)/detail/_components/CardShop';
+import { CommentSection } from '@/app/(main)/detail/_components/CommentSection';
+import { SaveButton } from '@/app/(main)/detail/_components/SaveButton';
+import { ShareButton } from '@/app/(main)/detail/_components/ShareButton';
 
 export default function detailPage() {
   return (
@@ -45,11 +48,8 @@ export default function detailPage() {
             면세 상태입니다.
           </p>
           <div className="my-2 flex gap-2">
-            <div className="flex flex-col items-center">
-              <button>❤️</button>
-              <span className="text-xs">89</span>
-            </div>
-            <button className="w-full bg-gray-100">컬렉션</button>
+            <SaveButton />
+            <ShareButton />
           </div>
         </div>
       </div>
@@ -125,6 +125,8 @@ export default function detailPage() {
           </div>
         </div>
       </div>
+
+      <CommentSection />
     </>
   );
 }
