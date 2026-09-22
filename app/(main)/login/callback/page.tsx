@@ -6,7 +6,6 @@ import { Suspense, useEffect } from 'react';
 import { useAuthStore } from '@/store/use-auth-store';
 
 function LoginCallback() {
-
   const router = useRouter();
   const searchParams = useSearchParams();
   const setAccessToken = useAuthStore((state) => state.setAccessToken);
@@ -16,8 +15,15 @@ function LoginCallback() {
 
     if (accessToken) {
       const isNewUser = searchParams.get('isNewUser') === 'true';
+
+      // 신규 유저는 약관 동의(회원가입) 완료 전까지 로그인 처리하지 않는다.
+      if (isNewUser) {
+        router.replace('/signup/terms');
+        return;
+      }
+
       setAccessToken(accessToken);
-      router.replace(isNewUser ? '/signup/terms' : '/');
+      router.replace('/');
       return;
     }
 
@@ -34,4 +40,3 @@ export default function LoginCallbackPage() {
     </Suspense>
   );
 }
-
