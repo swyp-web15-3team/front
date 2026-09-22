@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ProductGrid } from '@/app/(main)/search/_components/ProductGrid';
+import { ProductGrid } from '@/components/common/ProductGrid';
 import { Product } from '@/types/product';
 
 let latestObserverCallback: IntersectionObserverCallback | null = null;
