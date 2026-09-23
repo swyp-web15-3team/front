@@ -20,7 +20,6 @@ export async function POST() {
     }
   }
 
-  const response = NextResponse.json({ success: true });
-  response.cookies.delete(REFRESH_TOKEN_COOKIE);
-  return response;
+  cookieStore.delete(REFRESH_TOKEN_COOKIE);
+  return NextResponse.json({ success: true });
 }
