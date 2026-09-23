@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { useSignUpMutation } from '@/hooks/queries/use-auth';
+import { takeReturnTo } from '@/lib/return-to';
 import type { SignUpRequest } from '@/types/auth';
 
 const TERMS: Array<{
@@ -83,7 +84,12 @@ export default function TermsPage() {
       <button
         type="button"
         disabled={!requiredChecked || isPending}
-        onClick={() => signUp(checked, { onSuccess: () => router.push('/') })}
+        onClick={() =>
+          signUp(checked, {
+            // 로그인 전 보던 페이지로 복귀한다. 외부 유입이었다면 메인으로.
+            onSuccess: () => router.replace(takeReturnTo()),
+          })
+        }
         className="rounded-md bg-black py-3 font-medium text-white disabled:bg-black/30"
       >
         동의하고 계속하기

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { LoginLink } from '@/components/ui/LoginLink';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/use-auth-store';
 import { Product } from '@/types/product';
@@ -96,14 +96,13 @@ function BookmarkButton() {
 
   if (!isAuthenticated) {
     return (
-      <Link
-        href="/login"
+      <LoginLink
         onClick={(e) => e.stopPropagation()}
         aria-label="로그인이 필요해요"
         className="flex size-8 shrink-0 items-center justify-center rounded-md border border-black text-black"
       >
         <BookmarkIcon filled={false} />
-      </Link>
+      </LoginLink>
     );
   }
 

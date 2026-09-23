@@ -50,27 +50,33 @@ export async function GET(request: NextRequest) {
 
     const response = NextResponse.redirect(redirectUrl);
 
-    // 신규 유저는 회원가입(sign-up) 완료 전까지 로그인 상태로 만들지 않는다.
-    if (!isNewUser) {
-      // redirect 응답에는 cookies()가 아니라 response.cookies로 심어야 헤더에 실린다.
-      response.cookies.set(REFRESH_TOKEN_COOKIE, refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-      });
-    }
+    // 신규 유저도 refreshToken은 심는다. 약관 동의까지 가는 동안 새로고침/토큰 만료를
+    // 견뎌야 하기 때문. 로그인 여부는 쿠키가 아니라 isNewUser로 구분한다.
+    // redirect 응답에는 cookies()가 아니라 response.cookies로 심어야 헤더에 실린다.
+    response.cookies.set(REFRESH_TOKEN_COOKIE, refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
 
     return response;
   } catch (error) {
-    Sentry.captureException(error);
+    const status = axios.isAxiosError(error)
+      ? (error.response?.status ?? 500)
+      : 500;
+
+    // 탈퇴 계정 등 4xx는 예상된 비즈니스 에러라 기록하지 않는다.
+    if (status >= 500) {
+      Sentry.captureException(error);
+    }
 
     if (process.env.NODE_ENV !== 'production') {
       if (axios.isAxiosError(error)) {
         console.error('[kakao/callback] 실패', {
           url: error.config?.url,
           params: error.config?.params,
-          status: error.response?.status,
+          status,
           data: error.response?.data,
         });
       } else {
@@ -78,6 +84,18 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.redirect(new URL('/login', baseUrl));
+    const loginUrl = new URL('/login', baseUrl);
+
+    // 백엔드 에러 코드만 넘긴다. detail 문구를 그대로 실으면 외부에서 조작한
+    // 텍스트가 우리 로그인 화면에 그대로 뜨게 되므로, 문구는 클라이언트에서 매핑한다.
+    const code = axios.isAxiosError(error)
+      ? error.response?.data?.code
+      : undefined;
+
+    if (typeof code === 'string' && /^[A-Z]+_\d+$/.test(code)) {
+      loginUrl.searchParams.set('error', code);
+    }
+
+    return NextResponse.redirect(loginUrl);
   }
 }

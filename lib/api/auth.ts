@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-import { readPendingAccessToken, useAuthStore } from '@/store/use-auth-store';
+import { reissueAccessToken } from '@/lib/api/client';
+import { useAuthStore } from '@/store/use-auth-store';
 import type { SignUpRequest } from '@/types/auth';
 
 export async function logout(): Promise<void> {
@@ -10,15 +11,13 @@ export async function logout(): Promise<void> {
 export async function signUp(
   payload: SignUpRequest
 ): Promise<{ accessToken: string }> {
-  // 새로고침으로 store가 비어도 sessionStorage에 남은 토큰으로 가입을 이어간다.
-  const pendingAccessToken =
-    useAuthStore.getState().accessToken ?? readPendingAccessToken();
+  // 새로고침으로 store가 비어도 refreshToken 쿠키로 토큰을 되살려 가입을 이어간다.
+  const accessToken =
+    useAuthStore.getState().accessToken ?? (await reissueAccessToken());
   const { data } = await axios.post<{ accessToken: string }>(
     '/api/auth/sign-up',
     payload,
-    pendingAccessToken
-      ? { headers: { Authorization: `Bearer ${pendingAccessToken}` } }
-      : undefined
+    { headers: { Authorization: `Bearer ${accessToken}` } }
   );
   return data;
 }

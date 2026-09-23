@@ -1,8 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
 
+import { LoginLink } from '@/components/ui/LoginLink';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/use-auth-store';
 
@@ -13,13 +13,10 @@ export function SaveButton() {
 
   if (!isAuthenticated) {
     return (
-      <Link
-        href="/login"
-        className="flex items-center gap-1.5 rounded-md bg-black px-4 py-2 text-sm text-white"
-      >
+      <LoginLink className="flex items-center gap-1.5 rounded-md bg-black px-4 py-2 text-sm text-white">
         <BookmarkIcon filled={false} />
         로그인이 필요해요
-      </Link>
+      </LoginLink>
     );
   }
 
