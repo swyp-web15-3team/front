@@ -30,7 +30,7 @@ function onTokenRefreshed(accessToken: string) {
   refreshSubscribers = [];
 }
 
-async function reissueAccessToken(): Promise<string> {
+export async function reissueAccessToken(): Promise<string> {
   const { data } = await axios.post<{ accessToken: string }>(
     '/api/auth/refresh'
   );
