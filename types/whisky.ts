@@ -83,15 +83,25 @@ export interface WhiskyDetail extends WhiskyListItem {
 
 // ── GET /api/v1/whiskies ──────────────────────────
 export interface WhiskyListRequest {
+  /** 위스키 이름 부분 검색. 앞뒤 공백 제거 */
   query?: string;
+  /** 종류 ID */
   categoryId?: number;
+  /** 원산지 ID */
   originId?: number;
+  /** 생산 지역 ID */
   regionId?: number;
+  /** 용량(ml) */
   volumeMl?: number;
+  /** 판매 국가 */
   countryCode?: CountryCode;
+  /** 면세점 판매 여부 */
   isDutyFree?: boolean;
+  /** 정렬 조건 */
   sort?: WhiskySort;
+  /** 페이지 번호 */
   page?: number;
+  /** 페이지 크기 */
   size?: number;
 }
 

@@ -2,12 +2,11 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
 import {
   fetchRelatedWhiskies,
-  fetchWhiskies,
   fetchWhiskyCategories,
   fetchWhiskyDetail,
   searchWhiskyCandidates,
 } from '@/lib/api/test-whisky';
-import { fetchWhiskySuggestions } from '@/lib/api/whisky';
+import { fetchWhiskies, fetchWhiskySuggestions } from '@/lib/api/whisky';
 import { WhiskyListRequest } from '@/types/whisky';
 
 type WhiskyListFilters = Omit<WhiskyListRequest, 'page'>;
@@ -28,6 +27,7 @@ export const whiskyKeys = {
     [...whiskyKeys.all, 'suggestions', query] as const,
 };
 
+// 위스키 목록 검색
 export function useWhiskyListQuery(filters: WhiskyListFilters = {}) {
   return useInfiniteQuery({
     queryKey: whiskyKeys.list(filters),
