@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 import { CurationScroller } from '@/app/(main)/_components/CurationScroller';
-import { Curation, WhiskyCard } from '@/types/whisky';
+import { WhiskyCard } from '@/types/whisky';
 
 function toProduct(whisky: WhiskyCard) {
   return {
@@ -17,10 +17,16 @@ function toProduct(whisky: WhiskyCard) {
   };
 }
 
-export function CurationSection({ curation }: { curation: Curation }) {
+interface CurationSectionProps {
+  id: number;
+  title: string;
+  content: WhiskyCard[];
+}
+
+export function CurationSection({ id, title, content }: CurationSectionProps) {
   const maxDiscountRate = Math.max(
     0,
-    ...curation.whiskies.map((whisky) =>
+    ...content.map((whisky) =>
       whisky.comparison ? Math.round(whisky.comparison.diffRatio * 100) : 0
     )
   );
@@ -29,7 +35,7 @@ export function CurationSection({ curation }: { curation: Curation }) {
     <section>
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="text-xl font-bold">{curation.title}</h2>
+          <h2 className="text-xl font-bold">{title}</h2>
           {maxDiscountRate > 0 && (
             <p className="text-sm text-gray-500">
               최대 {maxDiscountRate}% 할인
@@ -37,7 +43,7 @@ export function CurationSection({ curation }: { curation: Curation }) {
           )}
         </div>
         <Link
-          href={`/curations/${curation.id}`}
+          href={`/curations/${id}`}
           className="text-sm text-gray-500 underline"
         >
           더보기
@@ -46,7 +52,7 @@ export function CurationSection({ curation }: { curation: Curation }) {
 
       <CurationScroller
         className="mt-4"
-        items={curation.whiskies.map((whisky) => ({
+        items={content.map((whisky) => ({
           id: whisky.id,
           product: toProduct(whisky),
         }))}

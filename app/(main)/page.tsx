@@ -1,9 +1,9 @@
-import { WhiskyList } from '@/app/(main)/_components/WhiskyList';
+import { CurationList } from '@/app/(main)/_components/CurationList';
 
 export default function Home() {
   return (
     <div className="mx-auto max-w-300">
-      <WhiskyList />
+      <CurationList />
     </div>
   );
 }
