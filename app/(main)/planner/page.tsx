@@ -7,7 +7,9 @@ import {
   useAddPlannerItemModal,
 } from '@/components/common/AddPlannerItemModal';
 import { HorizontalCard } from '@/components/ui/HorizontalCard';
+import { HorizontalScroller } from '@/components/ui/HorizontalScroller';
 import { Modal } from '@/components/ui/Modal';
+import { VerticalCard } from '@/components/ui/VerticalCard';
 import {
   PLANNER_PURCHASE_LIMIT_ML,
   PLANNER_PURCHASE_LIMIT_USD,
@@ -73,6 +75,7 @@ function LimitBar({
 function PlannerCard({
   item,
   section,
+  variant = 'horizontal',
   isDragging,
   onDragStart,
   onDragEnd,
@@ -81,6 +84,7 @@ function PlannerCard({
 }: {
   item: PlannerItem;
   section: BoardSection;
+  variant?: 'horizontal' | 'vertical';
   isDragging: boolean;
   onDragStart: (plannerItemId: number) => void;
   onDragEnd: () => void;
@@ -99,10 +103,15 @@ function PlannerCard({
       onDragEnd={onDragEnd}
       className={cn(
         'relative cursor-grab transition-all duration-150 ease-out active:cursor-grabbing',
+        variant === 'vertical' && 'w-56 shrink-0 snap-start',
         isDragging && 'scale-95 opacity-40'
       )}
     >
-      <HorizontalCard product={toProduct(item)} />
+      {variant === 'vertical' ? (
+        <VerticalCard product={toProduct(item)} />
+      ) : (
+        <HorizontalCard product={toProduct(item)} />
+      )}
       <button
         type="button"
         onClick={() => onDelete(item.plannerItemId)}
@@ -183,6 +192,7 @@ function DropZone({
   onDrop,
   onReset,
   resetLabel,
+  headerExtra,
   children,
 }: {
   title: string;
@@ -192,6 +202,7 @@ function DropZone({
   onDrop: (plannerItemId: number, from: BoardSection) => void;
   onReset: () => void;
   resetLabel: string;
+  headerExtra?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const [isOver, setIsOver] = useState(false);
@@ -227,15 +238,18 @@ function DropZone({
           {title}
           <span className="text-sm font-normal text-gray-400">{count}</span>
         </h2>
-        {count > 0 && (
-          <button
-            type="button"
-            onClick={onReset}
-            className="text-xs text-gray-400 hover:text-gray-600"
-          >
-            {resetLabel}
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {headerExtra}
+          {count > 0 && (
+            <button
+              type="button"
+              onClick={onReset}
+              className="text-xs text-gray-400 hover:text-gray-600"
+            >
+              {resetLabel}
+            </button>
+          )}
+        </div>
       </div>
       {children}
     </div>
@@ -250,6 +264,7 @@ export default function PlanPage() {
     useUpdatePlannerItemQuantityMutation();
   const [purchaseIds, setPurchaseIds] = useState<Set<number>>(new Set());
   const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [candidateView, setCandidateView] = useState<'swipe' | 'list'>('swipe');
   const [confirmAction, setConfirmAction] = useState<
     'resetPurchase' | 'resetCandidates' | 'resetAll' | null
   >(null);
@@ -409,22 +424,54 @@ export default function PlanPage() {
             accentClassName="border-t-4 border-t-gray-300"
             onDrop={handleDrop}
             onReset={() => setConfirmAction('resetCandidates')}
-            resetLabel="전체 삭제"
+            resetLabel="리스트 전체 삭제"
+            headerExtra={
+              <button
+                type="button"
+                onClick={() =>
+                  setCandidateView((v) => (v === 'swipe' ? 'list' : 'swipe'))
+                }
+                aria-label={
+                  candidateView === 'swipe' ? '세로 목록 보기' : '가로 보기'
+                }
+                className="text-xs text-gray-400 hover:text-gray-600"
+              >
+                {candidateView === 'swipe' ? '목록 보기' : '가로 보기'}
+              </button>
+            }
           >
-            <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {candidateItems.map((item) => (
-                <PlannerCard
-                  key={item.plannerItemId}
-                  item={item}
-                  section="candidate"
-                  isDragging={draggingId === item.plannerItemId}
-                  onDragStart={setDraggingId}
-                  onDragEnd={handleDragEnd}
-                  onDelete={handleDelete}
-                  onQuantityChange={handleQuantityChange}
-                />
-              ))}
-            </ul>
+            {candidateView === 'swipe' ? (
+              <HorizontalScroller dragScroll={false} trackClassName="gap-3">
+                {candidateItems.map((item) => (
+                  <PlannerCard
+                    key={item.plannerItemId}
+                    item={item}
+                    section="candidate"
+                    variant="vertical"
+                    isDragging={draggingId === item.plannerItemId}
+                    onDragStart={setDraggingId}
+                    onDragEnd={handleDragEnd}
+                    onDelete={handleDelete}
+                    onQuantityChange={handleQuantityChange}
+                  />
+                ))}
+              </HorizontalScroller>
+            ) : (
+              <ul className="grid max-h-[32rem] grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2">
+                {candidateItems.map((item) => (
+                  <PlannerCard
+                    key={item.plannerItemId}
+                    item={item}
+                    section="candidate"
+                    isDragging={draggingId === item.plannerItemId}
+                    onDragStart={setDraggingId}
+                    onDragEnd={handleDragEnd}
+                    onDelete={handleDelete}
+                    onQuantityChange={handleQuantityChange}
+                  />
+                ))}
+              </ul>
+            )}
             {candidateItems.length === 0 && (
               <p className="py-6 text-center text-sm text-gray-400">
                 구매 리스트 상품을 이 영역으로 드래그하면 후보로 옮겨져요

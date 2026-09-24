@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
-import { CurationScroller } from '@/app/(main)/_components/CurationScroller';
+import { HorizontalScroller } from '@/components/ui/HorizontalScroller';
+import { VerticalCard } from '@/components/ui/VerticalCard';
 import { WhiskyCard } from '@/types/whisky';
 
 function toProduct(whisky: WhiskyCard) {
@@ -50,13 +51,15 @@ export function CurationSection({ id, title, content }: CurationSectionProps) {
         </Link>
       </div>
 
-      <CurationScroller
-        className="mt-4"
-        items={content.map((whisky) => ({
-          id: whisky.id,
-          product: toProduct(whisky),
-        }))}
-      />
+      <HorizontalScroller className="mt-4">
+        {content.map((whisky) => (
+          <VerticalCard
+            key={whisky.id}
+            product={toProduct(whisky)}
+            className="w-40 shrink-0 snap-start sm:w-52"
+          />
+        ))}
+      </HorizontalScroller>
     </section>
   );
 }
