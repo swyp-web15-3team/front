@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { LogoutButton } from '@/app/(main)/mypage/_components/LogoutButton';
 import { ProfileImage } from '@/app/(main)/mypage/_components/ProfileImage';
 
 export default function MyPage() {
@@ -18,6 +19,7 @@ export default function MyPage() {
       <Link href="/mypage/collection">관심 목록</Link>
       <div>댓글</div>
       <div>로그인정보</div>
+      <LogoutButton />
       <Link href="/mypage/withdraw">회원탈퇴</Link>
     </>
   );

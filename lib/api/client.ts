@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/nextjs';
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 
+import { rememberReturnTo } from '@/lib/return-to';
 import { useAuthStore } from '@/store/use-auth-store';
 
 export const apiClient = axios.create({
@@ -41,6 +42,8 @@ function redirectToLogin() {
   useAuthStore.getState().clear();
 
   if (typeof window !== 'undefined') {
+    // 세션 만료로 튕긴 경우에도 로그인 후 보던 페이지로 돌아온다.
+    rememberReturnTo(window.location.pathname + window.location.search);
     // 인터셉터는 React 렌더 트리 밖에서 실행되어 useRouter를 쓸 수 없다
     // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = '/login';
