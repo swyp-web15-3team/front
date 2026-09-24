@@ -1,8 +1,11 @@
 import Link from 'next/link';
 
 import { ProfileImage } from '@/app/(main)/mypage/_components/ProfileImage';
+import { useLogoutMutation } from '@/hooks/queries/use-auth';
 
 export default function MyPage() {
+  const { mutate: logout, isPending } = useLogoutMutation();
+
   return (
     <>
       <div className="flex gap-4">
@@ -18,6 +21,9 @@ export default function MyPage() {
       <Link href="/mypage/collection">관심 목록</Link>
       <div>댓글</div>
       <div>로그인정보</div>
+      <button type="button" onClick={() => logout()} disabled={isPending}>
+        로그아웃
+      </button>
       <Link href="/mypage/withdraw">회원탈퇴</Link>
     </>
   );
