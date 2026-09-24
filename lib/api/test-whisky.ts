@@ -1,4 +1,3 @@
-import { getAllCandidates } from '@/lib/api/test-collection';
 import { PlannerCandidate } from '@/types/planner';
 import {
   SaleProduct,
@@ -84,6 +83,99 @@ const MOCK_SALE_PRODUCTS: SaleProduct[] = [
   },
 ];
 
+// 플래너/컬렉션 추가 모달에서 쓰는, 플래너에 추가 가능한 위스키 후보 전체 풀.
+// saleProductId는 플래너 mock(test-planner.ts)의 addPlannerItem과 공유한다.
+const MOCK_CANDIDATES: PlannerCandidate[] = [
+  {
+    saleProductId: 501,
+    whiskyId: 101,
+    whiskyName: '라가불린 16년',
+    whiskyOriginalName: 'Lagavulin 16',
+    volumeMl: 750,
+    price: {
+      amount: 9800,
+      currency: 'JPY',
+      amountKrw: 94000,
+      collectedAt: '2026-09-08T03:00:00+09:00',
+      stale: false,
+    },
+  },
+  {
+    saleProductId: 502,
+    whiskyId: 102,
+    whiskyName: '야마자키 12년',
+    whiskyOriginalName: '山崎 12yo',
+    volumeMl: 700,
+    price: {
+      amount: 18500,
+      currency: 'JPY',
+      amountKrw: 168500,
+      collectedAt: '2026-09-08T03:00:00+09:00',
+      stale: false,
+    },
+  },
+  {
+    saleProductId: 503,
+    whiskyId: 103,
+    whiskyName: '히비키 하모니',
+    whiskyOriginalName: '響 Harmony',
+    volumeMl: 700,
+    price: {
+      amount: 8000,
+      currency: 'JPY',
+      amountKrw: 76500,
+      collectedAt: '2026-09-08T03:00:00+09:00',
+      stale: false,
+    },
+  },
+  {
+    saleProductId: 504,
+    whiskyId: 104,
+    whiskyName: '하쿠슈 12년',
+    whiskyOriginalName: '白州 12yo',
+    volumeMl: 700,
+    price: {
+      amount: 12000,
+      currency: 'JPY',
+      amountKrw: 115000,
+      collectedAt: '2026-09-08T03:00:00+09:00',
+      stale: false,
+    },
+  },
+  {
+    saleProductId: 505,
+    whiskyId: 105,
+    whiskyName: '닛카 요이치',
+    whiskyOriginalName: 'Nikka Yoichi',
+    volumeMl: 700,
+    price: {
+      amount: 7500,
+      currency: 'JPY',
+      amountKrw: 72000,
+      collectedAt: '2026-09-08T03:00:00+09:00',
+      stale: false,
+    },
+  },
+];
+
+// 컬렉션 id -> 담긴 위스키(saleProductId 기준) 매핑
+const MOCK_COLLECTION_CANDIDATE_IDS: Record<number, number[]> = {
+  1: [501, 502],
+  2: [503],
+  3: [504, 505],
+  4: [],
+};
+
+export function findCandidateBySaleProductId(
+  saleProductId: number
+): PlannerCandidate | undefined {
+  return MOCK_CANDIDATES.find((c) => c.saleProductId === saleProductId);
+}
+
+export function getAllCandidates(): PlannerCandidate[] {
+  return MOCK_CANDIDATES;
+}
+
 function delay() {
   return new Promise((resolve) => setTimeout(resolve, MOCK_NETWORK_DELAY_MS));
 }
@@ -165,4 +257,20 @@ export async function searchWhiskyCandidates(
       item.whiskyName.toLowerCase().includes(keyword) ||
       item.whiskyOriginalName.toLowerCase().includes(keyword)
   );
+}
+
+// TODO: 컬렉션 아이템에 saleProductId가 생기면 실제 API(GET /collections/{id}/whiskies)로 교체한다.
+// 플래너 추가 모달 전용 목업. 실제 컬렉션 API 응답에는 플래너 추가에 필요한
+// saleProductId가 없어서, 그 탭만 아직 목업 후보 풀을 쓴다.
+export async function fetchCollectionCandidates(
+  collectionId: number
+): Promise<{ items: PlannerCandidate[] }> {
+  await delay();
+
+  const saleProductIds = MOCK_COLLECTION_CANDIDATE_IDS[collectionId] ?? [];
+  const items = saleProductIds
+    .map(findCandidateBySaleProductId)
+    .filter((item): item is PlannerCandidate => item !== undefined);
+
+  return { items };
 }

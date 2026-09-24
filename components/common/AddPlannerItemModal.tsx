@@ -5,12 +5,12 @@ import { useMemo, useState } from 'react';
 import { HorizontalCard } from '@/components/ui/HorizontalCard';
 import { Modal } from '@/components/ui/Modal';
 import { MODAL_ID } from '@/constants/modal';
-import {
-  useCollectionItemsQueries,
-  useCollectionListQuery,
-} from '@/hooks/queries/use-collection';
+import { useCollectionListQuery } from '@/hooks/queries/use-collection';
 import { useAddPlannerItemMutation } from '@/hooks/queries/use-planner';
-import { useWhiskyCandidateSearchQuery } from '@/hooks/queries/use-whisky';
+import {
+  useCollectionCandidatesQueries,
+  useWhiskyCandidateSearchQuery,
+} from '@/hooks/queries/use-whisky';
 import { useModal } from '@/hooks/use-modal';
 import { cn } from '@/lib/utils';
 import { PlannerCandidate } from '@/types/planner';
@@ -43,7 +43,7 @@ export function AddPlannerItemModal() {
     () => collections.map((c) => c.id),
     [collections]
   );
-  const collectionItemQueries = useCollectionItemsQueries(collectionIds);
+  const collectionItemQueries = useCollectionCandidatesQueries(collectionIds);
 
   const { data: searchResults } = useWhiskyCandidateSearchQuery(keyword);
   const addPlannerItemMutation = useAddPlannerItemMutation();

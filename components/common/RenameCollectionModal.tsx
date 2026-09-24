@@ -6,7 +6,10 @@ import { Modal } from '@/components/ui/Modal';
 import { MODAL_ID } from '@/constants/modal';
 import type { useRenameCollectionMutation } from '@/hooks/queries/use-collection';
 import { useModal } from '@/hooks/use-modal';
-import { COLLECTION_NAME_MAX_LENGTH } from '@/lib/api/test-collection';
+import {
+  COLLECTION_NAME_MAX_LENGTH,
+  getCollectionErrorMessage,
+} from '@/lib/api/collection';
 
 interface RenameCollectionModalProps {
   collectionId: number | null;
@@ -53,7 +56,9 @@ export function RenameCollectionModal({
           className="mt-4 w-full rounded-md border px-3 py-2 text-sm"
         />
         {isError && (
-          <p className="mt-1 text-xs text-red-500">{error.message}</p>
+          <p className="mt-1 text-xs text-red-500">
+            {getCollectionErrorMessage(error)}
+          </p>
         )}
         <div className="mt-4 flex gap-2">
           <button

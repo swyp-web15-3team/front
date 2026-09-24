@@ -1,6 +1,7 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query';
 
 import {
+  fetchCollectionCandidates,
   fetchRelatedWhiskies,
   fetchWhiskies,
   fetchWhiskyCategories,
@@ -61,5 +62,16 @@ export function useWhiskyCandidateSearchQuery(query: string) {
   return useQuery({
     queryKey: whiskyKeys.candidates(query),
     queryFn: () => searchWhiskyCandidates(query),
+  });
+}
+
+// 플래너 추가 모달의 "컬렉션" 탭. 실제 컬렉션 API에는 플래너 추가에 필요한
+// saleProductId가 없어서 이 탭만 아직 목업을 쓴다.
+export function useCollectionCandidatesQueries(collectionIds: number[]) {
+  return useQueries({
+    queries: collectionIds.map((collectionId) => ({
+      queryKey: [...whiskyKeys.all, 'collection-candidates', collectionId],
+      queryFn: () => fetchCollectionCandidates(collectionId),
+    })),
   });
 }

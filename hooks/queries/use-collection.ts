@@ -1,19 +1,14 @@
-import {
-  useMutation,
-  useQueries,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   addCollectionItem,
   createCollection,
   deleteCollection,
-  fetchCollectionItems,
+  fetchCollectionWhiskies,
   fetchCollections,
   removeCollectionItem,
   renameCollection,
-} from '@/lib/api/test-collection';
+} from '@/lib/api/collection';
 
 export const collectionKeys = {
   all: ['collections'] as const,
@@ -30,21 +25,12 @@ export function useCollectionListQuery() {
   });
 }
 
-export function useCollectionItemQuery(collectionId: number) {
+// 활성 컬렉션의 위스키만 조회한다. 선택된 컬렉션이 없으면(null) 요청하지 않는다.
+export function useCollectionWhiskyQuery(collectionId: number | null) {
   return useQuery({
-    queryKey: collectionKeys.item(collectionId),
-    queryFn: () => fetchCollectionItems(collectionId),
-  });
-}
-
-// 컬렉션 탭 전체 컬렉션의 아이템을 병렬 조회한다.
-// 검색어와 매칭되는 위스키가 속한 컬렉션을 찾아 드롭다운을 자동으로 펼치는 데 쓰인다.
-export function useCollectionItemsQueries(collectionIds: number[]) {
-  return useQueries({
-    queries: collectionIds.map((collectionId) => ({
-      queryKey: collectionKeys.item(collectionId),
-      queryFn: () => fetchCollectionItems(collectionId),
-    })),
+    queryKey: collectionKeys.item(collectionId ?? 0),
+    queryFn: () => fetchCollectionWhiskies(collectionId as number),
+    enabled: collectionId !== null,
   });
 }
 

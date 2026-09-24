@@ -1,4 +1,4 @@
-import { findCandidateBySaleProductId } from '@/lib/api/test-collection';
+import { findCandidateBySaleProductId } from '@/lib/api/test-whisky';
 import {
   DeletePlannerItemsRequest,
   MovePlannerItemsRequest,

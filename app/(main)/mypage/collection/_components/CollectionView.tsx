@@ -7,6 +7,10 @@ import {
   useAddCollectionItemModal,
 } from '@/components/common/AddCollectionItemModal';
 import {
+  CollectionMenuModal,
+  useCollectionMenuModal,
+} from '@/components/common/CollectionMenuModal';
+import {
   CreateCollectionModal,
   useCreateCollectionModal,
 } from '@/components/common/CreateCollectionModal';
@@ -16,7 +20,7 @@ import {
 } from '@/components/common/RenameCollectionModal';
 import { VerticalCard } from '@/components/ui/VerticalCard';
 import {
-  useCollectionItemQuery,
+  useCollectionWhiskyQuery,
   useCollectionListQuery,
   useCreateCollectionMutation,
   useDeleteCollectionMutation,
@@ -24,18 +28,19 @@ import {
   useRenameCollectionMutation,
 } from '@/hooks/queries/use-collection';
 import { cn } from '@/lib/utils';
-import { PlannerCandidate } from '@/types/planner';
+import { CollectionWhisky } from '@/types/collection';
 import { Product } from '@/types/product';
 
-function toProduct(item: PlannerCandidate): Product {
+function toProduct(item: CollectionWhisky): Product {
   return {
     imageUrl: '',
-    name: item.whiskyName,
-    originalName: item.whiskyOriginalName,
+    name: item.name,
+    // 이 API는 원문명을 내려주지 않는다.
+    originalName: '',
     discountRate: 0,
-    krPrice: item.price?.amountKrw ?? 0,
-    jpPrice: item.price?.amountKrw ?? 0,
-    jpPriceYen: item.price?.amount,
+    krPrice: item.kr?.amount ?? 0,
+    jpPrice: item.jp?.amountKrw ?? 0,
+    jpPriceYen: item.jp?.amount,
     volumeMl: item.volumeMl,
   };
 }
@@ -46,27 +51,51 @@ export function CollectionView() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const activeId = selectedId ?? collections[0]?.id ?? null;
   const activeCollection = collections.find((c) => c.id === activeId) ?? null;
-  const { data: itemsData, isLoading: isItemsLoading } = useCollectionItemQuery(
-    activeId ?? 0
-  );
+  const { data: itemsData, isLoading: isItemsLoading } =
+    useCollectionWhiskyQuery(activeId);
   const items = itemsData?.items ?? [];
+
+  // 편집 모드: 카드에 체크박스를 띄우고 선택한 위스키를 한 번에 뺀다.
+  const [isEditing, setIsEditing] = useState(false);
+  const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
 
   const { open: openCreateModal } = useCreateCollectionModal();
   const { open: openRenameModal } = useRenameCollectionModal();
   const { open: openAddItemModal } = useAddCollectionItemModal();
+  const { open: openMenuModal } = useCollectionMenuModal();
   const createCollectionMutation = useCreateCollectionMutation();
   const renameCollectionMutation = useRenameCollectionMutation();
   const deleteCollectionMutation = useDeleteCollectionMutation();
   const removeItemMutation = useRemoveCollectionItemMutation();
 
-  function handleRemoveItem(whiskyId: number) {
-    if (!activeCollection) return;
-    if (!window.confirm('이 위스키를 관심 목록에서 뺄까요?')) return;
+  function selectCollection(id: number) {
+    setSelectedId(id);
+    setIsEditing(false);
+    setCheckedIds(new Set());
+  }
 
-    removeItemMutation.mutate({
-      collectionId: activeCollection.id,
-      whiskyId,
+  function toggleChecked(whiskyId: number) {
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(whiskyId)) next.delete(whiskyId);
+      else next.add(whiskyId);
+      return next;
     });
+  }
+
+  function handleRemoveChecked() {
+    if (!activeCollection || checkedIds.size === 0) return;
+    if (!window.confirm(`선택한 ${checkedIds.size}개를 관심 목록에서 뺄까요?`))
+      return;
+
+    checkedIds.forEach((whiskyId) => {
+      removeItemMutation.mutate({
+        collectionId: activeCollection.id,
+        whiskyId,
+      });
+    });
+    setCheckedIds(new Set());
+    setIsEditing(false);
   }
 
   function handleDelete() {
@@ -87,53 +116,83 @@ export function CollectionView() {
 
   return (
     <div className="mt-4 flex flex-col gap-4">
-      <ul className="flex gap-2 overflow-x-auto">
-        {collections.map((collection) => (
-          <li key={collection.id}>
-            <button
-              type="button"
-              onClick={() => setSelectedId(collection.id)}
-              className={cn(
-                'rounded-full px-3 py-1.5 text-sm whitespace-nowrap',
-                activeId === collection.id
-                  ? 'bg-amber-50 font-medium'
-                  : 'bg-gray-100 text-gray-500'
+      <ul className="flex h-11 shrink-0 items-stretch gap-1 overflow-x-auto overflow-y-hidden border-b border-gray-200">
+        {collections.map((collection) => {
+          const isActive = activeId === collection.id;
+          return (
+            <li key={collection.id} className="flex items-stretch">
+              <button
+                type="button"
+                onClick={() => selectCollection(collection.id)}
+                className={cn(
+                  '-mb-px border-b-2 px-2 text-sm whitespace-nowrap',
+                  isActive
+                    ? 'border-black font-bold'
+                    : 'border-transparent text-gray-400'
+                )}
+              >
+                {collection.name}
+              </button>
+              {isActive && (
+                <button
+                  type="button"
+                  onClick={openMenuModal}
+                  aria-label={`${collection.name} 더보기`}
+                  className="px-1 text-sm text-gray-500"
+                >
+                  ⋯
+                </button>
               )}
-            >
-              {collection.name}
-            </button>
-          </li>
-        ))}
+            </li>
+          );
+        })}
         <li>
           <button
             type="button"
             onClick={openCreateModal}
-            className="rounded-full bg-gray-100 px-3 py-1.5 text-sm whitespace-nowrap text-gray-500"
+            aria-label="새 관심 목록 추가"
+            className="px-2 text-sm whitespace-nowrap text-gray-400"
           >
-            + 새 관심 목록
+            +
           </button>
         </li>
       </ul>
 
-      {activeCollection && (
-        <div className="flex gap-3 text-xs text-gray-400">
-          <button type="button" onClick={openAddItemModal}>
-            위스키 추가
+      {activeCollection && !isEditing && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={openAddItemModal}
+            className="text-xs text-gray-500"
+          >
+            + 위스키 추가
           </button>
-          {!activeCollection.isDefault && (
-            <>
-              <button type="button" onClick={openRenameModal}>
-                이름 변경
-              </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={deleteCollectionMutation.isPending}
-              >
-                삭제
-              </button>
-            </>
-          )}
+        </div>
+      )}
+
+      {isEditing && (
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-gray-500">{checkedIds.size}개 선택</span>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={handleRemoveChecked}
+              disabled={checkedIds.size === 0 || removeItemMutation.isPending}
+              className="text-red-500 disabled:opacity-30"
+            >
+              선택 삭제
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditing(false);
+                setCheckedIds(new Set());
+              }}
+              className="text-gray-400"
+            >
+              완료
+            </button>
+          </div>
         </div>
       )}
 
@@ -146,29 +205,39 @@ export function CollectionView() {
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {items.map((item) => (
-            <div key={item.saleProductId} className="relative">
-              <button
-                type="button"
-                onClick={() => handleRemoveItem(item.whiskyId)}
-                disabled={removeItemMutation.isPending}
-                aria-label="관심 목록에서 빼기"
-                className="absolute top-2 right-2 z-10 flex size-6 items-center justify-center rounded-full bg-black/60 text-xs text-white"
-              >
-                ✕
-              </button>
+            <div key={item.id} className="relative">
+              {isEditing && (
+                <label className="absolute top-2 right-2 z-10 flex size-6 items-center justify-center rounded-full bg-white/90 shadow">
+                  <input
+                    type="checkbox"
+                    checked={checkedIds.has(item.id)}
+                    onChange={() => toggleChecked(item.id)}
+                    aria-label={`${item.name} 선택`}
+                  />
+                </label>
+              )}
               <VerticalCard product={toProduct(item)} />
             </div>
           ))}
         </div>
       )}
 
+      {activeCollection && (
+        <CollectionMenuModal
+          key={`menu-${activeCollection.id}`}
+          isDefault={activeCollection.isDefault}
+          onRename={openRenameModal}
+          onEdit={() => setIsEditing(true)}
+          onDelete={handleDelete}
+        />
+      )}
       <CreateCollectionModal
         createCollectionMutation={createCollectionMutation}
-        onCreated={setSelectedId}
+        onCreated={selectCollection}
       />
       {activeCollection && (
         <RenameCollectionModal
-          key={activeCollection.id}
+          key={`rename-${activeCollection.id}`}
           collectionId={activeCollection.id}
           initialName={activeCollection.name}
           renameCollectionMutation={renameCollectionMutation}
@@ -176,7 +245,7 @@ export function CollectionView() {
       )}
       {activeCollection && (
         <AddCollectionItemModal
-          key={activeCollection.id}
+          key={`add-item-${activeCollection.id}`}
           collectionId={activeCollection.id}
           collectionName={activeCollection.name}
         />
