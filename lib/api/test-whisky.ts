@@ -1,4 +1,3 @@
-import { getAllCandidates } from '@/lib/api/test-collection';
 import { PlannerCandidate } from '@/types/planner';
 import {
   SaleProduct,
@@ -84,6 +83,81 @@ const MOCK_SALE_PRODUCTS: SaleProduct[] = [
   },
 ];
 
+// 플래너 추가 모달 "검색" 탭에서 쓰는 위스키 후보 목업 풀.
+// saleProductId는 플래너 mock(test-planner.ts)의 addPlannerItem과 공유한다.
+const MOCK_CANDIDATES: PlannerCandidate[] = [
+  {
+    saleProductId: 501,
+    whiskyId: 101,
+    whiskyName: '라가불린 16년',
+    whiskyOriginalName: 'Lagavulin 16',
+    volumeMl: 750,
+    price: {
+      amount: 9800,
+      currency: 'JPY',
+      amountKrw: 94000,
+      collectedAt: '2026-09-08T03:00:00+09:00',
+      stale: false,
+    },
+  },
+  {
+    saleProductId: 502,
+    whiskyId: 102,
+    whiskyName: '야마자키 12년',
+    whiskyOriginalName: '山崎 12yo',
+    volumeMl: 700,
+    price: {
+      amount: 18500,
+      currency: 'JPY',
+      amountKrw: 168500,
+      collectedAt: '2026-09-08T03:00:00+09:00',
+      stale: false,
+    },
+  },
+  {
+    saleProductId: 503,
+    whiskyId: 103,
+    whiskyName: '히비키 하모니',
+    whiskyOriginalName: '響 Harmony',
+    volumeMl: 700,
+    price: {
+      amount: 8000,
+      currency: 'JPY',
+      amountKrw: 76500,
+      collectedAt: '2026-09-08T03:00:00+09:00',
+      stale: false,
+    },
+  },
+  {
+    saleProductId: 504,
+    whiskyId: 104,
+    whiskyName: '하쿠슈 12년',
+    whiskyOriginalName: '白州 12yo',
+    volumeMl: 700,
+    price: {
+      amount: 12000,
+      currency: 'JPY',
+      amountKrw: 115000,
+      collectedAt: '2026-09-08T03:00:00+09:00',
+      stale: false,
+    },
+  },
+  {
+    saleProductId: 505,
+    whiskyId: 105,
+    whiskyName: '닛카 요이치',
+    whiskyOriginalName: 'Nikka Yoichi',
+    volumeMl: 700,
+    price: {
+      amount: 7500,
+      currency: 'JPY',
+      amountKrw: 72000,
+      collectedAt: '2026-09-08T03:00:00+09:00',
+      stale: false,
+    },
+  },
+];
+
 function delay() {
   return new Promise((resolve) => setTimeout(resolve, MOCK_NETWORK_DELAY_MS));
 }
@@ -158,9 +232,9 @@ export async function searchWhiskyCandidates(
   await delay();
 
   const keyword = query.trim().toLowerCase();
-  if (!keyword) return getAllCandidates();
+  if (!keyword) return MOCK_CANDIDATES;
 
-  return getAllCandidates().filter(
+  return MOCK_CANDIDATES.filter(
     (item) =>
       item.whiskyName.toLowerCase().includes(keyword) ||
       item.whiskyOriginalName.toLowerCase().includes(keyword)

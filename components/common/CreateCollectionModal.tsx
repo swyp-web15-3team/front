@@ -6,7 +6,7 @@ import { Modal } from '@/components/ui/Modal';
 import { MODAL_ID } from '@/constants/modal';
 import type { useCreateCollectionMutation } from '@/hooks/queries/use-collection';
 import { useModal } from '@/hooks/use-modal';
-import { COLLECTION_NAME_MAX_LENGTH } from '@/lib/api/test-collection';
+import { COLLECTION_NAME_MAX_LENGTH } from '@/lib/api/collection';
 
 interface CreateCollectionModalProps {
   createCollectionMutation: ReturnType<typeof useCreateCollectionMutation>;
