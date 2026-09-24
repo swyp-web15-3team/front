@@ -1,7 +1,14 @@
 import { AxiosError, AxiosHeaders } from 'axios';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getPlannerErrorMessage, groupPlannerItems } from '@/lib/api/planner';
+import { apiClient } from '@/lib/api/client';
+import {
+  deletePlannerItem,
+  deletePlannerItems,
+  getPlannerErrorMessage,
+  groupPlannerItems,
+  movePlannerItems,
+} from '@/lib/api/planner';
 import { PlannerItem, PlannerListType } from '@/types/planner';
 
 function makeItem(
@@ -86,5 +93,58 @@ describe('getPlannerErrorMessage', () => {
 
   it('axios 에러가 아니면 기본 문구를 쓴다', () => {
     expect(getPlannerErrorMessage(new Error('boom'), '기본')).toBe('기본');
+  });
+});
+
+describe('플래너 항목 삭제', () => {
+  const del = vi.spyOn(apiClient, 'delete').mockResolvedValue({ status: 204 });
+
+  beforeEach(() => del.mockClear());
+
+  it('항목 하나는 plannerItemId 경로로 지운다', async () => {
+    await deletePlannerItem(10);
+    expect(del).toHaveBeenCalledWith('/planners/items/10');
+  });
+
+  it('카드 ✕는 listType + saleProductId 범위 삭제다', async () => {
+    await deletePlannerItems({ listType: 'CANDIDATE', saleProductId: 502 });
+    expect(del).toHaveBeenCalledWith('/planners/items', {
+      params: { listType: 'CANDIDATE', saleProductId: 502 },
+    });
+  });
+
+  it('플래너 초기화는 쿼리 없이 호출한다', async () => {
+    await deletePlannerItems();
+    expect(del).toHaveBeenCalledWith('/planners/items', { params: undefined });
+  });
+});
+
+describe('플래너 항목 이동', () => {
+  const patch = vi.spyOn(apiClient, 'patch').mockResolvedValue({ status: 204 });
+
+  beforeEach(() => patch.mockClear());
+
+  it('카드 하나는 saleProductId까지 담아 보낸다', async () => {
+    await movePlannerItems({
+      fromListType: 'CANDIDATE',
+      toListType: 'PURCHASE',
+      saleProductId: 501,
+    });
+    expect(patch).toHaveBeenCalledWith('/planners/move', {
+      fromListType: 'CANDIDATE',
+      toListType: 'PURCHASE',
+      saleProductId: 501,
+    });
+  });
+
+  it('구매 리스트 초기화는 saleProductId 없이 PURCHASE → CANDIDATE다', async () => {
+    await movePlannerItems({
+      fromListType: 'PURCHASE',
+      toListType: 'CANDIDATE',
+    });
+    expect(patch).toHaveBeenCalledWith('/planners/move', {
+      fromListType: 'PURCHASE',
+      toListType: 'CANDIDATE',
+    });
   });
 });

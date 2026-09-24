@@ -16,6 +16,7 @@ import {
 } from '@/constants/planner';
 import {
   useDeletePlannerItemMutation,
+  useDeletePlannerItemsMutation,
   useMovePlannerItemsMutation,
   usePlannerQuery,
 } from '@/hooks/queries/use-planner';
@@ -248,6 +249,7 @@ export default function PlanPage() {
   const { data, isLoading, isError, refetch } = usePlannerQuery();
   const { open: openAddPlannerItemModal } = useAddPlannerItemModal();
   const { mutate: deletePlannerItem } = useDeletePlannerItemMutation();
+  const { mutate: deletePlannerItems } = useDeletePlannerItemsMutation();
   const { mutate: movePlannerItems } = useMovePlannerItemsMutation();
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [candidateView, setCandidateView] = useState<'swipe' | 'list'>('swipe');
@@ -273,14 +275,15 @@ export default function PlanPage() {
     totalMl > PLANNER_PURCHASE_LIMIT_ML;
 
   function handleDrop(plannerItemId: number, from: BoardSection) {
-    // 카드를 드래그했으면 그 그룹의 행 전체를 함께 옮긴다
+    // 카드를 드래그했으면 saleProductId 기준으로 그 그룹의 병 전체가 함께 옮겨진다
     const group = items.find((item) =>
       item.plannerItemIds.includes(plannerItemId)
     );
     if (group) {
       movePlannerItems({
-        plannerItemIds: group.plannerItemIds,
-        listType: from === 'candidate' ? 'PURCHASE' : 'CANDIDATE',
+        fromListType: group.listType,
+        toListType: from === 'candidate' ? 'PURCHASE' : 'CANDIDATE',
+        saleProductId: group.saleProductId,
       });
     }
     setDraggingId(null);
@@ -297,22 +300,25 @@ export default function PlanPage() {
     deletePlannerItem(group.plannerItemIds[group.plannerItemIds.length - 1]);
   }
 
+  // 카드 ✕는 그 그룹 전체라, 행마다 호출하지 않고 범위 삭제 한 번으로 지운다
   function handleDelete(group: PlannerItemGroup) {
-    group.plannerItemIds.forEach((id) => deletePlannerItem(id));
+    deletePlannerItems({
+      listType: group.listType,
+      saleProductId: group.saleProductId,
+    });
   }
 
   function handleConfirmReset() {
     if (confirmAction === 'resetPurchase') {
-      const plannerItemIds = purchaseItems.flatMap(
-        (item) => item.plannerItemIds
-      );
-      if (plannerItemIds.length > 0) {
-        movePlannerItems({ plannerItemIds, listType: 'CANDIDATE' });
-      }
+      // 구매 리스트 초기화는 삭제가 아니라 전체를 후보로 내리는 이동이다
+      movePlannerItems({
+        fromListType: 'PURCHASE',
+        toListType: 'CANDIDATE',
+      });
     } else if (confirmAction === 'resetCandidates') {
-      candidateItems.forEach(handleDelete);
+      deletePlannerItems({ listType: 'CANDIDATE' });
     } else if (confirmAction === 'resetAll') {
-      items.forEach(handleDelete);
+      deletePlannerItems(undefined);
     }
     setConfirmAction(null);
   }

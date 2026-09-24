@@ -7,6 +7,7 @@ import {
   AddPlannerItemResponse,
   PlannerItem,
   PlannerItemGroup,
+  PlannerListType,
   PlannerResponse,
 } from '@/types/planner';
 
@@ -67,4 +68,32 @@ export function getPlannerErrorMessage(error: unknown, fallback: string) {
     if (detail) return detail;
   }
   return fallback;
+}
+
+/** 항목 하나 삭제. 개수 − 버튼. 그룹의 plannerItemId 아무거나 하나면 된다. */
+export async function deletePlannerItem(plannerItemId: number): Promise<void> {
+  await apiClient.delete(`/planners/items/${plannerItemId}`);
+}
+
+/**
+ * 범위 삭제. 인자 없으면 플래너 전체 초기화, listType만 주면 그 리스트 전체,
+ * saleProductId까지 주면 그 리스트의 해당 상품 전부(카드 ✕).
+ */
+export async function deletePlannerItems(params?: {
+  listType: PlannerListType;
+  saleProductId?: number;
+}): Promise<void> {
+  await apiClient.delete('/planners/items', { params });
+}
+
+/**
+ * listType만 바꾼다. saleProductId가 있으면 그 카드의 모든 병,
+ * 없으면 fromListType 전체(구매 리스트 초기화)를 옮긴다.
+ */
+export async function movePlannerItems(body: {
+  fromListType: PlannerListType;
+  toListType: PlannerListType;
+  saleProductId?: number;
+}): Promise<void> {
+  await apiClient.patch('/planners/move', body);
 }

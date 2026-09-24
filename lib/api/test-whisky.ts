@@ -84,7 +84,6 @@ const MOCK_SALE_PRODUCTS: SaleProduct[] = [
 ];
 
 // 플래너 추가 모달 "검색" 탭에서 쓰는 위스키 후보 목업 풀.
-// saleProductId는 플래너 mock(test-planner.ts)의 addPlannerItem과 공유한다.
 const MOCK_CANDIDATES: PlannerCandidate[] = [
   {
     saleProductId: 501,

@@ -2,13 +2,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   addPlannerItems,
+  deletePlannerItem,
+  deletePlannerItems,
   fetchPlanner,
   groupPlannerItems,
+  movePlannerItems,
 } from '@/lib/api/planner';
-import {
-  deletePlannerItem,
-  updatePlannerItemListType,
-} from '@/lib/api/test-planner';
 import {
   AddPlannerItemRequest,
   PlannerListType,
@@ -47,14 +46,13 @@ export function useMovePlannerItemsMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      plannerItemIds,
-      listType,
-    }: {
-      plannerItemIds: number[];
-      listType: PlannerListType;
-    }) => updatePlannerItemListType(plannerItemIds, listType),
-    onMutate: async ({ plannerItemIds, listType }) => {
+    mutationFn: movePlannerItems,
+    onMutate: async (variables: {
+      fromListType: PlannerListType;
+      toListType: PlannerListType;
+      saleProductId?: number;
+    }) => {
+      const { fromListType, toListType, saleProductId } = variables;
       await queryClient.cancelQueries({ queryKey: plannerKeys.all });
 
       const previous = queryClient.getQueryData<PlannerResponse['data']>(
@@ -64,11 +62,15 @@ export function useMovePlannerItemsMutation() {
       if (previous) {
         queryClient.setQueryData<PlannerResponse['data']>(plannerKeys.all, {
           ...previous,
-          items: previous.items.map((item) =>
-            plannerItemIds.includes(item.plannerItemId)
-              ? { ...item, listType }
-              : item
-          ),
+          items: previous.items.map((item) => {
+            if (item.listType !== fromListType) return item;
+            if (
+              saleProductId !== undefined &&
+              item.saleProductId !== saleProductId
+            )
+              return item;
+            return { ...item, listType: toListType };
+          }),
         });
       }
 
@@ -109,6 +111,52 @@ export function useDeletePlannerItemMutation() {
       return { previous };
     },
     onError: (_err, _plannerItemId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(plannerKeys.all, context.previous);
+      }
+    },
+    onSettled: () => {
+      return queryClient.invalidateQueries({ queryKey: plannerKeys.all });
+    },
+  });
+}
+
+/**
+ * 범위 삭제(카드 ✕, 후보 전체 삭제, 플래너 초기화).
+ * 항목 하나씩 반복 호출하는 대신 한 번에 지운다.
+ */
+export function useDeletePlannerItemsMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deletePlannerItems,
+    onMutate: async (params?: {
+      listType: PlannerListType;
+      saleProductId?: number;
+    }) => {
+      await queryClient.cancelQueries({ queryKey: plannerKeys.all });
+
+      const previous = queryClient.getQueryData<PlannerResponse['data']>(
+        plannerKeys.all
+      );
+
+      if (previous) {
+        queryClient.setQueryData<PlannerResponse['data']>(plannerKeys.all, {
+          ...previous,
+          items: previous.items.filter((item) => {
+            if (!params) return false;
+            if (item.listType !== params.listType) return true;
+            return (
+              params.saleProductId !== undefined &&
+              item.saleProductId !== params.saleProductId
+            );
+          }),
+        });
+      }
+
+      return { previous };
+    },
+    onError: (_err, _params, context) => {
       if (context?.previous) {
         queryClient.setQueryData(plannerKeys.all, context.previous);
       }
