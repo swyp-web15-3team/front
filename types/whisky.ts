@@ -125,14 +125,20 @@ export type WhiskyRelatedListResponse =
   ApiSuccessResponse<WhiskyRelatedListData>;
 
 // ── GET /api/v1/curations ─────────────────────────
-export interface Curation {
-  id: number;
-  title: string;
-  whiskies: WhiskyCard[];
+export interface CurationListRequest {
+  page?: number;
+  size?: number;
 }
 
+// 주제가 없으면 id/title은 null, content는 []
 interface CurationListData {
-  curations: Curation[];
+  id: number | null;
+  title: string | null;
+  content: WhiskyListItem[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }
 
 export type CurationListResponse = ApiSuccessResponse<CurationListData>;
