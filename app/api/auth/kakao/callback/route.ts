@@ -14,6 +14,15 @@ export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
   const baseUrl = getBaseUrl(request);
 
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[kakao/callback] 진입', {
+      code: code && `${code.slice(0, 8)}...`,
+      error: request.nextUrl.searchParams.get('error'),
+      errorDescription: request.nextUrl.searchParams.get('error_description'),
+      redirectUri: process.env.KAKAO_REDIRECT_URI,
+    });
+  }
+
   if (!code) {
     return NextResponse.redirect(new URL('/login', baseUrl));
   }
@@ -27,6 +36,14 @@ export async function GET(request: NextRequest) {
 
     const { accessToken, refreshToken, isNewUser } = data.data;
 
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[kakao/callback] 백엔드 응답', {
+        ...data.data,
+        accessToken: accessToken && `${accessToken.slice(0, 12)}...`,
+        refreshToken: refreshToken && `${refreshToken.slice(0, 12)}...`,
+      });
+    }
+
     const redirectUrl = new URL('/login/callback', baseUrl);
     redirectUrl.searchParams.set('accessToken', accessToken);
     redirectUrl.searchParams.set('isNewUser', String(isNewUser));
@@ -35,6 +52,7 @@ export async function GET(request: NextRequest) {
 
     // 신규 유저는 회원가입(sign-up) 완료 전까지 로그인 상태로 만들지 않는다.
     if (!isNewUser) {
+      // redirect 응답에는 cookies()가 아니라 response.cookies로 심어야 헤더에 실린다.
       response.cookies.set(REFRESH_TOKEN_COOKIE, refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -46,6 +64,20 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     Sentry.captureException(error);
+
+    if (process.env.NODE_ENV !== 'production') {
+      if (axios.isAxiosError(error)) {
+        console.error('[kakao/callback] 실패', {
+          url: error.config?.url,
+          params: error.config?.params,
+          status: error.response?.status,
+          data: error.response?.data,
+        });
+      } else {
+        console.error('[kakao/callback] 실패', error);
+      }
+    }
+
     return NextResponse.redirect(new URL('/login', baseUrl));
   }
 }

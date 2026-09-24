@@ -25,23 +25,31 @@ export async function POST() {
     );
 
     const { refreshToken: newRefreshToken, ...tokenResponse } = data.data;
-    const response = NextResponse.json(tokenResponse);
-    response.cookies.set(REFRESH_TOKEN_COOKIE, newRefreshToken, {
+
+    cookieStore.set(REFRESH_TOKEN_COOKIE, newRefreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
     });
 
-    return response;
+    return NextResponse.json(tokenResponse);
   } catch (error) {
     Sentry.captureException(error);
 
-    const response = NextResponse.json(
+    const status = axios.isAxiosError(error)
+      ? (error.response?.status ?? 500)
+      : 500;
+
+    // 백엔드가 토큰 자체를 거부한 경우에만 쿠키를 지운다.
+    // 네트워크 오류/5xx로 지우면 멀쩡한 refreshToken이 날아간다.
+    if (status === 401 || status === 403) {
+      cookieStore.delete(REFRESH_TOKEN_COOKIE);
+    }
+
+    return NextResponse.json(
       { message: '토큰 재발급에 실패했습니다.' },
-      { status: 401 }
+      { status }
     );
-    response.cookies.delete(REFRESH_TOKEN_COOKIE);
-    return response;
   }
 }
