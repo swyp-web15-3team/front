@@ -1,91 +1,31 @@
 import { findCandidateBySaleProductId } from '@/lib/api/test-collection';
-import { PlannerItem, PlannerResponse } from '@/types/planner';
+import { PlannerItem, PlannerListType } from '@/types/planner';
 
 const MOCK_NETWORK_DELAY_MS = 400;
 let nextPlannerItemId = 100;
 
-const MOCK_PLANNER_ITEMS: PlannerItem[] = [
-  {
-    plannerItemId: 10,
-    saleProductId: 501,
-    whiskyId: 101,
-    whiskyName: 'Lagavulin 16',
-    volumeMl: 700,
-    abv: 43.0,
-    retailerId: 3,
-    retailerName: '나리타 면세',
-    countryCode: 'JP',
-    isDutyFree: true,
-    productUrl: 'https://example.com/product/501',
-    isSoldOut: false,
-    price: {
-      amount: 9800,
-      currency: 'JPY',
-      amountKrw: 94000,
-      collectedAt: '2026-09-08T03:00:00+09:00',
-      stale: false,
-    },
-    exchange: {
-      source: 'KOREA_EXIM',
-      krwPerJpy: 9.59,
-      validFrom: '2026-09-08',
-      validTo: '2026-09-08',
-    },
-    computable: true,
-    quantity: 1,
-  },
-  {
-    plannerItemId: 11,
-    saleProductId: 502,
-    whiskyId: 102,
-    whiskyName: '야마자키 12년',
-    volumeMl: 700,
-    abv: 43.0,
-    retailerId: 4,
-    retailerName: '돈키호테',
-    countryCode: 'JP',
-    isDutyFree: false,
-    productUrl: 'https://example.com/product/502',
-    isSoldOut: true,
-    price: null,
-    exchange: null,
-    computable: false,
-    quantity: 1,
-  },
-];
+// GET /api/v1/planners는 lib/api/planner.ts에서 실제 API로 연동됐다.
+// 아래는 아직 스펙이 나오지 않은 추가/이동/삭제용 목업이다.
+// 서버는 수량 필드를 내려주지 않는다. 한 행 = 1병이고, 수량은 같은
+// saleProductId + listType 행의 개수다.
+const MOCK_PLANNER_ITEMS: PlannerItem[] = [];
 
-// TODO: 플래너 API 연동 후 이 파일을 planner.ts로 옮기고 아래 목업 대신
-// apiClient.get<PlannerResponse>('/api/v1/planners')로 교체한다.
-// 반환 형태(PlannerResponse['data'])만 유지하면 훅 수정 없이 교체 가능하다.
-export async function fetchPlanner(): Promise<PlannerResponse['data']> {
-  await new Promise((resolve) => setTimeout(resolve, MOCK_NETWORK_DELAY_MS));
-
-  return { items: MOCK_PLANNER_ITEMS };
-}
-
-// TODO: 플래너 API 연동 후 apiClient.post<AddPlannerItemResponse['data']>('/api/v1/planners/items', { saleProductId, quantity })로 교체한다.
-// 같은 saleProductId가 이미 있으면 새 항목을 만들지 않고 quantity만 더한다.
+// TODO: 스펙 확정 후 apiClient.post('/api/v1/planners/items', { saleProductId, quantity })로 교체한다.
+// 수량만큼 행을 만든다.
 export async function addPlannerItem(
   saleProductId: number,
   quantity: number
-): Promise<PlannerItem> {
+): Promise<PlannerItem[]> {
   await new Promise((resolve) => setTimeout(resolve, MOCK_NETWORK_DELAY_MS));
-
-  const existing = MOCK_PLANNER_ITEMS.find(
-    (item) => item.saleProductId === saleProductId
-  );
-  if (existing) {
-    existing.quantity += quantity;
-    return existing;
-  }
 
   const candidate = findCandidateBySaleProductId(saleProductId);
   if (!candidate) {
     throw new Error('판매 상품을 찾을 수 없습니다.');
   }
 
-  const newItem: PlannerItem = {
+  const added = Array.from({ length: quantity }, () => ({
     plannerItemId: nextPlannerItemId++,
+    listType: 'CANDIDATE' as PlannerListType,
     saleProductId: candidate.saleProductId,
     whiskyId: candidate.whiskyId,
     whiskyName: candidate.whiskyName,
@@ -93,37 +33,34 @@ export async function addPlannerItem(
     abv: null,
     retailerId: 0,
     retailerName: '',
-    countryCode: 'JP',
+    countryCode: 'JP' as const,
     isDutyFree: false,
-    productUrl: '',
+    productUrl: null,
     isSoldOut: false,
     price: candidate.price,
     exchange: null,
     computable: candidate.price !== null,
-    quantity,
-  };
-  MOCK_PLANNER_ITEMS.push(newItem);
-  return newItem;
+  }));
+
+  MOCK_PLANNER_ITEMS.push(...added);
+  return added;
 }
 
-// TODO: 플래너 API 연동 후 apiClient.patch(`/api/v1/planners/items/${plannerItemId}`, { quantity })로 교체한다.
-export async function updatePlannerItemQuantity(
-  plannerItemId: number,
-  quantity: number
-): Promise<PlannerItem> {
+// TODO: 스펙 확정 후 구매/후보 이동 API로 교체한다.
+export async function updatePlannerItemListType(
+  plannerItemIds: number[],
+  listType: PlannerListType
+): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, MOCK_NETWORK_DELAY_MS));
 
-  const item = MOCK_PLANNER_ITEMS.find(
-    (item) => item.plannerItemId === plannerItemId
-  );
-  if (!item) {
-    throw new Error('플래너 항목을 찾을 수 없습니다.');
+  for (const item of MOCK_PLANNER_ITEMS) {
+    if (plannerItemIds.includes(item.plannerItemId)) {
+      item.listType = listType;
+    }
   }
-  item.quantity = quantity;
-  return item;
 }
 
-// TODO: 플래너 API 연동 후 apiClient.delete(`/api/v1/planners/items/${plannerItemId}`)로 교체한다.
+// TODO: 스펙 확정 후 apiClient.delete(`/api/v1/planners/items/${plannerItemId}`)로 교체한다.
 export async function deletePlannerItem(plannerItemId: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, MOCK_NETWORK_DELAY_MS));
 

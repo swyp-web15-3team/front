@@ -15,8 +15,12 @@ export interface PlannerItemExchange {
   validTo: string;
 }
 
+export type PlannerListType = 'PURCHASE' | 'CANDIDATE';
+
+// 서버가 내려주는 플래너 한 행. 한 행 = 1병이고 수량 필드는 없다.
 export interface PlannerItem {
   plannerItemId: number;
+  listType: PlannerListType;
   saleProductId: number;
   whiskyId: number;
   whiskyName: string;
@@ -26,12 +30,18 @@ export interface PlannerItem {
   retailerName: string;
   countryCode: CountryCode;
   isDutyFree: boolean;
-  productUrl: string;
+  productUrl: string | null;
   isSoldOut: boolean | null;
   price: PlannerItemPrice | null;
   exchange: PlannerItemExchange | null;
   computable: boolean;
+}
+
+// 같은 saleProductId + listType 행들을 한 카드로 묶은 화면용 단위.
+// quantity는 그룹의 행 수이고, 삭제/수량 변경은 plannerItemIds로 처리한다.
+export interface PlannerItemGroup extends PlannerItem {
   quantity: number;
+  plannerItemIds: number[];
 }
 
 export interface PlannerResponse {
@@ -50,8 +60,7 @@ export interface PlannerCandidate {
   price: PlannerItemPrice | null;
 }
 
-// POST /api/v1/planners/items 요청/응답. 같은 saleProductId를 다시 보내면
-// 새 항목을 만들지 않고 기존 항목의 quantity를 늘린다.
+// POST /api/v1/planners/items 요청/응답.
 export interface AddPlannerItemRequest {
   saleProductId: number;
   quantity: number;

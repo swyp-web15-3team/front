@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { fetchPlanner, groupPlannerItems } from '@/lib/api/planner';
 import {
   addPlannerItem,
   deletePlannerItem,
-  fetchPlanner,
-  updatePlannerItemQuantity,
+  updatePlannerItemListType,
 } from '@/lib/api/test-planner';
-import { PlannerResponse } from '@/types/planner';
+import { PlannerListType, PlannerResponse } from '@/types/planner';
 
 export const plannerKeys = {
   all: ['planners'] as const,
@@ -16,6 +16,8 @@ export function usePlannerQuery() {
   return useQuery({
     queryKey: plannerKeys.all,
     queryFn: fetchPlanner,
+    // 서버가 수량을 내려주지 않으므로 화면에서 쓰는 카드 단위로 묶어준다
+    select: (data) => groupPlannerItems(data.items),
   });
 }
 
@@ -35,18 +37,18 @@ export function useAddPlannerItemMutation() {
   });
 }
 
-export function useUpdatePlannerItemQuantityMutation() {
+export function useMovePlannerItemsMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({
-      plannerItemId,
-      quantity,
+      plannerItemIds,
+      listType,
     }: {
-      plannerItemId: number;
-      quantity: number;
-    }) => updatePlannerItemQuantity(plannerItemId, quantity),
-    onMutate: async ({ plannerItemId, quantity }) => {
+      plannerItemIds: number[];
+      listType: PlannerListType;
+    }) => updatePlannerItemListType(plannerItemIds, listType),
+    onMutate: async ({ plannerItemIds, listType }) => {
       await queryClient.cancelQueries({ queryKey: plannerKeys.all });
 
       const previous = queryClient.getQueryData<PlannerResponse['data']>(
@@ -57,7 +59,9 @@ export function useUpdatePlannerItemQuantityMutation() {
         queryClient.setQueryData<PlannerResponse['data']>(plannerKeys.all, {
           ...previous,
           items: previous.items.map((item) =>
-            item.plannerItemId === plannerItemId ? { ...item, quantity } : item
+            plannerItemIds.includes(item.plannerItemId)
+              ? { ...item, listType }
+              : item
           ),
         });
       }
