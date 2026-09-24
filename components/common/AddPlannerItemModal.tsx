@@ -31,9 +31,9 @@ export function AddPlannerItemModal() {
   const { isOpen, close } = useAddPlannerItemModal();
   const [tab, setTab] = useState<Tab>('collection');
   const [keyword, setKeyword] = useState('');
-  const [openCollectionIds, setOpenCollectionIds] = useState<Set<number>>(
-    new Set()
-  );
+  const [selectedCollectionId, setSelectedCollectionId] = useState<
+    number | null
+  >(null);
   // saleProductId -> 선택 개수. 동일한 술을 다시 클릭하면 개수만 늘어난다.
   const [counts, setCounts] = useState<Map<number, number>>(new Map());
   const [isConfirmingClose, setIsConfirmingClose] = useState(false);
@@ -58,35 +58,27 @@ export function AddPlannerItemModal() {
     [counts]
   );
 
-  // 컬렉션 탭에서 검색어가 있으면, 매칭되는 위스키가 속한 컬렉션의 드롭다운을 자동으로 연다.
-  const matchedCollectionIds = useMemo(() => {
+  // 컬렉션 탭에서 검색어가 있으면, 매칭되는 위스키가 속한 첫 컬렉션을 자동으로 연다.
+  const keywordMatchedCollectionId = useMemo(() => {
     if (tab !== 'collection' || !keyword.trim()) return null;
 
     const lowerKeyword = keyword.trim().toLowerCase();
-    const matched = new Set<number>();
-    collectionIds.forEach((id, index) => {
-      const items = collectionItemQueries[index]?.data?.items ?? [];
-      const hasMatch = items.some(
+    const matchedIndex = collectionIds.findIndex((_, index) =>
+      (collectionItemQueries[index]?.data?.items ?? []).some(
         (item) =>
           item.whiskyName.toLowerCase().includes(lowerKeyword) ||
           item.whiskyOriginalName.toLowerCase().includes(lowerKeyword)
-      );
-      if (hasMatch) matched.add(id);
-    });
-    return matched;
+      )
+    );
+    return matchedIndex === -1 ? null : collectionIds[matchedIndex];
   }, [tab, keyword, collectionIds, collectionItemQueries]);
 
-  function toggleCollection(collectionId: number) {
-    setOpenCollectionIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(collectionId)) {
-        next.delete(collectionId);
-      } else {
-        next.add(collectionId);
-      }
-      return next;
-    });
-  }
+  const openCollectionId = selectedCollectionId ?? keywordMatchedCollectionId;
+  const openCollectionIndex = collectionIds.indexOf(openCollectionId ?? -1);
+  const openCollectionItems =
+    openCollectionIndex === -1
+      ? []
+      : (collectionItemQueries[openCollectionIndex]?.data?.items ?? []);
 
   // 서버 한도(종류 20개, 종류당 20병)를 넘으면 400이라 입력 단계에서 막는다
   function changeCount(saleProductId: number, diff: 1 | -1) {
@@ -122,6 +114,7 @@ export function AddPlannerItemModal() {
 
   function handleClose() {
     setKeyword('');
+    setSelectedCollectionId(null);
     setCounts(new Map());
     setIsConfirmingClose(false);
     setErrorMessage('');
@@ -166,6 +159,31 @@ export function AddPlannerItemModal() {
     );
   }
 
+  const visibleItems =
+    tab === 'all'
+      ? (searchResults ?? [])
+      : filterByKeyword(openCollectionItems);
+
+  const whiskyList = (
+    <ul className="h-full overflow-y-auto rounded-lg bg-gray-50 p-2">
+      {visibleItems.length === 0 ? (
+        <li className="py-8 text-center text-xs text-gray-400">
+          해당하는 상품이 없습니다
+        </li>
+      ) : (
+        visibleItems.map((item) => (
+          <CandidateRow
+            key={item.saleProductId}
+            item={item}
+            count={counts.get(item.saleProductId) ?? 0}
+            onIncrement={() => changeCount(item.saleProductId, 1)}
+            onDecrement={() => changeCount(item.saleProductId, -1)}
+          />
+        ))
+      )}
+    </ul>
+  );
+
   if (isConfirmingClose) {
     return (
       <Modal
@@ -203,101 +221,78 @@ export function AddPlannerItemModal() {
     <Modal
       isOpen={isOpen}
       onClose={requestClose}
-      panelClassName="max-w-[520px]"
+      panelClassName="flex h-[80vh] max-w-[760px] flex-col"
     >
-      <div className="flex gap-1 rounded-md bg-gray-100 p-1 text-sm">
-        <button
-          type="button"
-          onClick={() => setTab('collection')}
-          className={cn(
-            'flex-1 rounded-md py-1.5',
-            tab === 'collection' ? 'bg-white font-medium' : 'text-gray-500'
-          )}
-        >
-          컬렉션
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('all')}
-          className={cn(
-            'flex-1 rounded-md py-1.5',
-            tab === 'all' ? 'bg-white font-medium' : 'text-gray-500'
-          )}
-        >
-          전체
-        </button>
-      </div>
+      <div className="flex min-h-0 flex-1 gap-3">
+        {/* 1열: 컬렉션 / 검색 전환 */}
+        <div className="flex w-24 shrink-0 flex-col gap-1 text-sm">
+          {(['collection', 'all'] as const).map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setTab(value)}
+              className={cn(
+                'rounded-md px-3 py-2 text-left',
+                tab === value
+                  ? 'bg-gray-100 font-semibold'
+                  : 'text-gray-500 hover:bg-gray-50'
+              )}
+            >
+              {value === 'collection' ? '컬렉션' : '검색'}
+            </button>
+          ))}
+        </div>
 
-      <input
-        type="text"
-        value={keyword}
-        onChange={(e) => setKeyword(e.target.value)}
-        placeholder="search box"
-        className="mt-3 w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none"
-      />
-
-      <div className="mt-3 max-h-100 overflow-y-auto">
-        {tab === 'collection'
-          ? collections.map((collection, index) => {
-              const items = filterByKeyword(
-                collectionItemQueries[index]?.data?.items ?? []
-              );
-              const isOpenDropdown =
-                openCollectionIds.has(collection.id) ||
-                (matchedCollectionIds?.has(collection.id) ?? false);
-
-              return (
-                <div key={collection.id} className="border-b border-gray-100">
+        {tab === 'collection' ? (
+          <>
+            {/* 2열: 컬렉션 목록 */}
+            <ul className="flex w-48 shrink-0 flex-col gap-1 overflow-y-auto text-sm">
+              {collections.map((collection, index) => (
+                <li key={collection.id}>
                   <button
                     type="button"
-                    onClick={() => toggleCollection(collection.id)}
-                    className="flex w-full items-center justify-between py-3 text-sm"
+                    onClick={() => setSelectedCollectionId(collection.id)}
+                    className={cn(
+                      'flex w-full items-center justify-between rounded-md px-3 py-2 text-left',
+                      openCollectionId === collection.id
+                        ? 'bg-gray-100 font-semibold'
+                        : 'hover:bg-gray-50'
+                    )}
                   >
-                    <span>{collection.name}</span>
-                    <span
-                      className={cn(
-                        'transition-transform',
-                        isOpenDropdown && 'rotate-90'
-                      )}
-                    >
-                      {'>'}
+                    <span className="truncate">{collection.name}</span>
+                    <span className="ml-2 shrink-0 text-xs text-gray-400">
+                      ({collectionItemQueries[index]?.data?.items.length ?? 0})
                     </span>
                   </button>
-                  {isOpenDropdown && (
-                    <ul className="pb-2">
-                      {items.length === 0 ? (
-                        <li className="py-2 text-center text-xs text-gray-400">
-                          해당하는 상품이 없습니다
-                        </li>
-                      ) : (
-                        items.map((item) => (
-                          <CandidateRow
-                            key={item.saleProductId}
-                            item={item}
-                            count={counts.get(item.saleProductId) ?? 0}
-                            onIncrement={() =>
-                              changeCount(item.saleProductId, 1)
-                            }
-                            onDecrement={() =>
-                              changeCount(item.saleProductId, -1)
-                            }
-                          />
-                        ))
-                      )}
-                    </ul>
-                  )}
-                </div>
-              );
-            })
-          : (searchResults ?? []).map((item) => (
-              <CandidateRow
-                key={item.saleProductId}
-                item={item}
-                count={counts.get(item.saleProductId) ?? 0}
-                onIncrement={() => changeCount(item.saleProductId, 1)}
-                onDecrement={() => changeCount(item.saleProductId, -1)}
-              />
-            ))}
+                </li>
+              ))}
+            </ul>
+
+            {/* 3열: 위스키 리스트. 컬렉션 선택 시 부드럽게 펼쳐진다 */}
+            <div
+              className={cn(
+                'grid min-w-0 flex-1 transition-all duration-300 ease-out',
+                openCollectionId !== null
+                  ? 'grid-cols-[1fr] opacity-100'
+                  : 'grid-cols-[0fr] opacity-0'
+              )}
+            >
+              <div className="min-w-0 overflow-hidden">{whiskyList}</div>
+            </div>
+          </>
+        ) : (
+          /* 검색 탭은 2열: 검색창 아래에 위스키 리스트가 바로 붙는다 */
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
+            <input
+              type="text"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              placeholder="위스키 검색"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none"
+            />
+            <div className="min-h-0 flex-1">{whiskyList}</div>
+          </div>
+        )}
       </div>
 
       <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
