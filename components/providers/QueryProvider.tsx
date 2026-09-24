@@ -21,8 +21,9 @@ export function QueryProvider({ children }: QueryProviderProps) {
       return;
     }
 
-    // 로그인 콜백은 쿠키가 막 심어지는 중이라 여기서 refresh를 때리면 불필요한 401이 난다.
-    if (pathname.startsWith('/login')) {
+    // 로그인/회원가입 진행 중에는 아직 쿠키가 없거나 막 심어지는 중이라
+    // 여기서 refresh를 때리면 불필요한 401이 난다.
+    if (pathname.startsWith('/login') || pathname.startsWith('/signup')) {
       return;
     }
 
