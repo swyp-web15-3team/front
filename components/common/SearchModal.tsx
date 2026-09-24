@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { MODAL_ID } from '@/constants/modal';
 import { useModal } from '@/hooks/use-modal';
 import { Modal } from '@/components/ui/Modal';
+import { useDebounce } from '@/hooks/use-debounce';
+import { useWhiskySuggestionsQuery } from '@/hooks/queries/use-whisky';
 
 interface IconProps {
   className?: string;
@@ -47,8 +49,6 @@ function CloseIcon({ className }: IconProps) {
   );
 }
 
-const RECOMMENDED_KEYWORDS = ['야마자키', '치타', '요이치', '후지', '마르스'];
-
 export function useSearchModal() {
   return useModal(MODAL_ID.SEARCH);
 }
@@ -64,6 +64,9 @@ export function SearchModal() {
     '닛카',
     '산토리',
   ]);
+
+  const debouncedKeyword = useDebounce(keyword, 300);
+  const { data } = useWhiskySuggestionsQuery(debouncedKeyword, isOpen);
 
   const removeRecentKeyword = (target: string) => {
     setRecentKeywords((prev) => prev.filter((item) => item !== target));
@@ -161,16 +164,19 @@ export function SearchModal() {
       )}
 
       <div className="mt-5">
-        <p className="text-sm text-gray-500">추천 검색어</p>
         <div className="mt-2 flex flex-wrap gap-2">
-          {RECOMMENDED_KEYWORDS.map((item) => (
+          {(data?.suggestions.length ?? 0) > 0 && (
+            <p className="text-sm text-gray-500">추천 검색어</p>
+          )}
+
+          {data?.suggestions.map((item) => (
             <button
-              key={item}
+              key={item.keyword}
               type="button"
-              onClick={() => handleSearch(item)}
+              onClick={() => handleSearch(item.keyword)}
               className="rounded-full border border-gray-300 px-3 py-1 text-sm"
             >
-              {item}
+              {item.keyword}
             </button>
           ))}
         </div>

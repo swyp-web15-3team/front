@@ -2,11 +2,11 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
 import {
   fetchRelatedWhiskies,
-  fetchWhiskies,
   fetchWhiskyCategories,
   fetchWhiskyDetail,
   searchWhiskyCandidates,
 } from '@/lib/api/test-whisky';
+import { fetchWhiskies, fetchWhiskySuggestions } from '@/lib/api/whisky';
 import { WhiskyListRequest } from '@/types/whisky';
 
 type WhiskyListFilters = Omit<WhiskyListRequest, 'page'>;
@@ -23,8 +23,11 @@ export const whiskyKeys = {
     [...whiskyKeys.detail(whiskyId), 'related'] as const,
   candidates: (query: string) =>
     [...whiskyKeys.all, 'candidates', query] as const,
+  suggestions: (query: string) =>
+    [...whiskyKeys.all, 'suggestions', query] as const,
 };
 
+// 위스키 목록 검색
 export function useWhiskyListQuery(filters: WhiskyListFilters = {}) {
   return useInfiniteQuery({
     queryKey: whiskyKeys.list(filters),
@@ -61,5 +64,17 @@ export function useWhiskyCandidateSearchQuery(query: string) {
   return useQuery({
     queryKey: whiskyKeys.candidates(query),
     queryFn: () => searchWhiskyCandidates(query),
+  });
+}
+
+// 검색 모달 추천 검색어
+export function useWhiskySuggestionsQuery(query: string, enabled: boolean) {
+  const trimmedQuery = query.trim();
+
+  return useQuery({
+    queryKey: whiskyKeys.suggestions(trimmedQuery),
+    queryFn: () =>
+      fetchWhiskySuggestions(trimmedQuery ? { query: trimmedQuery } : {}),
+    enabled,
   });
 }
