@@ -89,7 +89,7 @@ function delay() {
 }
 
 // TODO: 위스키 목록 API 연동 후 이 파일을 whisky.ts로 옮기고 아래 목업 대신
-// apiClient.get<WhiskyListResponse>('/api/v1/whiskies', { params })로 교체한다.
+// apiClient.get<WhiskyListResponse>('/whiskies', { params })로 교체한다.
 // 반환 형태(WhiskyListResponse['data'])만 유지하면 훅 수정 없이 교체 가능하다.
 export async function fetchWhiskies({
   page = 0,
@@ -114,7 +114,7 @@ export async function fetchWhiskies({
   };
 }
 
-// TODO: 위스키 종류 API 연동 후 apiClient.get<WhiskyCategoryListResponse>('/api/v1/whisky-categories')로 교체한다.
+// TODO: 위스키 종류 API 연동 후 apiClient.get<WhiskyCategoryListResponse>('/whisky-categories')로 교체한다.
 export async function fetchWhiskyCategories(): Promise<
   WhiskyCategoryListResponse['data']
 > {
@@ -122,7 +122,7 @@ export async function fetchWhiskyCategories(): Promise<
   return { categories: MOCK_CATEGORIES };
 }
 
-// TODO: 위스키 상세 API 연동 후 apiClient.get<WhiskyDetailResponse>(`/api/v1/whiskies/${whiskyId}`)로 교체한다.
+// TODO: 위스키 상세 API 연동 후 apiClient.get<WhiskyDetailResponse>(`/whiskies/${whiskyId}`)로 교체한다.
 export async function fetchWhiskyDetail(
   whiskyId: number
 ): Promise<WhiskyDetailResponse['data']> {
@@ -135,7 +135,7 @@ export async function fetchWhiskyDetail(
   };
 }
 
-// TODO: 연관 위스키 API 연동 후 apiClient.get<WhiskyRelatedListResponse>(`/api/v1/whiskies/${whiskyId}/related`)로 교체한다.
+// TODO: 연관 위스키 API 연동 후 apiClient.get<WhiskyRelatedListResponse>(`/whiskies/${whiskyId}/related`)로 교체한다.
 export async function fetchRelatedWhiskies(
   whiskyId: number
 ): Promise<WhiskyRelatedListResponse['data']> {
@@ -150,7 +150,7 @@ export async function fetchRelatedWhiskies(
   return { whiskies };
 }
 
-// TODO: 위스키 검색 API 연동 후 apiClient.get<WhiskyListResponse>('/api/v1/whiskies', { params: { query } })로 교체한다.
+// TODO: 위스키 검색 API 연동 후 apiClient.get<WhiskyListResponse>('/whiskies', { params: { query } })로 교체한다.
 // 플래너 추가 모달의 "전체" 탭에서 쓰는, 플래너에 추가 가능한 위스키 후보 검색.
 export async function searchWhiskyCandidates(
   query: string

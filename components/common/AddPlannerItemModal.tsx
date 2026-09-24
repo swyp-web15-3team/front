@@ -10,6 +10,11 @@ import {
   useCollectionListQuery,
 } from '@/hooks/queries/use-collection';
 import { useAddPlannerItemMutation } from '@/hooks/queries/use-planner';
+import {
+  ADD_PLANNER_ITEM_MAX_QUANTITY,
+  ADD_PLANNER_ITEM_MAX_TYPES,
+  getPlannerErrorMessage,
+} from '@/lib/api/planner';
 import { useWhiskyCandidateSearchQuery } from '@/hooks/queries/use-whisky';
 import { useModal } from '@/hooks/use-modal';
 import { cn } from '@/lib/utils';
@@ -83,10 +88,29 @@ export function AddPlannerItemModal() {
     });
   }
 
+  // 서버 한도(종류 20개, 종류당 20병)를 넘으면 400이라 입력 단계에서 막는다
   function changeCount(saleProductId: number, diff: 1 | -1) {
+    setErrorMessage('');
     setCounts((prev) => {
+      const current = prev.get(saleProductId) ?? 0;
+
+      if (diff === 1) {
+        if (current === 0 && prev.size >= ADD_PLANNER_ITEM_MAX_TYPES) {
+          setErrorMessage(
+            `한 번에 추가할 수 있는 상품은 ${ADD_PLANNER_ITEM_MAX_TYPES}개까지입니다.`
+          );
+          return prev;
+        }
+        if (current >= ADD_PLANNER_ITEM_MAX_QUANTITY) {
+          setErrorMessage(
+            `한 상품은 ${ADD_PLANNER_ITEM_MAX_QUANTITY}병까지 담을 수 있어요.`
+          );
+          return prev;
+        }
+      }
+
       const next = new Map(prev);
-      const count = Math.max((next.get(saleProductId) ?? 0) + diff, 0);
+      const count = Math.max(current + diff, 0);
       if (count === 0) {
         next.delete(saleProductId);
       } else {
@@ -124,7 +148,11 @@ export function AddPlannerItemModal() {
     // "리스트 갱신 → 모달 닫힘" 순서가 보장된다.
     addPlannerItemMutation.mutate(items, {
       onSuccess: handleClose,
-      onError: () => setErrorMessage('추가에 실패했어요. 다시 시도해주세요.'),
+      // 품절/가격 없음 등은 서버가 어떤 상품인지까지 detail로 알려준다
+      onError: (error) =>
+        setErrorMessage(
+          getPlannerErrorMessage(error, '추가에 실패했어요. 다시 시도해주세요.')
+        ),
     });
   }
 

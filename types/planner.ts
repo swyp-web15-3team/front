@@ -61,9 +61,21 @@ export interface PlannerCandidate {
 }
 
 // POST /api/v1/planners/items 요청/응답.
-export interface AddPlannerItemRequest {
+// 서버는 수량 컬럼이 없어 quantity만큼 행을 만든다. 같은 상품을 다시 넣으면
+// 새 plannerItemId 행이 생기고, 한 요청 안에 같은 saleProductId는 못 넣는다.
+export interface AddPlannerItemRequestItem {
   saleProductId: number;
-  quantity: number;
+  /** 병 수. 생략하면 1, 최대 20 */
+  quantity?: number;
+  /** 생략하면 CANDIDATE */
+  listType?: PlannerListType;
 }
 
-export type AddPlannerItemResponse = ApiSuccessResponse<PlannerItem>;
+export interface AddPlannerItemRequest {
+  /** 1~20개 */
+  items: AddPlannerItemRequestItem[];
+}
+
+export type AddPlannerItemResponse = ApiSuccessResponse<{
+  items: PlannerItem[];
+}>;

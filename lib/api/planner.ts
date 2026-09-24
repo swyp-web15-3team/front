@@ -1,12 +1,17 @@
+import axios from 'axios';
+
 import { apiClient } from '@/lib/api/client';
+import { ApiErrorResponse } from '@/types/common';
 import {
+  AddPlannerItemRequest,
+  AddPlannerItemResponse,
   PlannerItem,
   PlannerItemGroup,
   PlannerResponse,
 } from '@/types/planner';
 
 export async function fetchPlanner(): Promise<PlannerResponse['data']> {
-  const { data } = await apiClient.get<PlannerResponse>('/api/v1/planners');
+  const { data } = await apiClient.get<PlannerResponse>('/planners');
   return data.data;
 }
 
@@ -34,4 +39,32 @@ export function groupPlannerItems(items: PlannerItem[]): PlannerItemGroup[] {
   }
 
   return [...groups.values()];
+}
+
+/** 한 요청에 넣을 수 있는 상품 종류 수 */
+export const ADD_PLANNER_ITEM_MAX_TYPES = 20;
+/** 상품 한 종류당 병 수 */
+export const ADD_PLANNER_ITEM_MAX_QUANTITY = 20;
+
+/**
+ * 한 요청에 여러 상품을 넣는다. 같은 saleProductId는 중복으로 못 넣으니
+ * quantity로 합쳐서 보낸다. 멱등이 아니라서 실패 시 무조건 재시도하면 안 된다.
+ */
+export async function addPlannerItems(
+  items: AddPlannerItemRequest['items']
+): Promise<PlannerItem[]> {
+  const { data } = await apiClient.post<AddPlannerItemResponse>(
+    '/planners/items',
+    { items } satisfies AddPlannerItemRequest
+  );
+  return data.data.items;
+}
+
+/** 서버가 ProblemDetail로 내려준 detail을 그대로 안내 문구로 쓴다 */
+export function getPlannerErrorMessage(error: unknown, fallback: string) {
+  if (axios.isAxiosError<ApiErrorResponse>(error)) {
+    const detail = error.response?.data?.detail;
+    if (detail) return detail;
+  }
+  return fallback;
 }

@@ -134,7 +134,7 @@ export class MockApiError extends Error {
   }
 }
 
-// TODO: 컬렉션 API 연동 후 apiClient.get<CollectionListResponse>('/api/v1/collections')로 교체한다.
+// TODO: 컬렉션 API 연동 후 apiClient.get<CollectionListResponse>('/collections')로 교체한다.
 export async function fetchCollections(): Promise<
   CollectionListResponse['data']
 > {
@@ -142,7 +142,7 @@ export async function fetchCollections(): Promise<
   return { collections: MOCK_COLLECTIONS };
 }
 
-// TODO: 컬렉션 상세 API 연동 후 apiClient.get<CollectionItemListResponse>(`/api/v1/collections/${collectionId}/items`)로 교체한다.
+// TODO: 컬렉션 상세 API 연동 후 apiClient.get<CollectionItemListResponse>(`/collections/${collectionId}/items`)로 교체한다.
 export async function fetchCollectionItems(
   collectionId: number
 ): Promise<CollectionItemListResponse['data']> {
@@ -156,7 +156,7 @@ export async function fetchCollectionItems(
   return { items };
 }
 
-// TODO: 컬렉션 API 연동 후 apiClient.post<CollectionListResponse['data']['collections'][number]>('/api/v1/collections', { name })로 교체한다.
+// TODO: 컬렉션 API 연동 후 apiClient.post<CollectionListResponse['data']['collections'][number]>('/collections', { name })로 교체한다.
 // 명세서(관심 그룹 생성) 기준 유효성 검증과 에러 케이스를 목업으로 재현한다.
 export async function createCollection(rawName: string): Promise<Collection> {
   await delay();
@@ -192,7 +192,7 @@ export async function createCollection(rawName: string): Promise<Collection> {
   return newCollection;
 }
 
-// TODO: 관심 그룹 이름 변경 API 연동 후 apiClient.patch<Collection>(`/api/v1/collections/${collectionId}`, { name })로 교체한다.
+// TODO: 관심 그룹 이름 변경 API 연동 후 apiClient.patch<Collection>(`/collections/${collectionId}`, { name })로 교체한다.
 export async function renameCollection(
   collectionId: number,
   rawName: string
@@ -229,7 +229,7 @@ export async function renameCollection(
   return target;
 }
 
-// TODO: 관심 그룹 삭제 API 연동 후 apiClient.delete<{ id: number }>(`/api/v1/collections/${collectionId}`)로 교체한다.
+// TODO: 관심 그룹 삭제 API 연동 후 apiClient.delete<{ id: number }>(`/collections/${collectionId}`)로 교체한다.
 export async function deleteCollection(
   collectionId: number
 ): Promise<{ id: number }> {
@@ -249,7 +249,7 @@ export async function deleteCollection(
   return { id: collectionId };
 }
 
-// TODO: 컬렉션 API 연동 후 apiClient.put<AddCollectionItemResponse['data']>(`/api/v1/collections/${collectionId}/items/${whiskyId}`)로 교체한다.
+// TODO: 컬렉션 API 연동 후 apiClient.put<AddCollectionItemResponse['data']>(`/collections/${collectionId}/items/${whiskyId}`)로 교체한다.
 // 명세서(관심 그룹에 위스키 추가) 기준 403/404 에러 케이스를 목업으로 재현한다.
 export async function addCollectionItem(
   collectionId: number,
@@ -275,7 +275,7 @@ export async function addCollectionItem(
   return { collectionId, whiskyId, saved: true };
 }
 
-// TODO: 컬렉션 API 연동 후 apiClient.delete<RemoveCollectionItemResponse['data']>(`/api/v1/collections/${collectionId}/items/${whiskyId}`)로 교체한다.
+// TODO: 컬렉션 API 연동 후 apiClient.delete<RemoveCollectionItemResponse['data']>(`/collections/${collectionId}/items/${whiskyId}`)로 교체한다.
 // 명세서(관심 그룹에서 위스키 제거) 기준 403/404 에러 케이스를 목업으로 재현한다.
 export async function removeCollectionItem(
   collectionId: number,

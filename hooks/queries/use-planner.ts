@@ -1,12 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { fetchPlanner, groupPlannerItems } from '@/lib/api/planner';
 import {
-  addPlannerItem,
+  addPlannerItems,
+  fetchPlanner,
+  groupPlannerItems,
+} from '@/lib/api/planner';
+import {
   deletePlannerItem,
   updatePlannerItemListType,
 } from '@/lib/api/test-planner';
-import { PlannerListType, PlannerResponse } from '@/types/planner';
+import {
+  AddPlannerItemRequest,
+  PlannerListType,
+  PlannerResponse,
+} from '@/types/planner';
 
 export const plannerKeys = {
   all: ['planners'] as const,
@@ -25,12 +32,11 @@ export function useAddPlannerItemMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (items: { saleProductId: number; quantity: number }[]) =>
-      Promise.all(
-        items.map(({ saleProductId, quantity }) =>
-          addPlannerItem(saleProductId, quantity)
-        )
-      ),
+    // 한 요청에 전부 담는다. 한 종류라도 실패하면 서버가 한 행도 만들지 않는다.
+    mutationFn: (items: AddPlannerItemRequest['items']) =>
+      addPlannerItems(items),
+    // 멱등이 아니라서 자동 재시도하면 병이 늘어난다
+    retry: false,
     onSuccess: () => {
       return queryClient.invalidateQueries({ queryKey: plannerKeys.all });
     },
