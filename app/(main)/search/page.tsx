@@ -1,10 +1,47 @@
 'use client';
 
+import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+
 import { FilterBar } from '@/app/(main)/search/_components/FilterBar';
 import { ProductGrid } from '@/components/common/ProductGrid';
-import { useProductListQuery } from '@/hooks/queries/use-product';
+import { useWhiskyListQuery } from '@/hooks/queries/use-whisky';
+import { Product } from '@/types/product';
+import { WhiskyListItem } from '@/types/whisky';
+
+// TODO: WhiskyList.tsx, CollectionView.tsx의 toProduct와 중복 — 공용 위치로 추출 필요
+function toProduct(whisky: WhiskyListItem): Product {
+  return {
+    imageUrl: '',
+    name: whisky.name,
+    originalName: '',
+    discountRate: whisky.comparison
+      ? -Math.round(whisky.comparison.diffRatio * 100)
+      : 0,
+    krPrice: whisky.kr?.amount ?? 0,
+    jpPrice: whisky.jp?.amountKrw ?? 0,
+    jpPriceYen: whisky.jp?.amount ?? 0,
+    volumeMl: whisky.volumeMl,
+  };
+}
 
 export default function SearchPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-100 items-center justify-center">
+          <p>불러오는 중...</p>
+        </div>
+      }
+    >
+      <SearchPageContent />
+    </Suspense>
+  );
+}
+
+function SearchPageContent() {
+  const searchParams = useSearchParams();
+  const query = searchParams.get('q') ?? '';
   const {
     data,
     isLoading,
@@ -13,9 +50,10 @@ export default function SearchPage() {
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useProductListQuery();
+  } = useWhiskyListQuery({ query });
 
-  const items = data?.pages.flatMap((page) => page.items) ?? [];
+  const items =
+    data?.pages.flatMap((page) => page.content.map(toProduct)) ?? [];
 
   return (
     <div className="mx-auto max-w-300">
