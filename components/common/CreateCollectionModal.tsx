@@ -35,7 +35,7 @@ export function CreateCollectionModal({
     if (!name.trim()) return;
 
     // 응답을 기다리지 않고 모달은 즉시 닫는다.
-    // 성공/실패에 따른 낙관적 UI 반영은 SaveItemBottomSheet가 mutation 상태로 그린다.
+    // 성공/실패에 따른 낙관적 UI 반영은 SaveItemModal이 mutation 상태로 그린다.
     mutate(name.trim(), {
       onSuccess: (collection) => {
         onCreated?.(collection.id);

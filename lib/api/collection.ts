@@ -51,13 +51,14 @@ export async function deleteCollection(
   return { id: collectionId };
 }
 
-// 추가는 PUT이라 멱등이다. 이미 담긴 위스키를 다시 눌러도 409가 아니라 그대로 성공한다.
+// whiskyId는 경로가 아니라 body로 보낸다.
 export async function addCollectionItem(
   collectionId: number,
   whiskyId: number
 ): Promise<AddCollectionItemResponse['data']> {
-  const { data } = await apiClient.put<AddCollectionItemResponse>(
-    `/collections/${collectionId}/items/${whiskyId}`
+  const { data } = await apiClient.post<AddCollectionItemResponse>(
+    `/collections/${collectionId}/whiskies`,
+    { whiskyId }
   );
   return data.data;
 }
@@ -67,7 +68,7 @@ export async function removeCollectionItem(
   whiskyId: number
 ): Promise<RemoveCollectionItemResponse['data']> {
   const { data } = await apiClient.delete<RemoveCollectionItemResponse>(
-    `/collections/${collectionId}/items/${whiskyId}`
+    `/collections/${collectionId}/whiskies/${whiskyId}`
   );
   return data.data;
 }

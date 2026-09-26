@@ -3,6 +3,7 @@
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
+import { SaveItemModal } from '@/components/common/SaveItemModal';
 import { VerticalCard } from '@/components/ui/VerticalCard';
 import { Product } from '@/types/product';
 
@@ -138,6 +139,8 @@ export function ProductGrid({
           <>{endContent ?? <p>마지막 상품입니다</p>}</>
         )}
       </div>
+
+      <SaveItemModal />
     </div>
   );
 }
