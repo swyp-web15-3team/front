@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { HorizontalCard } from '@/components/ui/HorizontalCard';
 import { Modal } from '@/components/ui/Modal';
@@ -15,11 +15,15 @@ import {
   ADD_PLANNER_ITEM_MAX_TYPES,
   getPlannerErrorMessage,
 } from '@/lib/api/planner';
-import { useWhiskyCandidateSearchQuery } from '@/hooks/queries/use-whisky';
+import {
+  useWhiskyDetailQuery,
+  useWhiskyListQuery,
+} from '@/hooks/queries/use-whisky';
 import { useModal } from '@/hooks/use-modal';
 import { cn } from '@/lib/utils';
 import { PlannerCandidate } from '@/types/planner';
 import { Product } from '@/types/product';
+import { WhiskyListItem } from '@/types/whisky';
 
 type Tab = 'collection' | 'all';
 
@@ -50,7 +54,21 @@ export function AddPlannerItemModal() {
   );
   const collectionItemQueries = useCollectionItemsQueries(collectionIds);
 
-  const { data: searchResults } = useWhiskyCandidateSearchQuery(keyword);
+  // 검색 탭은 검색 페이지와 같은 실제 목록 API(GET /whiskies)를 쓴다.
+  const {
+    data: searchData,
+    isLoading: isSearchLoading,
+    isError: isSearchError,
+    refetch: refetchSearch,
+    hasNextPage: hasNextSearchPage,
+    isFetchingNextPage: isFetchingNextSearchPage,
+    fetchNextPage: fetchNextSearchPage,
+  } = useWhiskyListQuery({ query: keyword.trim() || undefined });
+
+  const searchResults = useMemo(
+    () => searchData?.pages.flatMap((page) => page.content) ?? [],
+    [searchData]
+  );
   const addPlannerItemMutation = useAddPlannerItemMutation();
 
   const totalSelectedCount = useMemo(
@@ -159,10 +177,7 @@ export function AddPlannerItemModal() {
     );
   }
 
-  const visibleItems =
-    tab === 'all'
-      ? (searchResults ?? [])
-      : filterByKeyword(openCollectionItems);
+  const visibleItems = filterByKeyword(openCollectionItems);
 
   const whiskyList = (
     <ul className="h-full overflow-y-auto rounded-lg bg-gray-50 p-2">
@@ -290,7 +305,20 @@ export function AddPlannerItemModal() {
               placeholder="위스키 검색"
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none"
             />
-            <div className="min-h-0 flex-1">{whiskyList}</div>
+            <div className="min-h-0 flex-1">
+              <SearchResultList
+                items={searchResults}
+                isLoading={isSearchLoading}
+                isError={isSearchError}
+                onRetry={refetchSearch}
+                hasNextPage={hasNextSearchPage}
+                isFetchingNextPage={isFetchingNextSearchPage}
+                onLoadMore={fetchNextSearchPage}
+                counts={counts}
+                onIncrement={(saleProductId) => changeCount(saleProductId, 1)}
+                onDecrement={(saleProductId) => changeCount(saleProductId, -1)}
+              />
+            </div>
           </div>
         )}
       </div>
@@ -380,5 +408,235 @@ function CandidateRow({
         </div>
       </div>
     </li>
+  );
+}
+
+function toSearchProduct(whisky: WhiskyListItem): Product {
+  return {
+    id: whisky.id,
+    imageUrl: '',
+    name: whisky.name,
+    originalName: '',
+    discountRate: whisky.comparison
+      ? -Math.round(whisky.comparison.diffRatio * 100)
+      : 0,
+    krPrice: whisky.kr?.amount ?? 0,
+    jpPrice: whisky.jp?.amountKrw ?? 0,
+    jpPriceYen: whisky.jp?.amount ?? 0,
+    volumeMl: whisky.volumeMl,
+  };
+}
+
+/**
+ * 검색 탭 결과. 검색 페이지와 같은 GET /whiskies를 쓰고 로딩/에러/빈 결과와
+ * 무한 스크롤 처리도 그대로 맞춘다.
+ *
+ * 목록 API는 saleProductId를 안 내려주는데 플래너 추가엔 그게 필요하다.
+ * 그래서 행을 펼칠 때만 상세(GET /whiskies/{id})를 불러 판매처를 고르게 한다.
+ */
+function SearchResultList({
+  items,
+  isLoading,
+  isError,
+  onRetry,
+  hasNextPage,
+  isFetchingNextPage,
+  onLoadMore,
+  counts,
+  onIncrement,
+  onDecrement,
+}: {
+  items: WhiskyListItem[];
+  isLoading: boolean;
+  isError: boolean;
+  onRetry: () => void;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  onLoadMore: () => void;
+  counts: Map<number, number>;
+  onIncrement: (saleProductId: number) => void;
+  onDecrement: (saleProductId: number) => void;
+}) {
+  const sentinelRef = useRef<HTMLLIElement>(null);
+  const [expandedWhiskyId, setExpandedWhiskyId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasNextPage || isFetchingNextPage) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) onLoadMore();
+      },
+      { rootMargin: '200px' }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, onLoadMore]);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center rounded-lg bg-gray-50 text-xs text-gray-400">
+        불러오는 중...
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-2 rounded-lg bg-gray-50 text-xs text-gray-400">
+        <p>일시적인 오류가 발생했습니다</p>
+        <button type="button" onClick={onRetry} className="underline">
+          다시 시도
+        </button>
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="flex h-full items-center justify-center rounded-lg bg-gray-50 text-xs text-gray-400">
+        해당하는 상품이 없습니다
+      </div>
+    );
+  }
+
+  return (
+    <ul className="h-full overflow-y-auto rounded-lg bg-gray-50 p-2">
+      {items.map((whisky) => (
+        <li key={whisky.id} className="py-1">
+          <div className="flex items-center gap-2 rounded-xl">
+            <HorizontalCard
+              product={toSearchProduct(whisky)}
+              className="flex-1"
+            />
+            <button
+              type="button"
+              onClick={() =>
+                setExpandedWhiskyId((prev) =>
+                  prev === whisky.id ? null : whisky.id
+                )
+              }
+              aria-expanded={expandedWhiskyId === whisky.id}
+              className="shrink-0 rounded-md border border-gray-300 px-3 py-1.5 text-xs"
+            >
+              {expandedWhiskyId === whisky.id ? '닫기' : '판매처'}
+            </button>
+          </div>
+
+          {expandedWhiskyId === whisky.id && (
+            <SaleProductPicker
+              whiskyId={whisky.id}
+              counts={counts}
+              onIncrement={onIncrement}
+              onDecrement={onDecrement}
+            />
+          )}
+        </li>
+      ))}
+
+      <li ref={sentinelRef} aria-hidden className="h-px" />
+
+      {isFetchingNextPage && (
+        <li className="py-2 text-center text-xs text-gray-400">
+          불러오는 중...
+        </li>
+      )}
+    </ul>
+  );
+}
+
+/**
+ * 펼친 위스키의 판매처 목록. saleProductId는 상세에만 있어서 여기서 불러온다.
+ * 품절이거나 가격이 없는 판매처는 서버가 400으로 거절하므로 담기를 막는다.
+ */
+function SaleProductPicker({
+  whiskyId,
+  counts,
+  onIncrement,
+  onDecrement,
+}: {
+  whiskyId: number;
+  counts: Map<number, number>;
+  onIncrement: (saleProductId: number) => void;
+  onDecrement: (saleProductId: number) => void;
+}) {
+  const { data, isLoading, isError, refetch } = useWhiskyDetailQuery(whiskyId);
+
+  if (isLoading) {
+    return (
+      <p className="py-3 text-center text-xs text-gray-400">불러오는 중...</p>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center gap-1 py-3 text-xs text-gray-400">
+        <p>판매처를 불러오지 못했습니다</p>
+        <button type="button" onClick={() => refetch()} className="underline">
+          다시 시도
+        </button>
+      </div>
+    );
+  }
+
+  const saleProducts = data?.saleProducts ?? [];
+
+  if (saleProducts.length === 0) {
+    return (
+      <p className="py-3 text-center text-xs text-gray-400">
+        판매 중인 곳이 없습니다
+      </p>
+    );
+  }
+
+  return (
+    <ul className="mt-1 ml-4 flex flex-col gap-1 border-l border-gray-200 pl-3">
+      {saleProducts.map((saleProduct) => {
+        const count = counts.get(saleProduct.id) ?? 0;
+        const isAddable = !saleProduct.isSoldOut && saleProduct.price !== null;
+
+        return (
+          <li
+            key={saleProduct.id}
+            className="flex items-center gap-2 text-xs text-gray-600"
+          >
+            <span className="min-w-0 flex-1 truncate">
+              {saleProduct.retailerName}
+              {saleProduct.isDutyFree && ' · 면세'}
+            </span>
+            <span className="shrink-0">
+              {saleProduct.price
+                ? `${saleProduct.price.amountKrw?.toLocaleString('ko-KR') ?? saleProduct.price.amount.toLocaleString('ko-KR')}원`
+                : saleProduct.isSoldOut
+                  ? '품절'
+                  : '가격 정보 없음'}
+            </span>
+            <span className="flex shrink-0 items-center gap-1.5">
+              <button
+                type="button"
+                aria-label="개수 줄이기"
+                disabled={count === 0}
+                onClick={() => onDecrement(saleProduct.id)}
+                className="flex size-6 items-center justify-center rounded-full border border-gray-300 disabled:opacity-30"
+              >
+                −
+              </button>
+              <span className="w-4 text-center">{count}</span>
+              <button
+                type="button"
+                aria-label="개수 늘리기"
+                disabled={!isAddable}
+                onClick={() => onIncrement(saleProduct.id)}
+                className="flex size-6 items-center justify-center rounded-full border border-gray-300 disabled:opacity-30"
+              >
+                +
+              </button>
+            </span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

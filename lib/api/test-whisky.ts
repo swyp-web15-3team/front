@@ -1,10 +1,8 @@
 import { PlannerCandidate } from '@/types/planner';
 import {
-  SaleProduct,
   WhiskyCard,
   WhiskyCategory,
   WhiskyCategoryListResponse,
-  WhiskyDetailResponse,
   WhiskyListItem,
   WhiskyListRequest,
   WhiskyListResponse,
@@ -49,39 +47,6 @@ const MOCK_WHISKY: WhiskyListItem = {
   origin: { id: 1, name: '스코틀랜드' },
   region: { id: 10, name: '아일라' },
 };
-
-const MOCK_SALE_PRODUCTS: SaleProduct[] = [
-  {
-    id: 501,
-    retailerName: '롯데면세점',
-    countryCode: 'KR',
-    isDutyFree: true,
-    productUrl: 'https://example.com/product/501',
-    isSoldOut: false,
-    price: {
-      amount: 189000,
-      currency: 'KRW',
-      amountKrw: 189000,
-      collectedAt: '2026-09-08T03:00:00+09:00',
-      stale: false,
-    },
-  },
-  {
-    id: 502,
-    retailerName: '나리타 면세',
-    countryCode: 'JP',
-    isDutyFree: true,
-    productUrl: 'https://example.com/product/502',
-    isSoldOut: false,
-    price: {
-      amount: 9800,
-      currency: 'JPY',
-      amountKrw: 94000,
-      collectedAt: '2026-09-08T03:00:00+09:00',
-      stale: false,
-    },
-  },
-];
 
 // 플래너 추가 모달 "검색" 탭에서 쓰는 위스키 후보 목업 풀.
 const MOCK_CANDIDATES: PlannerCandidate[] = [
@@ -193,19 +158,6 @@ export async function fetchWhiskyCategories(): Promise<
 > {
   await delay();
   return { categories: MOCK_CATEGORIES };
-}
-
-// TODO: 위스키 상세 API 연동 후 apiClient.get<WhiskyDetailResponse>(`/whiskies/${whiskyId}`)로 교체한다.
-export async function fetchWhiskyDetail(
-  whiskyId: number
-): Promise<WhiskyDetailResponse['data']> {
-  await delay();
-
-  return {
-    ...MOCK_WHISKY,
-    id: whiskyId,
-    saleProducts: MOCK_SALE_PRODUCTS,
-  };
 }
 
 // TODO: 연관 위스키 API 연동 후 apiClient.get<WhiskyRelatedListResponse>(`/whiskies/${whiskyId}/related`)로 교체한다.
