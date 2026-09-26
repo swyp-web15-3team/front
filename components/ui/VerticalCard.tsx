@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSaveItemModal } from '@/components/common/SaveItemModal';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/use-auth-store';
 import { Product } from '@/types/product';
@@ -59,7 +60,7 @@ export function VerticalCard({
         <div className="p-4">
           <div className="flex items-start justify-between gap-2">
             <p className="text-lg">{name}</p>
-            <BookmarkButton />
+            <BookmarkButton product={product} />
           </div>
           <p className="text-gray-500">{originalName}</p>
           <p className="text-lg text-[#EC4B4B]">{discountRate}%</p>
@@ -83,15 +84,23 @@ export function VerticalCard({
   );
 }
 
-function BookmarkButton() {
+function BookmarkButton({ product }: { product: Product }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  // TODO: 컬렉션 저장 API 연동 후 서버 상태(TanStack Query)로 교체
-  const [isSaved, setIsSaved] = useState(false);
+  const { open: openSaveItemModal } = useSaveItemModal();
+  // TODO: 저장 여부는 컬렉션 조회 API 연동 후 서버 상태로 교체
+  const isSaved = false;
 
   const handleToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsSaved((prev) => !prev);
+    if (product.id === undefined) return;
+
+    openSaveItemModal({
+      id: product.id,
+      name: product.name,
+      originalName: product.originalName,
+      imageUrl: product.imageUrl,
+    });
   };
 
   if (!isAuthenticated) {

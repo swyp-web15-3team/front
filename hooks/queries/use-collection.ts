@@ -13,7 +13,7 @@ import {
   fetchCollections,
   removeCollectionItem,
   renameCollection,
-} from '@/lib/api/test-collection';
+} from '@/lib/api/collection';
 
 export const collectionKeys = {
   all: ['collections'] as const,

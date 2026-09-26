@@ -29,6 +29,7 @@ import { Product } from '@/types/product';
 
 function toProduct(item: PlannerCandidate): Product {
   return {
+    id: item.whiskyId,
     imageUrl: '',
     name: item.whiskyName,
     originalName: item.whiskyOriginalName,

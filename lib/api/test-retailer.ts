@@ -14,7 +14,7 @@ const MOCK_RETAILERS: Retailer[] = [
 ];
 
 // TODO: 판매처 API 연동 후 이 파일을 retailer.ts로 옮기고 아래 목업 대신
-// apiClient.get<RetailerListResponse>('/api/v1/retailers', { params })로 교체한다.
+// apiClient.get<RetailerListResponse>('/retailers', { params })로 교체한다.
 // 반환 형태(RetailerListResponse['data'])만 유지하면 훅 수정 없이 교체 가능하다.
 export async function fetchRetailers(
   params: RetailerListRequest = {}

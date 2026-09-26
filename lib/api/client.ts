@@ -40,11 +40,14 @@ export async function reissueAccessToken(): Promise<string> {
 function redirectToLogin() {
   useAuthStore.getState().clear();
 
-  if (typeof window !== 'undefined') {
-    // 인터셉터는 React 렌더 트리 밖에서 실행되어 useRouter를 쓸 수 없다
-    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-    window.location.href = '/login';
-  }
+  if (typeof window === 'undefined') return;
+  // 이미 /login이면 다시 이동시키지 않는다. 로그인 페이지에서 뜬 401이
+  // 또 리다이렉트를 부르면 새로고침이 무한 반복된다.
+  if (window.location.pathname === '/login') return;
+
+  // 인터셉터는 React 렌더 트리 밖에서 실행되어 useRouter를 쓸 수 없다
+  // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+  window.location.href = '/login';
 }
 
 // TODO: 공통 토스트 유틸 도입 후 교체

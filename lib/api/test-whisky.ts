@@ -1,11 +1,8 @@
-import { getAllCandidates } from '@/lib/api/test-collection';
 import { PlannerCandidate } from '@/types/planner';
 import {
-  SaleProduct,
   WhiskyCard,
   WhiskyCategory,
   WhiskyCategoryListResponse,
-  WhiskyDetailResponse,
   WhiskyListItem,
   WhiskyListRequest,
   WhiskyListResponse,
@@ -51,33 +48,74 @@ const MOCK_WHISKY: WhiskyListItem = {
   region: { id: 10, name: '아일라' },
 };
 
-const MOCK_SALE_PRODUCTS: SaleProduct[] = [
+// 플래너 추가 모달 "검색" 탭에서 쓰는 위스키 후보 목업 풀.
+const MOCK_CANDIDATES: PlannerCandidate[] = [
   {
-    id: 501,
-    retailerName: '롯데면세점',
-    countryCode: 'KR',
-    isDutyFree: true,
-    productUrl: 'https://example.com/product/501',
-    isSoldOut: false,
+    saleProductId: 501,
+    whiskyId: 101,
+    whiskyName: '라가불린 16년',
+    whiskyOriginalName: 'Lagavulin 16',
+    volumeMl: 750,
     price: {
-      amount: 189000,
-      currency: 'KRW',
-      amountKrw: 189000,
+      amount: 9800,
+      currency: 'JPY',
+      amountKrw: 94000,
       collectedAt: '2026-09-08T03:00:00+09:00',
       stale: false,
     },
   },
   {
-    id: 502,
-    retailerName: '나리타 면세',
-    countryCode: 'JP',
-    isDutyFree: true,
-    productUrl: 'https://example.com/product/502',
-    isSoldOut: false,
+    saleProductId: 502,
+    whiskyId: 102,
+    whiskyName: '야마자키 12년',
+    whiskyOriginalName: '山崎 12yo',
+    volumeMl: 700,
     price: {
-      amount: 9800,
+      amount: 18500,
       currency: 'JPY',
-      amountKrw: 94000,
+      amountKrw: 168500,
+      collectedAt: '2026-09-08T03:00:00+09:00',
+      stale: false,
+    },
+  },
+  {
+    saleProductId: 503,
+    whiskyId: 103,
+    whiskyName: '히비키 하모니',
+    whiskyOriginalName: '響 Harmony',
+    volumeMl: 700,
+    price: {
+      amount: 8000,
+      currency: 'JPY',
+      amountKrw: 76500,
+      collectedAt: '2026-09-08T03:00:00+09:00',
+      stale: false,
+    },
+  },
+  {
+    saleProductId: 504,
+    whiskyId: 104,
+    whiskyName: '하쿠슈 12년',
+    whiskyOriginalName: '白州 12yo',
+    volumeMl: 700,
+    price: {
+      amount: 12000,
+      currency: 'JPY',
+      amountKrw: 115000,
+      collectedAt: '2026-09-08T03:00:00+09:00',
+      stale: false,
+    },
+  },
+  {
+    saleProductId: 505,
+    whiskyId: 105,
+    whiskyName: '닛카 요이치',
+    whiskyOriginalName: 'Nikka Yoichi',
+    volumeMl: 700,
+    price: {
+      amount: 7500,
+      currency: 'JPY',
+      amountKrw: 72000,
       collectedAt: '2026-09-08T03:00:00+09:00',
       stale: false,
     },
@@ -89,7 +127,7 @@ function delay() {
 }
 
 // TODO: 위스키 목록 API 연동 후 이 파일을 whisky.ts로 옮기고 아래 목업 대신
-// apiClient.get<WhiskyListResponse>('/api/v1/whiskies', { params })로 교체한다.
+// apiClient.get<WhiskyListResponse>('/whiskies', { params })로 교체한다.
 // 반환 형태(WhiskyListResponse['data'])만 유지하면 훅 수정 없이 교체 가능하다.
 export async function fetchWhiskies({
   page = 0,
@@ -114,7 +152,7 @@ export async function fetchWhiskies({
   };
 }
 
-// TODO: 위스키 종류 API 연동 후 apiClient.get<WhiskyCategoryListResponse>('/api/v1/whisky-categories')로 교체한다.
+// TODO: 위스키 종류 API 연동 후 apiClient.get<WhiskyCategoryListResponse>('/whisky-categories')로 교체한다.
 export async function fetchWhiskyCategories(): Promise<
   WhiskyCategoryListResponse['data']
 > {
@@ -122,20 +160,7 @@ export async function fetchWhiskyCategories(): Promise<
   return { categories: MOCK_CATEGORIES };
 }
 
-// TODO: 위스키 상세 API 연동 후 apiClient.get<WhiskyDetailResponse>(`/api/v1/whiskies/${whiskyId}`)로 교체한다.
-export async function fetchWhiskyDetail(
-  whiskyId: number
-): Promise<WhiskyDetailResponse['data']> {
-  await delay();
-
-  return {
-    ...MOCK_WHISKY,
-    id: whiskyId,
-    saleProducts: MOCK_SALE_PRODUCTS,
-  };
-}
-
-// TODO: 연관 위스키 API 연동 후 apiClient.get<WhiskyRelatedListResponse>(`/api/v1/whiskies/${whiskyId}/related`)로 교체한다.
+// TODO: 연관 위스키 API 연동 후 apiClient.get<WhiskyRelatedListResponse>(`/whiskies/${whiskyId}/related`)로 교체한다.
 export async function fetchRelatedWhiskies(
   whiskyId: number
 ): Promise<WhiskyRelatedListResponse['data']> {
@@ -150,7 +175,7 @@ export async function fetchRelatedWhiskies(
   return { whiskies };
 }
 
-// TODO: 위스키 검색 API 연동 후 apiClient.get<WhiskyListResponse>('/api/v1/whiskies', { params: { query } })로 교체한다.
+// TODO: 위스키 검색 API 연동 후 apiClient.get<WhiskyListResponse>('/whiskies', { params: { query } })로 교체한다.
 // 플래너 추가 모달의 "전체" 탭에서 쓰는, 플래너에 추가 가능한 위스키 후보 검색.
 export async function searchWhiskyCandidates(
   query: string
@@ -158,9 +183,9 @@ export async function searchWhiskyCandidates(
   await delay();
 
   const keyword = query.trim().toLowerCase();
-  if (!keyword) return getAllCandidates();
+  if (!keyword) return MOCK_CANDIDATES;
 
-  return getAllCandidates().filter(
+  return MOCK_CANDIDATES.filter(
     (item) =>
       item.whiskyName.toLowerCase().includes(keyword) ||
       item.whiskyOriginalName.toLowerCase().includes(keyword)

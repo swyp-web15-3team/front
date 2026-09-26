@@ -12,6 +12,7 @@ import { WhiskyListItem } from '@/types/whisky';
 // TODO: WhiskyList.tsx, CollectionView.tsx의 toProduct와 중복 — 공용 위치로 추출 필요
 function toProduct(whisky: WhiskyListItem): Product {
   return {
+    id: whisky.id,
     imageUrl: '',
     name: whisky.name,
     originalName: '',
