@@ -52,6 +52,9 @@ export function Modal({
       aria-label="모달 오버레이"
       className={cn(
         DEFAULT_OVERLAY_CLASSNAME,
+        // 닫힌 모달도 DOM에 남아 exit 애니메이션을 그리므로, 클릭을 가로채지 않도록
+        // 오버레이와 패널 모두에서 포인터 이벤트를 끈다. (패널에서 빠뜨리면 닫힌 모달의
+        // 패널이 나중 형제로 쌓여 열린 모달의 백드롭 클릭을 삼킨다)
         isOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
         overlayClassName
       )}
@@ -60,7 +63,9 @@ export function Modal({
       <div
         className={cn(
           DEFAULT_PANEL_CLASSNAME,
-          isOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0',
+          isOpen
+            ? 'scale-100 opacity-100'
+            : 'pointer-events-none scale-95 opacity-0',
           panelClassName
         )}
         onClick={(e) => e.stopPropagation()}

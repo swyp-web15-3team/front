@@ -28,3 +28,9 @@ export type AddCollectionItemResponse = ApiSuccessResponse<{
 }>;
 
 export type RemoveCollectionItemResponse = AddCollectionItemResponse;
+
+// 목록 조회 페이지네이션 파라미터
+export interface CollectionWhiskyListRequest {
+  page?: number;
+  size?: number;
+}

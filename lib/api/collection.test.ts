@@ -24,8 +24,8 @@ describe('관심 그룹 위스키 추가/제거', () => {
     expect(result).toEqual({ collectionId: 1, whiskyId: 101, saved: true });
   });
 
-  // DELETE의 body는 axios에서 두 번째 인자가 아니라 config.data로 나간다.
-  it('DELETE /collections/{collectionId}/whiskies에 whiskyIds를 담아 제거한다', async () => {
+  // 서버는 ?whiskyIds=4&whiskyIds=1 형태를 받는다. body도, whiskyIds[]도 아니다.
+  it('DELETE /collections/{collectionId}/whiskies에 whiskyIds 쿼리로 제거한다', async () => {
     const del = vi.spyOn(apiClient, 'delete').mockResolvedValue({
       data: { data: { collectionId: 1, whiskyId: 101, saved: false } },
     });
@@ -33,7 +33,8 @@ describe('관심 그룹 위스키 추가/제거', () => {
     await removeCollectionItems(1, [101]);
 
     expect(del).toHaveBeenCalledWith('/collections/1/whiskies', {
-      data: { whiskyIds: [101] },
+      params: { whiskyIds: [101] },
+      paramsSerializer: { indexes: null },
     });
   });
 
@@ -45,7 +46,8 @@ describe('관심 그룹 위스키 추가/제거', () => {
     await removeCollectionItems(1, [101, 102, 103]);
 
     expect(del).toHaveBeenCalledWith('/collections/1/whiskies', {
-      data: { whiskyIds: [101, 102, 103] },
+      params: { whiskyIds: [101, 102, 103] },
+      paramsSerializer: { indexes: null },
     });
   });
 });

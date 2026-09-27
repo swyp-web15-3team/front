@@ -1,11 +1,15 @@
+import type { AxiosError } from 'axios';
+
 import { apiClient } from '@/lib/api/client';
 import {
   AddCollectionItemResponse,
   Collection,
   CollectionItemListResponse,
   CollectionListResponse,
+  CollectionWhiskyListRequest,
   RemoveCollectionItemResponse,
 } from '@/types/collection';
+import { ApiErrorResponse } from '@/types/common';
 
 /** 관심 그룹 이름 최대 길이 (서버가 400으로 거절하는 기준) */
 export const COLLECTION_NAME_MAX_LENGTH = 100;
@@ -18,10 +22,12 @@ export async function fetchCollections(): Promise<
 }
 
 export async function fetchCollectionItems(
-  collectionId: number
+  collectionId: number,
+  { page, size }: CollectionWhiskyListRequest = {}
 ): Promise<CollectionItemListResponse['data']> {
   const { data } = await apiClient.get<CollectionItemListResponse>(
-    `/collections/${collectionId}/whiskies`
+    `/collections/${collectionId}/whiskies`,
+    { params: { page, size } }
   );
   return data.data;
 }
@@ -63,15 +69,15 @@ export async function addCollectionItem(
   return data.data;
 }
 
-// 단건/다건 모두 whiskyIds 배열로 보낸다. DELETE는 axios에서 body를
-// config.data로 넘겨야 한다(두 번째 인자가 body가 아니다).
+// 단건/다건 모두 whiskyIds 쿼리 파라미터를 반복해서 보낸다.
+// (?whiskyIds=4&whiskyIds=1 — body나 whiskyIds[]=4 형태가 아니다)
 export async function removeCollectionItems(
   collectionId: number,
   whiskyIds: number[]
 ): Promise<RemoveCollectionItemResponse['data']> {
   const { data } = await apiClient.delete<RemoveCollectionItemResponse>(
     `/collections/${collectionId}/whiskies`,
-    { data: { whiskyIds } }
+    { params: { whiskyIds }, paramsSerializer: { indexes: null } }
   );
   return data.data;
 }
@@ -87,4 +93,12 @@ export async function moveCollectionItems(
     { targetCollectionId, whiskyIds }
   );
   return data.data;
+}
+
+// 서버는 에러를 ProblemDetail(detail에 사용자용 메시지)로 내려준다.
+// axios 에러의 message는 "Request failed with status code 409"라서 화면에 그대로 못 쓴다.
+export function getCollectionErrorMessage(error: unknown): string {
+  const detail = (error as AxiosError<ApiErrorResponse>)?.response?.data
+    ?.detail;
+  return detail || '요청을 처리하지 못했어요. 다시 시도해주세요.';
 }
