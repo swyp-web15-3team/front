@@ -106,7 +106,8 @@ export default async function DetailPage({
             {/* TODO: 예상 총 관세 계산 로직/API 연동 */}
           </div>
           <p className="border border-gray-300 p-1">
-            1인당 주류 면세 한도는 2병(합산 2L 이하, $400 이하)입니다.
+            1인당 주류 면세 한도는 합산 2L 이하, $400 이하입니다. (병 수 제한
+            없음)
           </p>
           <div className="my-2 flex gap-2">
             <SaveButton

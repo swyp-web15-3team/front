@@ -10,16 +10,18 @@ import { HorizontalCard } from '@/components/ui/HorizontalCard';
 import { HorizontalScroller } from '@/components/ui/HorizontalScroller';
 import { Modal } from '@/components/ui/Modal';
 import { VerticalCard } from '@/components/ui/VerticalCard';
+import { DutyFreeGuide } from '@/app/(main)/planner/_components/DutyFreeGuide';
 import {
-  PLANNER_PURCHASE_LIMIT_ML,
-  PLANNER_PURCHASE_LIMIT_USD,
-} from '@/constants/planner';
+  findRate,
+  useExchangeRatesQuery,
+} from '@/hooks/queries/use-exchange-rate';
 import {
   useDeletePlannerItemMutation,
   useDeletePlannerItemsMutation,
   useMovePlannerItemsMutation,
   usePlannerQuery,
 } from '@/hooks/queries/use-planner';
+import { calculateLiquorDuty } from '@/lib/customs-duty';
 import { cn } from '@/lib/utils';
 import { PlannerItemGroup } from '@/types/planner';
 import { Product } from '@/types/product';
@@ -39,40 +41,6 @@ function toProduct(item: PlannerItemGroup): Product {
 }
 
 type BoardSection = 'purchase' | 'candidate';
-
-function LimitBar({
-  value,
-  limit,
-  unit,
-}: {
-  value: number;
-  limit: number;
-  unit: string;
-}) {
-  const ratio = limit > 0 ? Math.min(value / limit, 1) : 0;
-  const exceeded = value > limit;
-
-  return (
-    <div className="flex-1">
-      <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-        <div
-          className={cn(
-            'h-full rounded-full bg-gray-900',
-            exceeded && 'bg-red-500'
-          )}
-          style={{ width: `${ratio * 100}%` }}
-        />
-      </div>
-      <p
-        className={cn('mt-1 text-sm text-gray-500', exceeded && 'text-red-500')}
-      >
-        {value.toLocaleString('ko-KR')}
-        {unit} / {limit.toLocaleString('ko-KR')}
-        {unit}
-      </p>
-    </div>
-  );
-}
 
 function PlannerCard({
   item,
@@ -252,6 +220,8 @@ export default function PlanPage() {
   const { mutate: deletePlannerItem } = useDeletePlannerItemMutation();
   const { mutate: deletePlannerItems } = useDeletePlannerItemsMutation();
   const { mutate: movePlannerItems } = useMovePlannerItemsMutation();
+  const { data: exchangeRates } = useExchangeRatesQuery();
+
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [candidateView, setCandidateView] = useState<'swipe' | 'list'>('swipe');
   const [confirmAction, setConfirmAction] = useState<
@@ -263,17 +233,19 @@ export default function PlanPage() {
   const purchaseItems = items.filter((item) => item.listType === 'PURCHASE');
   const candidateItems = items.filter((item) => item.listType === 'CANDIDATE');
 
-  const totalKrw = purchaseItems.reduce(
-    (sum, item) => sum + (item.price?.amountKrw ?? 0) * item.quantity,
-    0
-  );
-  const totalMl = purchaseItems.reduce(
-    (sum, item) => sum + item.volumeMl * item.quantity,
-    0
-  );
-  const isOverLimit =
-    totalKrw > PLANNER_PURCHASE_LIMIT_USD ||
-    totalMl > PLANNER_PURCHASE_LIMIT_ML;
+  // 서버가 amountKrw로 원화 환산가를 주므로 krwPerUnit은 1이고,
+  // $400 한도 판정에만 USD 환율이 필요하다.
+  const krwPerUsd = findRate(exchangeRates?.rates, 'USD');
+  const duty = calculateLiquorDuty({
+    bottles: purchaseItems.map((item) => ({
+      price: item.price?.amountKrw ?? 0,
+      volumeMl: item.volumeMl,
+      quantity: item.quantity,
+    })),
+    krwPerUnit: 1,
+    // 환율이 없으면 priceUsd가 0이 되어 금액 한도는 초과로 잡지 않는다
+    krwPerUsd: krwPerUsd ?? 0,
+  });
 
   function handleDrop(plannerItemId: number, from: BoardSection) {
     // 카드를 드래그했으면 saleProductId 기준으로 그 그룹의 병 전체가 함께 옮겨진다
@@ -361,21 +333,7 @@ export default function PlanPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-6">
-          {isOverLimit && (
-            <p className="text-sm text-red-500">구매 한도를 초과했어요.</p>
-          )}
-          <div className="flex flex-col gap-3 sm:flex-row sm:gap-6">
-            <LimitBar
-              value={totalKrw}
-              limit={PLANNER_PURCHASE_LIMIT_USD}
-              unit="원"
-            />
-            <LimitBar
-              value={totalMl}
-              limit={PLANNER_PURCHASE_LIMIT_ML}
-              unit="ml"
-            />
-          </div>
+          <DutyFreeGuide duty={duty} rateUnavailable={krwPerUsd === null} />
 
           <DropZone
             title="구매 리스트"
