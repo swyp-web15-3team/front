@@ -8,6 +8,7 @@ import {
 } from '@/components/common/AddPlannerItemModal';
 import { HorizontalCard } from '@/components/ui/HorizontalCard';
 import { HorizontalScroller } from '@/components/ui/HorizontalScroller';
+import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { VerticalCard } from '@/components/ui/VerticalCard';
 import { DutyFreeGuide } from '@/app/(main)/planner/_components/DutyFreeGuide';
@@ -86,21 +87,21 @@ function PlannerCard({
         type="button"
         onClick={() => onDelete(item)}
         aria-label="삭제"
-        className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-gray-500 shadow-sm hover:text-gray-900"
+        className="bg-canvas/90 text-fg-muted hover:text-fg absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full shadow-sm"
       >
         ✕
       </button>
-      <div className="absolute right-2 bottom-2 flex items-center gap-1.5 rounded-full border border-gray-200 bg-white/90 px-1 py-0.5 shadow-sm">
+      <div className="border-border bg-canvas/90 absolute right-2 bottom-2 flex items-center gap-1.5 rounded-full border px-1 py-0.5 shadow-sm">
         <button
           type="button"
           aria-label="개수 줄이기"
           disabled={item.quantity <= 1}
           onClick={() => onDecrease(item)}
-          className="flex size-6 items-center justify-center rounded-full text-sm disabled:opacity-30"
+          className="text-body-sm text-fg flex size-6 items-center justify-center rounded-full disabled:opacity-30"
         >
           −
         </button>
-        <span className="w-4 text-center text-sm">{item.quantity}</span>
+        <span className="text-body-sm w-4 text-center">{item.quantity}</span>
       </div>
     </li>
   );
@@ -121,22 +122,14 @@ function ConfirmModal({
 }) {
   return (
     <Modal isOpen={isOpen} onClose={onCancel} panelClassName="max-w-[360px]">
-      <p className="text-center text-sm font-medium">{message}</p>
+      <p className="text-body-sm-strong text-center">{message}</p>
       <div className="mt-4 flex gap-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="w-full rounded-md border-2 bg-amber-50 px-3 py-1.5 text-sm text-black"
-        >
+        <Button variant="secondary" fullWidth onClick={onCancel}>
           취소
-        </button>
-        <button
-          type="button"
-          onClick={onConfirm}
-          className="w-full rounded-md border-2 bg-amber-50 px-3 py-1.5 text-sm text-black"
-        >
+        </Button>
+        <Button fullWidth onClick={onConfirm}>
           {confirmLabel}
-        </button>
+        </Button>
       </div>
     </Modal>
   );
@@ -186,15 +179,15 @@ function DropZone({
         onDrop(plannerItemId, from);
       }}
       className={cn(
-        'rounded-xl border border-gray-200 bg-white p-3 transition-colors duration-150 sm:p-4',
+        'border-border bg-canvas rounded-lg border p-3 transition-colors duration-150 sm:p-4',
         accentClassName,
-        isOver && 'border-gray-400 bg-gray-50'
+        isOver && 'border-primary bg-surface-muted'
       )}
     >
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="flex items-center gap-1.5 text-base font-semibold text-gray-900">
+        <h2 className="text-section-title text-fg flex items-center gap-1.5">
           {title}
-          <span className="text-sm font-normal text-gray-400">{count}</span>
+          <span className="text-body-sm text-fg-muted">{count}</span>
         </h2>
         <div className="flex items-center gap-3">
           {headerExtra}
@@ -202,7 +195,7 @@ function DropZone({
             <button
               type="button"
               onClick={onReset}
-              className="text-xs text-gray-400 hover:text-gray-600"
+              className="text-caption text-fg-muted hover:text-fg"
             >
               {resetLabel}
             </button>
@@ -326,7 +319,7 @@ export default function PlanPage() {
           <button
             type="button"
             onClick={() => refetch()}
-            className="text-sm underline"
+            className="text-body-sm text-fg-muted hover:text-fg underline"
           >
             다시 시도
           </button>
@@ -339,7 +332,7 @@ export default function PlanPage() {
             title="구매 리스트"
             count={purchaseItems.length}
             section="purchase"
-            accentClassName="border-t-4 border-t-gray-900"
+            accentClassName="border-t-primary border-t-4"
             onDrop={handleDrop}
             onReset={() => setConfirmAction('resetPurchase')}
             resetLabel="초기화"
@@ -359,7 +352,7 @@ export default function PlanPage() {
               ))}
             </ul>
             {purchaseItems.length === 0 && (
-              <p className="py-6 text-center text-sm text-gray-400">
+              <p className="text-body-sm text-fg-muted py-6 text-center">
                 후보 상품을 이 영역으로 드래그하면 구매 리스트에 담겨요
               </p>
             )}
@@ -369,7 +362,7 @@ export default function PlanPage() {
             title="후보"
             count={candidateItems.length}
             section="candidate"
-            accentClassName="border-t-4 border-t-gray-300"
+            accentClassName="border-t-border-strong border-t-4"
             onDrop={handleDrop}
             onReset={() => setConfirmAction('resetCandidates')}
             resetLabel="리스트 전체 삭제"
@@ -382,7 +375,7 @@ export default function PlanPage() {
                 aria-label={
                   candidateView === 'swipe' ? '세로 목록 보기' : '가로 보기'
                 }
-                className="text-xs text-gray-400 hover:text-gray-600"
+                className="text-caption text-fg-muted hover:text-fg"
               >
                 {candidateView === 'swipe' ? '목록 보기' : '가로 보기'}
               </button>
@@ -421,7 +414,7 @@ export default function PlanPage() {
               </ul>
             )}
             {candidateItems.length === 0 && (
-              <p className="py-6 text-center text-sm text-gray-400">
+              <p className="text-body-sm text-fg-muted py-6 text-center">
                 구매 리스트 상품을 이 영역으로 드래그하면 후보로 옮겨져요
               </p>
             )}
@@ -431,7 +424,7 @@ export default function PlanPage() {
             <button
               type="button"
               onClick={() => openAddPlannerItemModal()}
-              className="w-full rounded-md border border-dashed border-gray-300 py-3 text-sm text-gray-500"
+              className="border-border-strong text-body-sm text-fg-muted hover:bg-surface-muted w-full rounded-md border border-dashed py-3"
             >
               + 추가하기 / 옮기기
             </button>
@@ -439,7 +432,7 @@ export default function PlanPage() {
               <button
                 type="button"
                 onClick={() => setConfirmAction('resetAll')}
-                className="shrink-0 rounded-md border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-500"
+                className="border-border-strong text-body-sm text-fg-muted hover:bg-surface-muted shrink-0 rounded-md border border-dashed px-4 py-3"
               >
                 플래너 초기화
               </button>

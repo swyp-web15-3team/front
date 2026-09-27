@@ -10,15 +10,25 @@ export default function MyPage() {
           <ProfileImage src="" />
         </div>
         <div>
-          <p>닉네임 들어갈 곳</p>
-          <p>이메일 들어갈 곳</p>
+          <p className="text-card-title">닉네임 들어갈 곳</p>
+          <p className="text-body-sm text-fg-muted">이메일 들어갈 곳</p>
         </div>
       </div>
-      <div>좋아요</div>
-      <Link href="/mypage/collection">관심 목록</Link>
-      <div>댓글</div>
-      <div>로그인정보</div>
-      <Link href="/mypage/withdraw">회원탈퇴</Link>
+      <div className="text-body">좋아요</div>
+      <Link
+        href="/mypage/collection"
+        className="text-body hover:text-primary-strong"
+      >
+        관심 목록
+      </Link>
+      <div className="text-body">댓글</div>
+      <div className="text-body">로그인정보</div>
+      <Link
+        href="/mypage/withdraw"
+        className="text-body-sm text-fg-muted hover:text-fg"
+      >
+        회원탈퇴
+      </Link>
     </>
   );
 }

@@ -127,7 +127,7 @@ export function SearchModal() {
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             placeholder="싱글 몰트 스카치 위스키"
-            className="min-w-0 flex-1 bg-transparent py-3.5 text-sm outline-none placeholder:text-gray-400"
+            className="text-body-sm text-fg placeholder:text-fg-subtle min-w-0 flex-1 bg-transparent py-3.5 outline-none"
           />
           {keyword && (
             <button
@@ -138,27 +138,27 @@ export function SearchModal() {
                 inputRef.current?.focus();
               }}
             >
-              <CloseIcon className="size-4 text-gray-400" />
+              <CloseIcon className="text-fg-muted size-4" />
             </button>
           )}
         </div>
         <button
           type="submit"
           aria-label="검색"
-          className="flex size-12 shrink-0 items-center justify-center rounded-md bg-black"
+          className="bg-surface-inverse flex size-12 shrink-0 items-center justify-center rounded-md"
         >
-          <SearchIcon className="size-5 text-white" />
+          <SearchIcon className="text-fg-on-dark size-5" />
         </button>
       </form>
 
       {recentKeywords.length > 0 && (
         <section className="mt-6">
-          <h2 className="text-sm text-gray-500">최근 검색어</h2>
+          <h2 className="text-body-sm text-fg-muted">최근 검색어</h2>
           <ul className="mt-3 flex flex-wrap gap-2">
             {recentKeywords.map((item) => (
               <li
                 key={item}
-                className="flex max-w-full items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 text-sm"
+                className="border-border text-body-sm flex max-w-full items-center gap-1.5 rounded-md border px-2.5 py-1.5"
               >
                 <button
                   type="button"
@@ -183,19 +183,21 @@ export function SearchModal() {
 
       {suggestions.length > 0 && (
         <section className="mt-6">
-          <h2 className="text-sm text-gray-500">추천 검색어</h2>
+          <h2 className="text-body-sm text-fg-muted">추천 검색어</h2>
           <ol className="mt-3 flex flex-col gap-3">
             {suggestions.map((item, index) => (
               <li key={item.keyword}>
                 <button
                   type="button"
                   onClick={() => handleSearch(item.keyword)}
-                  className="flex w-full items-center gap-3 text-left text-sm"
+                  className="text-body-sm flex w-full items-center gap-3 text-left"
                 >
-                  <span className="w-3 shrink-0 text-gray-400">
+                  <span className="text-fg-muted w-3 shrink-0">
                     {index + 1}
                   </span>
-                  <span className="truncate font-medium">{item.keyword}</span>
+                  <span className="text-body-sm-strong truncate">
+                    {item.keyword}
+                  </span>
                 </button>
               </li>
             ))}

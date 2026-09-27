@@ -1,6 +1,7 @@
 'use client';
 import * as Sentry from '@sentry/nextjs';
 
+import { Button } from '@/components/ui/Button';
 import { HorizontalCard } from '@/components/ui/HorizontalCard';
 import { VerticalCard } from '@/components/ui/VerticalCard';
 import {
@@ -25,38 +26,27 @@ export default function UiPage() {
 
   return (
     <section className="flex flex-col gap-4">
-      <div>
-        <button
-          onClick={errorTestHandler}
-          className="border-2 bg-amber-50 text-black"
-        >
+      <div className="flex flex-wrap gap-2">
+        <Button variant="secondary" onClick={errorTestHandler}>
           client 에러 전송 버튼
-        </button>
-        <button
-          onClick={serverErrorTestHandler}
-          className="border-2 bg-amber-50 text-black"
-        >
+        </Button>
+        <Button variant="secondary" onClick={serverErrorTestHandler}>
           server 에러 전송 버튼
-        </button>
-        <button
-          onClick={edgeErrorTestHandler}
-          className="border-2 bg-amber-50 text-black"
-        >
+        </Button>
+        <Button variant="secondary" onClick={edgeErrorTestHandler}>
           edge 에러 전송 버튼
-        </button>
-        <button
-          onClick={openSampleModal1}
-          className="border-2 bg-amber-50 text-black"
-        >
+        </Button>
+        <Button variant="secondary" onClick={openSampleModal1}>
           샘플 모달 열기1
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="secondary"
           onClick={() => console.log('콘솔로그 테스트')}
-          className="border-2 bg-amber-50 text-black"
         >
           콘솔로그
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="secondary"
           onClick={() =>
             openSaveItemModal({
               id: 101,
@@ -65,10 +55,9 @@ export default function UiPage() {
               imageUrl: 'https://placehold.co/200x150.png',
             })
           }
-          className="border-2 bg-amber-50 text-black"
         >
           저장 모달 열기
-        </button>
+        </Button>
       </div>
       <SampleModal1 />
       <VerticalCard

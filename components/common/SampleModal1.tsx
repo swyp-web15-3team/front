@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { MODAL_ID } from '@/constants/modal';
 import { useModal } from '@/hooks/use-modal';
@@ -13,16 +14,13 @@ export function SampleModal1() {
 
   return (
     <Modal isOpen={isOpen} onClose={close}>
-      <h2 className="text-lg font-bold">샘플 모달1</h2>
-      <p className="mt-2 text-sm text-zinc-500">
+      <h2 className="text-section-title">샘플 모달1</h2>
+      <p className="text-body-sm text-fg-muted mt-2">
         useModal 훅으로 열고 닫히는 샘플 모달입니다.
       </p>
-      <button
-        onClick={close}
-        className="mt-4 rounded-md border-2 bg-amber-50 px-3 py-1.5 text-sm text-black"
-      >
+      <Button variant="secondary" onClick={close} className="mt-4">
         닫기
-      </button>
+      </Button>
     </Modal>
   );
 }

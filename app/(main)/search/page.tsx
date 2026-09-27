@@ -50,11 +50,14 @@ function MissingQuery() {
         <button
           type="button"
           onClick={handleBack}
-          className="rounded border px-4 py-2 text-sm"
+          className="border-border-strong text-button text-fg min-h-11 rounded-md border px-4 py-2"
         >
           뒤로 가기
         </button>
-        <Link href="/" className="rounded border px-4 py-2 text-sm">
+        <Link
+          href="/"
+          className="border-border-strong text-button text-fg min-h-11 rounded-md border px-4 py-2"
+        >
           홈으로
         </Link>
       </div>
@@ -94,7 +97,7 @@ function SearchResults({ query }: SearchResultsProps) {
           <button
             type="button"
             onClick={() => refetch()}
-            className="text-sm underline"
+            className="text-body-sm text-fg-muted hover:text-fg underline"
           >
             다시 시도
           </button>

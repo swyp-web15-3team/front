@@ -61,7 +61,7 @@ export function FilterBar({ sort, onSortChange }: FilterBarProps) {
         {filterOptions[group].map((option) => (
           <label
             key={option}
-            className="flex items-center gap-2 rounded px-2 py-1.5 text-sm whitespace-nowrap hover:bg-gray-50"
+            className="text-body-sm hover:bg-surface-muted flex items-center gap-2 rounded px-2 py-1.5 whitespace-nowrap"
           >
             <input
               type="checkbox"
@@ -82,7 +82,7 @@ export function FilterBar({ sort, onSortChange }: FilterBarProps) {
           type="button"
           aria-label="필터 열기"
           onClick={openFilterModal}
-          className="relative rounded-full bg-gray-100 p-2"
+          className="bg-surface-sunken text-fg relative rounded-full p-2"
         >
           <FilterIcon className="size-4" />
           {hasFilters && (
@@ -131,7 +131,7 @@ export function FilterBar({ sort, onSortChange }: FilterBarProps) {
                   setOpenKey(null);
                 }}
                 className={cn(
-                  'rounded px-3 py-1.5 text-left text-sm whitespace-nowrap hover:bg-gray-50',
+                  'text-body-sm hover:bg-surface-muted rounded px-3 py-1.5 text-left whitespace-nowrap',
                   sort === value && 'font-bold'
                 )}
               >
@@ -206,15 +206,18 @@ function FilterDropdown({
         type="button"
         onClick={onToggle}
         className={cn(
-          'relative flex items-center gap-1 text-sm whitespace-nowrap',
+          'text-body-sm relative flex items-center gap-1 whitespace-nowrap',
           variant === 'pill'
-            ? cn('rounded-full bg-gray-100 px-4 py-2', isOpen && 'bg-gray-200')
-            : 'text-gray-700'
+            ? cn(
+                'bg-surface-sunken rounded-full px-4 py-2',
+                isOpen && 'bg-border'
+              )
+            : 'text-fg'
         )}
       >
         {label}
         {hasActive && (
-          <span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-red-500" />
+          <span className="bg-primary absolute -top-0.5 -right-0.5 size-1.5 rounded-full" />
         )}
         <ChevronIcon
           className={cn('size-3 transition-transform', isOpen && 'rotate-180')}
@@ -223,7 +226,7 @@ function FilterDropdown({
       {isOpen && (
         <div
           className={cn(
-            'absolute top-full z-20 mt-2 min-w-40 rounded-md border border-gray-200 bg-white p-2 shadow-md',
+            'border-border bg-canvas absolute top-full z-20 mt-2 min-w-40 rounded-md border p-2 shadow-md',
             align === 'right' ? 'right-0' : 'left-0'
           )}
         >

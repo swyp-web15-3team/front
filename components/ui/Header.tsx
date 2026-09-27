@@ -58,7 +58,7 @@ export default function Header() {
   const placeholder = (
     <span
       className={cn(
-        'truncate text-sm text-gray-400 transition-opacity',
+        'text-body-sm text-fg-subtle truncate transition-opacity',
         isPlaceholderVisible ? 'opacity-100' : 'opacity-0'
       )}
       style={{ transitionDuration: `${SEARCH_PLACEHOLDER_FADE_MS}ms` }}
@@ -70,8 +70,8 @@ export default function Header() {
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 flex items-center justify-between border-b border-transparent bg-white px-2 py-4 sm:px-6',
-        isScrolled && 'border-gray-300'
+        'bg-canvas sticky top-0 z-50 flex items-center justify-between border-b border-transparent px-2 py-4 sm:px-6',
+        isScrolled && 'border-border-strong'
       )}
     >
       <Link href="/">
@@ -88,7 +88,7 @@ export default function Header() {
           onClick={openSearchModal}
           id="search-bar"
           aria-label="검색"
-          className="flex w-full items-center rounded-md bg-gray-100 py-2 pr-8 pl-2 text-left"
+          className="bg-surface-sunken flex w-full items-center rounded-md py-2 pr-8 pl-2 text-left"
         >
           {/* useSearchParams는 Suspense 경계가 필요하다 (layout에서 렌더되므로) */}
           <Suspense fallback={placeholder}>
@@ -103,16 +103,20 @@ export default function Header() {
           strokeWidth={2}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 cursor-pointer text-black"
+          className="text-fg pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 cursor-pointer"
           onClick={(e) => e.preventDefault()}
         >
           <circle cx="11" cy="11" r="7" />
           <path d="m21 21-4.3-4.3" />
         </svg>
       </div>
-      <nav className="hidden gap-2 sm:flex sm:gap-4">
-        <Link href="/mypage/collection">관심 목록</Link>
-        <Link href="/planner">플래너</Link>
+      <nav className="text-body-sm hidden gap-2 sm:flex sm:gap-4">
+        <Link href="/mypage/collection" className="hover:text-primary-strong">
+          관심 목록
+        </Link>
+        <Link href="/planner" className="hover:text-primary-strong">
+          플래너
+        </Link>
         <AuthNavAction />
       </nav>
       <Suspense fallback={null}>
@@ -132,5 +136,5 @@ function SearchBarText({ placeholder }: SearchBarTextProps) {
 
   if (!query) return placeholder;
 
-  return <span className="truncate text-sm text-black">{query}</span>;
+  return <span className="text-body-sm text-fg truncate">{query}</span>;
 }

@@ -133,7 +133,7 @@ export function ProductGrid({
 
       <div ref={sentinelRef} aria-hidden className="h-px w-full" />
 
-      <div className="flex justify-center py-6 text-sm text-gray-500">
+      <div className="text-body-sm text-fg-muted flex justify-center py-6">
         {isFetchingNextPage && <p>불러오는 중...</p>}
         {!hasNextPage && !isFetchingNextPage && items.length > 0 && (
           <>{endContent ?? <p>마지막 상품입니다</p>}</>

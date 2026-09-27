@@ -11,7 +11,8 @@ export default function MainLayout({ children }: LayoutProps<'/'>) {
     <>
       <Header />
       <div className="flex flex-1 flex-col">
-        <div className="mx-auto w-full max-w-300 flex-1 px-2 py-3">
+        {/* 페이지 거터: 모바일 8px → sm 24px (docs/DESIGN.md Layout) */}
+        <div className="mx-auto w-full max-w-300 flex-1 px-2 py-3 sm:px-6">
           {children}
         </div>
         <Footer />

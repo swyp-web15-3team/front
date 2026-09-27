@@ -90,22 +90,22 @@ export default async function DetailPage({
             width={300}
             height={350}
             priority
-            className="object-cover"
+            className="object-contain"
           />
         </div>
         <div>
-          <p>{whisky.name}</p>
+          <p className="text-page-title">{whisky.name}</p>
           <div>{/* 태그들 */}</div>
-          <div className="flex flex-col">
+          <div className="text-body-sm flex flex-col">
             {specs.map(({ label, value }) => (
-              <div key={label} className="flex justify-between">
-                <p>{label}</p>
-                <p>{value || '-'}</p>
+              <div key={label} className="flex justify-between py-1">
+                <p className="text-fg-muted">{label}</p>
+                <p className="text-fg">{value || '-'}</p>
               </div>
             ))}
             {/* TODO: 예상 총 관세 계산 로직/API 연동 */}
           </div>
-          <p className="border border-gray-300 p-1">
+          <p className="border-border text-body-sm text-fg-muted rounded-md border p-3">
             1인당 주류 면세 한도는 합산 2L 이하, $400 이하입니다. (병 수 제한
             없음)
           </p>
@@ -128,10 +128,10 @@ export default async function DetailPage({
 
           return (
             <div key={title}>
-              <p>{title}</p>
+              <p className="text-section-title mb-2">{title}</p>
               <div className="flex flex-col gap-2">
                 {sales.length === 0 ? (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-body-sm text-fg-muted">
                     판매처 정보가 없습니다
                   </p>
                 ) : (

@@ -31,7 +31,7 @@ export default function WithdrawPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold">탈퇴하는 이유를 알려주세요</h1>
+      <h1 className="text-page-title">탈퇴하는 이유를 알려주세요</h1>
 
       <div role="radiogroup" className="mt-6 flex flex-col gap-3">
         {REASONS.map(({ value, label }) => (
@@ -43,7 +43,7 @@ export default function WithdrawPage() {
               checked={reason === value}
               onChange={() => setReason(value)}
             />
-            <span className="text-lg font-bold">{label}</span>
+            <span className="text-body text-fg">{label}</span>
           </label>
         ))}
       </div>
@@ -52,7 +52,7 @@ export default function WithdrawPage() {
         type="button"
         onClick={handleWithdraw}
         disabled={!reason || isPending}
-        className="mt-12 w-full bg-gray-200 py-4 disabled:opacity-50"
+        className="bg-danger text-fg-on-dark text-button mt-12 min-h-11 w-full rounded-md py-4 disabled:opacity-50"
       >
         탈퇴하기
       </button>

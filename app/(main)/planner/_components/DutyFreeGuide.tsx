@@ -43,17 +43,17 @@ function LimitGauge({
   return (
     <div className="flex-1">
       <div className="flex items-baseline justify-between">
-        <p className="text-sm font-medium text-gray-700">{label}</p>
+        <p className="text-body-sm-strong text-fg">{label}</p>
         <p
           className={cn(
-            'text-sm tabular-nums',
-            exceeded ? 'font-semibold text-red-600' : 'text-gray-500'
+            'text-body-sm tabular-nums',
+            exceeded ? 'text-danger font-bold' : 'text-fg-muted'
           )}
         >
-          <span className={cn(exceeded && 'text-red-600')}>
+          <span className={cn(exceeded && 'text-danger')}>
             {formatValue(value)}
           </span>
-          <span className="text-gray-400"> / {formatValue(limit)}</span>
+          <span className="text-fg-muted"> / {formatValue(limit)}</span>
         </p>
       </div>
       <div
@@ -62,17 +62,17 @@ function LimitGauge({
         aria-valuenow={Math.round(ratio * 100)}
         aria-valuemin={0}
         aria-valuemax={100}
-        className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-gray-200"
+        className="bg-border mt-1.5 h-2 w-full overflow-hidden rounded-full"
       >
         <div
           className={cn(
             'h-full rounded-full transition-[width] duration-300 ease-out',
-            exceeded ? 'bg-red-500' : 'bg-gray-900'
+            exceeded ? 'bg-danger' : 'bg-primary'
           )}
           style={{ width: `${ratio * 100}%` }}
         />
       </div>
-      {caption && <p className="mt-1 text-xs text-gray-400">{caption}</p>}
+      {caption && <p className="text-caption text-fg-muted mt-1">{caption}</p>}
     </div>
   );
 }
@@ -89,10 +89,10 @@ function TaxRow({
   return (
     <div className="flex items-baseline justify-between gap-2 py-1.5">
       <div className="min-w-0">
-        <span className="text-sm text-gray-700">{label}</span>
-        <span className="ml-1.5 text-xs text-gray-400">{hint}</span>
+        <span className="text-body-sm text-fg">{label}</span>
+        <span className="text-caption text-fg-muted ml-1.5">{hint}</span>
       </div>
-      <span className="shrink-0 text-sm text-gray-900 tabular-nums">
+      <span className="text-body-sm text-fg shrink-0 tabular-nums">
         {formatKrw(amount)}
       </span>
     </div>
@@ -125,23 +125,25 @@ export function DutyFreeGuide({ duty, rateUnavailable }: DutyFreeGuideProps) {
       aria-label="면세 한도 안내"
       className={cn(
         'rounded-xl border p-4',
-        isDutyFree ? 'border-gray-200 bg-gray-50' : 'border-red-200 bg-red-50'
+        isDutyFree
+          ? 'border-border bg-surface-muted'
+          : 'border-danger/30 bg-danger-surface'
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h2 className="text-sm font-semibold text-gray-900">
+          <h2 className="text-body-sm-strong text-fg">
             {isDutyFree
               ? '면세 범위 안이에요'
               : `면세 한도 초과 (${exceededLabel})`}
           </h2>
-          <p className="mt-0.5 text-xs text-gray-500">
+          <p className="text-caption text-fg-muted mt-0.5">
             1인 기준 · 합산 {DUTY_FREE_VOLUME_ML.toLocaleString('ko-KR')}ml 이하
             AND ${DUTY_FREE_PRICE_USD} 이하
           </p>
         </div>
         {!isDutyFree && (
-          <span className="shrink-0 rounded-full bg-red-600 px-2 py-0.5 text-xs font-medium text-white">
+          <span className="bg-danger text-fg-on-dark text-caption shrink-0 rounded-full px-2 py-0.5">
             예상 세금 {formatKrw(duty.totalTax)}
           </span>
         )}
@@ -169,7 +171,7 @@ export function DutyFreeGuide({ duty, rateUnavailable }: DutyFreeGuideProps) {
 
       {!isDutyFree && (
         <>
-          <p className="mt-4 text-xs leading-relaxed text-red-700">
+          <p className="text-caption text-danger mt-4 leading-relaxed">
             한도를 넘으면 <b>초과분이 아니라 전량</b>에 세금이 붙어요. 입국 시
             자진신고하면 관세의 {percent(VOLUNTARY_DECLARATION_DISCOUNT)}를(최대{' '}
             {VOLUNTARY_DECLARATION_CAP_KRW.toLocaleString('ko-KR')}원) 깎아주고,
@@ -180,14 +182,14 @@ export function DutyFreeGuide({ duty, rateUnavailable }: DutyFreeGuideProps) {
             type="button"
             onClick={() => setIsDetailOpen((open) => !open)}
             aria-expanded={isDetailOpen}
-            className="mt-3 text-xs text-gray-600 underline underline-offset-2 hover:text-gray-900"
+            className="text-caption text-fg-muted hover:text-fg mt-3 underline underline-offset-2"
           >
             {isDetailOpen ? '세금 상세 접기' : '세금 상세 보기'}
           </button>
 
           {isDetailOpen && (
-            <div className="mt-3 rounded-lg border border-red-100 bg-white p-3">
-              <div className="divide-y divide-gray-100">
+            <div className="border-danger/20 bg-canvas mt-3 rounded-lg border p-3">
+              <div className="divide-border divide-y">
                 <TaxRow
                   label="물품가"
                   hint="구매 리스트 합계"
@@ -214,18 +216,18 @@ export function DutyFreeGuide({ duty, rateUnavailable }: DutyFreeGuideProps) {
                   amount={duty.vat}
                 />
               </div>
-              <div className="mt-2 flex items-baseline justify-between border-t-2 border-gray-900 pt-2">
-                <span className="text-sm font-semibold">예상 총액</span>
+              <div className="border-fg mt-2 flex items-baseline justify-between border-t-2 pt-2">
+                <span className="text-body-sm-strong">예상 총액</span>
                 <span className="text-right">
-                  <span className="block text-base font-bold tabular-nums">
+                  <span className="text-section-title block tabular-nums">
                     {formatKrw(duty.totalWithTax)}
                   </span>
-                  <span className="block text-xs text-red-600 tabular-nums">
+                  <span className="text-caption text-danger block tabular-nums">
                     세금 {formatKrw(duty.totalTax)}
                   </span>
                 </span>
               </div>
-              <p className="mt-2 text-xs leading-relaxed text-gray-400">
+              <p className="text-caption text-fg-muted mt-2 leading-relaxed">
                 위스키(HS 2208.30) 기준 추정치예요. 실제 세액은 환율·품목 분류에
                 따라 달라질 수 있어요.
               </p>

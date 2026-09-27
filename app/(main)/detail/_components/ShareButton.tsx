@@ -26,7 +26,7 @@ export function ShareButton() {
     <button
       type="button"
       onClick={handleShare}
-      className="flex items-center gap-1.5 rounded-md border border-gray-300 px-4 py-2 text-sm"
+      className="border-border-strong text-button text-fg flex min-h-11 items-center gap-1.5 rounded-md border px-4 py-2"
     >
       <ShareIcon />
       {copied ? '링크가 복사되었어요' : '공유하기'}

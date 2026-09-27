@@ -52,7 +52,7 @@ export function FilterModal({ filters, onApply }: FilterModalProps) {
       onClose={close}
       panelClassName="flex max-h-[90vh] max-w-[640px] flex-col p-0"
     >
-      <h2 className="px-6 pt-6 pb-4 text-lg font-bold">필터</h2>
+      <h2 className="text-section-title px-6 pt-6 pb-4">필터</h2>
 
       <FilterChips
         filters={draft}
@@ -86,7 +86,7 @@ export function FilterModal({ filters, onApply }: FilterModalProps) {
         <button
           type="button"
           onClick={close}
-          className="flex-1 rounded-md border border-gray-200 py-3.5"
+          className="border-border-strong text-button text-fg hover:bg-surface-muted flex-1 rounded-md border py-3.5"
         >
           취소
         </button>
@@ -94,7 +94,7 @@ export function FilterModal({ filters, onApply }: FilterModalProps) {
           type="button"
           onClick={handleApply}
           disabled={isSameFilters(draft, filters)}
-          className="bg-brand flex-1 rounded-md py-3.5 text-white disabled:bg-gray-200 disabled:text-gray-400"
+          className="bg-primary text-on-primary text-button disabled:bg-border disabled:text-fg-subtle flex-1 rounded-md py-3.5"
         >
           상품보기
         </button>
@@ -125,8 +125,10 @@ function OptionSection({ group, selected, onToggle }: OptionSectionProps) {
               aria-pressed={isSelected}
               onClick={() => onToggle(option)}
               className={cn(
-                'rounded-md border px-4 py-2 text-sm',
-                isSelected ? 'border-black' : 'border-gray-200'
+                'text-body-sm rounded-md border px-4 py-2',
+                isSelected
+                  ? 'border-primary text-primary-strong'
+                  : 'border-border'
               )}
             >
               {option}
