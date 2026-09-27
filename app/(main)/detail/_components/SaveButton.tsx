@@ -1,25 +1,37 @@
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import type { SaveItemWhisky } from '@/components/common/SaveItemModal';
+import { rememberCurrentPath } from '@/lib/login-return';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/use-auth-store';
 
-export function SaveButton() {
+interface SaveButtonProps {
+  whisky: SaveItemWhisky;
+}
+
+export function SaveButton({ whisky }: SaveButtonProps) {
+  const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   // TODO: 컬렉션 저장 API 연동 후 서버 상태(TanStack Query)로 교체
   const [isSaved, setIsSaved] = useState(false);
 
   if (!isAuthenticated) {
     return (
-      <Link
-        href="/login"
+      <button
+        type="button"
+        onClick={() => {
+          // 로그인 후 이 페이지로 돌아와 저장 모달이 자동으로 열리게 한다.
+          rememberCurrentPath(whisky);
+          router.push('/login');
+        }}
         className="flex items-center gap-1.5 rounded-md bg-black px-4 py-2 text-sm text-white"
       >
         <BookmarkIcon filled={false} />
         로그인이 필요해요
-      </Link>
+      </button>
     );
   }
 

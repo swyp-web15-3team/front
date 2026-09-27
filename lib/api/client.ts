@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/nextjs';
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 
+import { rememberCurrentPath } from '@/lib/login-return';
 import { useAuthStore } from '@/store/use-auth-store';
 
 export const apiClient = axios.create({
@@ -44,6 +45,9 @@ function redirectToLogin() {
   // 이미 /login이면 다시 이동시키지 않는다. 로그인 페이지에서 뜬 401이
   // 또 리다이렉트를 부르면 새로고침이 무한 반복된다.
   if (window.location.pathname === '/login') return;
+
+  // 세션이 끊겨 튕겨나가는 경우에도 로그인 후 보던 페이지로 되돌린다.
+  rememberCurrentPath();
 
   // 인터셉터는 React 렌더 트리 밖에서 실행되어 useRouter를 쓸 수 없다
   // eslint-disable-next-line @next/next/no-location-assign-relative-destination

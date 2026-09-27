@@ -21,7 +21,7 @@ export async function fetchCollectionItems(
   collectionId: number
 ): Promise<CollectionItemListResponse['data']> {
   const { data } = await apiClient.get<CollectionItemListResponse>(
-    `/collections/${collectionId}/items`
+    `/collections/${collectionId}/whiskies`
   );
   return data.data;
 }

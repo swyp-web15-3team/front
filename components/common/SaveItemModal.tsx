@@ -24,7 +24,7 @@ const OPTIMISTIC_ERROR_DISMISS_MS = 3000;
 export interface SaveItemWhisky {
   id: number;
   name: string;
-  originalName: string;
+  originalName?: string;
   imageUrl?: string;
 }
 

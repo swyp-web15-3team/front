@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSaveItemModal } from '@/components/common/SaveItemModal';
+import { rememberCurrentPath } from '@/lib/login-return';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/use-auth-store';
 import { Product } from '@/types/product';
@@ -129,6 +130,16 @@ function BookmarkButton({ product }: { product: Product }) {
   const handleLoginRedirect = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    rememberCurrentPath(
+      product.id === undefined
+        ? undefined
+        : {
+            id: product.id,
+            name: product.name,
+            originalName: product.originalName,
+            imageUrl: product.imageUrl,
+          }
+    );
     router.push('/login');
   };
 

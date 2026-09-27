@@ -109,7 +109,13 @@ export default async function DetailPage({
             1인당 주류 면세 한도는 2병(합산 2L 이하, $400 이하)입니다.
           </p>
           <div className="my-2 flex gap-2">
-            <SaveButton />
+            <SaveButton
+              whisky={{
+                id: whisky.id,
+                name: whisky.name,
+                imageUrl: whisky.imageUrl,
+              }}
+            />
             <ShareButton />
           </div>
         </div>
