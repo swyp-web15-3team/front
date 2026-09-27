@@ -3,9 +3,9 @@
 import { useState } from 'react';
 
 import {
-  AddCollectionItemModal,
-  useAddCollectionItemModal,
-} from '@/components/common/AddCollectionItemModal';
+  AddPlannerItemModal,
+  useAddPlannerItemModal,
+} from '@/components/common/AddPlannerItemModal';
 import {
   CollectionMenuModal,
   useCollectionMenuModal,
@@ -46,7 +46,7 @@ export function CollectionView() {
 
   const { open: openCreateModal } = useCreateCollectionModal();
   const { open: openRenameModal } = useRenameCollectionModal();
-  const { open: openAddItemModal } = useAddCollectionItemModal();
+  const { open: openAddItemModal } = useAddPlannerItemModal();
   const { open: openMenuModal } = useCollectionMenuModal();
   const createCollectionMutation = useCreateCollectionMutation();
   const renameCollectionMutation = useRenameCollectionMutation();
@@ -196,32 +196,39 @@ export function CollectionView() {
               다시 누르면 목록에서 뺀다. 편집 중에는 카드 전체가 선택 토글이다. */}
           {items.map((item) =>
             isEditing ? (
-              <button
+              <div
                 key={item.id}
-                type="button"
-                onClick={() => toggleSelected(item.id)}
-                aria-pressed={selectedIds.has(item.id)}
                 className={cn(
-                  'relative rounded-xl text-left',
+                  'relative rounded-xl',
                   selectedIds.has(item.id) && 'ring-2 ring-black'
                 )}
               >
                 {/* 카드의 저장 버튼은 편집 중엔 안 눌리게 덮는다 */}
-                <span className="pointer-events-none block">
+                <div className="pointer-events-none">
                   <VerticalCard product={whiskyToProduct(item)} isSaved />
-                </span>
-                <span
-                  className={cn(
-                    'absolute top-2 left-2 flex size-5 items-center justify-center rounded border text-xs',
-                    selectedIds.has(item.id)
-                      ? 'border-black bg-black text-white'
-                      : 'border-gray-300 bg-white'
-                  )}
-                  aria-hidden="true"
+                </div>
+                {/* 카드 전체를 덮는 선택 토글. 카드 안에 button이 있어
+                    바깥을 button으로 감쌀 수 없다(중첩 금지). */}
+                <button
+                  type="button"
+                  onClick={() => toggleSelected(item.id)}
+                  aria-pressed={selectedIds.has(item.id)}
+                  aria-label={`${item.name} 선택`}
+                  className="absolute inset-0 h-full w-full rounded-xl"
                 >
-                  {selectedIds.has(item.id) ? '✓' : ''}
-                </span>
-              </button>
+                  <span
+                    className={cn(
+                      'absolute top-2 left-2 flex size-5 items-center justify-center rounded border text-xs',
+                      selectedIds.has(item.id)
+                        ? 'border-black bg-black text-white'
+                        : 'border-gray-300 bg-white'
+                    )}
+                    aria-hidden="true"
+                  >
+                    {selectedIds.has(item.id) ? '✓' : ''}
+                  </span>
+                </button>
+              </div>
             ) : (
               <VerticalCard
                 key={item.id}
@@ -299,10 +306,9 @@ export function CollectionView() {
         />
       )}
       {activeCollection && (
-        <AddCollectionItemModal
+        <AddPlannerItemModal
           key={`add-item-${activeCollection.id}`}
-          collectionId={activeCollection.id}
-          collectionName={activeCollection.name}
+          collection={activeCollection}
         />
       )}
     </div>
