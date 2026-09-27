@@ -1,4 +1,5 @@
 import {
+  skipToken,
   useMutation,
   useQueries,
   useQuery,
@@ -7,11 +8,14 @@ import {
 
 import {
   addCollectionItem,
+  COPY_COLLECTION_ITEMS_MAX,
+  copyCollectionItems,
   createCollection,
   deleteCollection,
   fetchCollectionItems,
   fetchCollections,
-  removeCollectionItem,
+  moveCollectionItems,
+  removeCollectionItems,
   renameCollection,
 } from '@/lib/api/collection';
 
@@ -19,7 +23,7 @@ export const collectionKeys = {
   all: ['collections'] as const,
   lists: () => [...collectionKeys.all, 'list'] as const,
   items: () => [...collectionKeys.all, 'items'] as const,
-  item: (collectionId: number) =>
+  item: (collectionId: number | null) =>
     [...collectionKeys.items(), collectionId] as const,
 };
 
@@ -30,10 +34,15 @@ export function useCollectionListQuery() {
   });
 }
 
-export function useCollectionItemQuery(collectionId: number) {
+// 컬렉션이 아직 안 정해졌으면 null을 넘긴다. 0 같은 가짜 id로 요청이 나가면
+// 서버에 없는 컬렉션을 조회하게 된다.
+export function useCollectionItemQuery(collectionId: number | null) {
   return useQuery({
     queryKey: collectionKeys.item(collectionId),
-    queryFn: () => fetchCollectionItems(collectionId),
+    queryFn:
+      collectionId === null
+        ? skipToken
+        : () => fetchCollectionItems(collectionId),
   });
 }
 
@@ -112,14 +121,71 @@ export function useRemoveCollectionItemMutation() {
   return useMutation({
     mutationFn: ({
       collectionId,
-      whiskyId,
+      whiskyIds,
     }: {
       collectionId: number;
-      whiskyId: number;
-    }) => removeCollectionItem(collectionId, whiskyId),
+      whiskyIds: number[];
+    }) => removeCollectionItems(collectionId, whiskyIds),
     onSuccess: (_data, { collectionId }) => {
       queryClient.invalidateQueries({
         queryKey: collectionKeys.item(collectionId),
+      });
+    },
+  });
+}
+
+export function useMoveCollectionItemMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      collectionId,
+      targetCollectionId,
+      whiskyIds,
+    }: {
+      collectionId: number;
+      targetCollectionId: number;
+      whiskyIds: number[];
+    }) => moveCollectionItems(collectionId, targetCollectionId, whiskyIds),
+    // 출발지/도착지 둘 다 목록이 바뀐다.
+    onSuccess: (_data, { collectionId, targetCollectionId }) => {
+      queryClient.invalidateQueries({
+        queryKey: collectionKeys.item(collectionId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: collectionKeys.item(targetCollectionId),
+      });
+    },
+  });
+}
+
+// 복사는 한 번에 20개까지라 그보다 많으면 나눠 보낸다. 서버가 도착 그룹의
+// 중복은 알아서 건너뛰므로 재시도로 중복이 쌓이지는 않는다.
+export function useCopyCollectionItemsMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      collectionId,
+      targetCollectionId,
+      whiskyIds,
+    }: {
+      collectionId: number;
+      targetCollectionId: number;
+      whiskyIds: number[];
+    }) => {
+      for (let i = 0; i < whiskyIds.length; i += COPY_COLLECTION_ITEMS_MAX) {
+        await copyCollectionItems(
+          collectionId,
+          targetCollectionId,
+          whiskyIds.slice(i, i + COPY_COLLECTION_ITEMS_MAX)
+        );
+      }
+    },
+    // 출발 그룹은 그대로라 도착 그룹만 다시 불러온다.
+    onSuccess: (_data, { targetCollectionId }) => {
+      queryClient.invalidateQueries({
+        queryKey: collectionKeys.item(targetCollectionId),
       });
     },
   });

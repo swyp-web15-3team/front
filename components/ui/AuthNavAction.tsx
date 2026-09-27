@@ -1,16 +1,28 @@
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { useLogoutMutation } from '@/hooks/queries/use-auth';
+import { rememberCurrentPath } from '@/lib/login-return';
 import { useAuthStore } from '@/store/use-auth-store';
 
 export function AuthNavAction() {
+  const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { mutate: logout, isPending } = useLogoutMutation();
 
   if (!isAuthenticated) {
-    return <Link href="/login">로그인</Link>;
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          rememberCurrentPath();
+          router.push('/login');
+        }}
+      >
+        로그인
+      </button>
+    );
   }
 
   return (

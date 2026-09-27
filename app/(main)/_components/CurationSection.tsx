@@ -1,7 +1,6 @@
 import Link from 'next/link';
 
 import { HorizontalScroller } from '@/components/ui/HorizontalScroller';
-import { SaveItemModal } from '@/components/common/SaveItemModal';
 import { VerticalCard } from '@/components/ui/VerticalCard';
 import { WhiskyCard } from '@/types/whisky';
 
@@ -62,8 +61,6 @@ export function CurationSection({ id, title, content }: CurationSectionProps) {
           />
         ))}
       </HorizontalScroller>
-
-      <SaveItemModal />
     </section>
   );
 }
