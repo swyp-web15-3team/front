@@ -1,12 +1,13 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
+import { searchWhiskyCandidates } from '@/lib/api/test-whisky';
 import {
   fetchRelatedWhiskies,
+  fetchWhiskies,
   fetchWhiskyCategories,
   fetchWhiskyDetail,
-  searchWhiskyCandidates,
-} from '@/lib/api/test-whisky';
-import { fetchWhiskies, fetchWhiskySuggestions } from '@/lib/api/whisky';
+  fetchWhiskySuggestions,
+} from '@/lib/api/whisky';
 import { WhiskyListRequest } from '@/types/whisky';
 
 type WhiskyListFilters = Omit<WhiskyListRequest, 'page'>;
@@ -42,6 +43,8 @@ export function useWhiskyCategoryListQuery() {
   return useQuery({
     queryKey: whiskyKeys.categories(),
     queryFn: fetchWhiskyCategories,
+    // 거의 바뀌지 않는 마스터 목록이라 한 번 받아온 뒤 재조회하지 않는다
+    staleTime: Infinity,
   });
 }
 

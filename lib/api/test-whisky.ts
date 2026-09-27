@@ -4,12 +4,10 @@ import {
   SaleProduct,
   WhiskyCard,
   WhiskyCategory,
-  WhiskyCategoryListResponse,
   WhiskyDetailResponse,
   WhiskyListItem,
   WhiskyListRequest,
   WhiskyListResponse,
-  WhiskyRelatedListResponse,
 } from '@/types/whisky';
 
 const MOCK_NETWORK_DELAY_MS = 400;
@@ -114,14 +112,6 @@ export async function fetchWhiskies({
   };
 }
 
-// TODO: 위스키 종류 API 연동 후 apiClient.get<WhiskyCategoryListResponse>('/api/v1/whisky-categories')로 교체한다.
-export async function fetchWhiskyCategories(): Promise<
-  WhiskyCategoryListResponse['data']
-> {
-  await delay();
-  return { categories: MOCK_CATEGORIES };
-}
-
 // TODO: 위스키 상세 API 연동 후 apiClient.get<WhiskyDetailResponse>(`/api/v1/whiskies/${whiskyId}`)로 교체한다.
 export async function fetchWhiskyDetail(
   whiskyId: number
@@ -133,21 +123,6 @@ export async function fetchWhiskyDetail(
     id: whiskyId,
     saleProducts: MOCK_SALE_PRODUCTS,
   };
-}
-
-// TODO: 연관 위스키 API 연동 후 apiClient.get<WhiskyRelatedListResponse>(`/api/v1/whiskies/${whiskyId}/related`)로 교체한다.
-export async function fetchRelatedWhiskies(
-  whiskyId: number
-): Promise<WhiskyRelatedListResponse['data']> {
-  await delay();
-
-  const whiskies = Array.from({ length: 4 }, (_, i) => ({
-    ...MOCK_WHISKY_CARD,
-    id: whiskyId + i + 1,
-    name: `${whiskyId + i + 1} ${MOCK_WHISKY_CARD.name}`,
-  }));
-
-  return { whiskies };
 }
 
 // TODO: 위스키 검색 API 연동 후 apiClient.get<WhiskyListResponse>('/api/v1/whiskies', { params: { query } })로 교체한다.
