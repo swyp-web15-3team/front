@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useSaveItemModal } from '@/components/common/SaveItemModal';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/use-auth-store';
 import { Product } from '@/types/product';
@@ -67,7 +68,7 @@ export function VerticalCard({
           </span>
         )}
         <div className="absolute right-2 bottom-2">
-          <BookmarkButton />
+          <BookmarkButton product={product} />
         </div>
       </div>
       <div className="flex flex-1 flex-col bg-gray-50 px-4 py-3">
@@ -104,16 +105,24 @@ export function VerticalCard({
   );
 }
 
-function BookmarkButton() {
+function BookmarkButton({ product }: { product: Product }) {
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  // TODO: 컬렉션 저장 API 연동 후 서버 상태(TanStack Query)로 교체
-  const [isSaved, setIsSaved] = useState(false);
+  const { open: openSaveItemModal } = useSaveItemModal();
+  // TODO: 저장 여부는 컬렉션 조회 API 연동 후 서버 상태로 교체
+  const isSaved = false;
 
   const handleToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsSaved((prev) => !prev);
+    if (product.id === undefined) return;
+
+    openSaveItemModal({
+      id: product.id,
+      name: product.name,
+      originalName: product.originalName,
+      imageUrl: product.imageUrl,
+    });
   };
 
   // 카드 전체가 Link일 수 있어 중첩 <a>를 피하려고 button + router.push로 이동한다

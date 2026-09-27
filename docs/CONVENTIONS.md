@@ -101,6 +101,18 @@ constants/                # 상수, enum
 
 - 백엔드 서버가 별도로 존재한다. 일반 요청은 클라이언트에서 axios로 백엔드를 직접 호출한다. 인증 등 보안이 필요한 요청은 Next.js Route Handler(`app/api/.../route.ts`)를 경유한다
 - axios 인스턴스는 `lib/api/client.ts`에 둔다. baseURL은 `NEXT_PUBLIC_API_URL`을 사용하고, 인터셉터에서 인증 토큰 첨부와 공통 에러 처리를 수행한다
+- **`NEXT_PUBLIC_API_URL`에 `/api/v1`까지 포함되어 있다.** 따라서 API 함수에서는 그 뒤 경로만 적는다
+
+  ```
+  NEXT_PUBLIC_API_URL=https://sulchedule-server.sunghoyaaa.com/api/v1
+  ```
+
+  ```ts
+  apiClient.get('/planners');         // O → .../api/v1/planners
+  apiClient.get('/api/v1/planners');  // X → .../api/v1/api/v1/planners
+  ```
+
+  API 명세서의 엔드포인트가 `/api/v1/planners`처럼 적혀 있어도 `/api/v1`을 떼고 넣는다. 버전이 올라가면 env만 바꾸면 되도록 코드에 버전을 넣지 않는다
 - API 함수는 도메인별로 분리한다 (예: `lib/api/user.ts`, `lib/api/auth.ts`)
 - TanStack Query 훅은 `hooks/queries/use-user.ts`처럼 도메인별로 분리하고, 이름은 `useXxxQuery` / `useXxxMutation`으로 짓는다
 

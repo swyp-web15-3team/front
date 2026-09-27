@@ -48,10 +48,12 @@ export function useWhiskyCategoryListQuery() {
   });
 }
 
-export function useWhiskyDetailQuery(whiskyId: number) {
+// enabled=false면 요청하지 않는다. 펼친 행의 판매처만 불러올 때 쓴다.
+export function useWhiskyDetailQuery(whiskyId: number | null) {
   return useQuery({
-    queryKey: whiskyKeys.detail(whiskyId),
-    queryFn: () => fetchWhiskyDetail(whiskyId),
+    queryKey: whiskyKeys.detail(whiskyId ?? 0),
+    queryFn: () => fetchWhiskyDetail(whiskyId as number),
+    enabled: whiskyId !== null,
   });
 }
 

@@ -8,13 +8,13 @@ import {
   useSampleModal1,
 } from '@/components/common/SampleModal1';
 import {
-  SaveItemBottomSheet,
-  useSaveItemBottomSheet,
-} from '@/components/common/SaveItemBottomSheet';
+  SaveItemModal,
+  useSaveItemModal,
+} from '@/components/common/SaveItemModal';
 
 export default function UiPage() {
   const { open: openSampleModal1 } = useSampleModal1();
-  const { open: openSaveItemBottomSheet } = useSaveItemBottomSheet();
+  const { open: openSaveItemModal } = useSaveItemModal();
 
   const errorTestHandler = () => {
     Sentry.captureException(new Error('GlitchTip 브라우저 테스트 에러'));
@@ -61,7 +61,7 @@ export default function UiPage() {
         </button>
         <button
           onClick={() =>
-            openSaveItemBottomSheet({
+            openSaveItemModal({
               id: 101,
               name: '야마자키 12년(더미)',
               originalName: '山崎 | Yamazaki 12yo',
@@ -70,11 +70,11 @@ export default function UiPage() {
           }
           className="border-2 bg-amber-50 text-black"
         >
-          저장 바텀시트 열기
+          저장 모달 열기
         </button>
       </div>
       <SampleModal1 />
-      <SaveItemBottomSheet />
+      <SaveItemModal />
       <VerticalCard
         className="w-60"
         product={{
