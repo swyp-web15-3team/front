@@ -20,9 +20,7 @@ import {
   useWhiskyListQuery,
 } from '@/hooks/queries/use-whisky';
 import { useModal } from '@/hooks/use-modal';
-import { cn } from '@/lib/utils';
-import { PlannerCandidate } from '@/types/planner';
-import { Product } from '@/types/product';
+import { cn, whiskyToProduct } from '@/lib/utils';
 import { WhiskyListItem } from '@/types/whisky';
 
 type Tab = 'collection' | 'all';
@@ -82,10 +80,8 @@ export function AddPlannerItemModal() {
 
     const lowerKeyword = keyword.trim().toLowerCase();
     const matchedIndex = collectionIds.findIndex((_, index) =>
-      (collectionItemQueries[index]?.data?.items ?? []).some(
-        (item) =>
-          item.whiskyName.toLowerCase().includes(lowerKeyword) ||
-          item.whiskyOriginalName.toLowerCase().includes(lowerKeyword)
+      (collectionItemQueries[index]?.data?.items ?? []).some((item) =>
+        item.name.toLowerCase().includes(lowerKeyword)
       )
     );
     return matchedIndex === -1 ? null : collectionIds[matchedIndex];
@@ -167,36 +163,29 @@ export function AddPlannerItemModal() {
     });
   }
 
-  function filterByKeyword(items: PlannerCandidate[]) {
+  function filterByKeyword(items: WhiskyListItem[]) {
     if (!keyword.trim()) return items;
     const lowerKeyword = keyword.trim().toLowerCase();
-    return items.filter(
-      (item) =>
-        item.whiskyName.toLowerCase().includes(lowerKeyword) ||
-        item.whiskyOriginalName.toLowerCase().includes(lowerKeyword)
+    return items.filter((item) =>
+      item.name.toLowerCase().includes(lowerKeyword)
     );
   }
 
   const visibleItems = filterByKeyword(openCollectionItems);
 
   const whiskyList = (
-    <ul className="h-full overflow-y-auto rounded-lg bg-gray-50 p-2">
-      {visibleItems.length === 0 ? (
-        <li className="py-8 text-center text-xs text-gray-400">
-          해당하는 상품이 없습니다
-        </li>
-      ) : (
-        visibleItems.map((item) => (
-          <CandidateRow
-            key={item.saleProductId}
-            item={item}
-            count={counts.get(item.saleProductId) ?? 0}
-            onIncrement={() => changeCount(item.saleProductId, 1)}
-            onDecrement={() => changeCount(item.saleProductId, -1)}
-          />
-        ))
-      )}
-    </ul>
+    <SearchResultList
+      items={visibleItems}
+      isLoading={false}
+      isError={false}
+      onRetry={() => {}}
+      hasNextPage={false}
+      isFetchingNextPage={false}
+      onLoadMore={() => {}}
+      counts={counts}
+      onIncrement={(saleProductId) => changeCount(saleProductId, 1)}
+      onDecrement={(saleProductId) => changeCount(saleProductId, -1)}
+    />
   );
 
   if (isConfirmingClose) {
@@ -359,74 +348,6 @@ export function AddPlannerItemModal() {
   );
 }
 
-function toCandidateProduct(item: PlannerCandidate): Product {
-  return {
-    imageUrl: '',
-    name: item.whiskyName,
-    originalName: item.whiskyOriginalName,
-    discountRate: 0,
-    krPrice: item.price?.amountKrw ?? 0,
-    jpPrice: item.price?.amountKrw ?? 0,
-    jpPriceYen: item.price?.amount ?? 0,
-  };
-}
-
-function CandidateRow({
-  item,
-  count,
-  onIncrement,
-  onDecrement,
-}: {
-  item: PlannerCandidate;
-  count: number;
-  onIncrement: () => void;
-  onDecrement: () => void;
-}) {
-  return (
-    <li className="py-1">
-      <div className="flex items-center gap-2 rounded-xl">
-        <HorizontalCard product={toCandidateProduct(item)} className="flex-1" />
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            aria-label="개수 줄이기"
-            disabled={count === 0}
-            onClick={onDecrement}
-            className="flex size-7 items-center justify-center rounded-full border border-gray-300 text-sm disabled:opacity-30"
-          >
-            −
-          </button>
-          <span className="w-4 text-center text-sm">{count}</span>
-          <button
-            type="button"
-            aria-label="개수 늘리기"
-            onClick={onIncrement}
-            className="flex size-7 items-center justify-center rounded-full border border-gray-300 text-sm"
-          >
-            +
-          </button>
-        </div>
-      </div>
-    </li>
-  );
-}
-
-function toSearchProduct(whisky: WhiskyListItem): Product {
-  return {
-    id: whisky.id,
-    imageUrl: '',
-    name: whisky.name,
-    originalName: '',
-    discountRate: whisky.comparison
-      ? -Math.round(whisky.comparison.diffRatio * 100)
-      : 0,
-    krPrice: whisky.kr?.amount ?? 0,
-    jpPrice: whisky.jp?.amountKrw ?? 0,
-    jpPriceYen: whisky.jp?.amount ?? 0,
-    volumeMl: whisky.volumeMl,
-  };
-}
-
 /**
  * 검색 탭 결과. 검색 페이지와 같은 GET /whiskies를 쓰고 로딩/에러/빈 결과와
  * 무한 스크롤 처리도 그대로 맞춘다.
@@ -508,7 +429,7 @@ function SearchResultList({
         <li key={whisky.id} className="py-1">
           <div className="flex items-center gap-2 rounded-xl">
             <HorizontalCard
-              product={toSearchProduct(whisky)}
+              product={whiskyToProduct(whisky)}
               className="flex-1"
             />
             <button

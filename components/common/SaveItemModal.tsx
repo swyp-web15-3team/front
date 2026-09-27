@@ -86,7 +86,7 @@ function SaveItemModalContent() {
     return new Set(
       collectionIds.filter((_, index) =>
         (collectionItemQueries[index]?.data?.items ?? []).some(
-          (item) => item.whiskyId === whisky.id
+          (item) => item.id === whisky.id
         )
       )
     );

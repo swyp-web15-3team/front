@@ -23,23 +23,7 @@ import {
   useRemoveCollectionItemMutation,
   useRenameCollectionMutation,
 } from '@/hooks/queries/use-collection';
-import { cn } from '@/lib/utils';
-import { PlannerCandidate } from '@/types/planner';
-import { Product } from '@/types/product';
-
-function toProduct(item: PlannerCandidate): Product {
-  return {
-    id: item.whiskyId,
-    imageUrl: '',
-    name: item.whiskyName,
-    originalName: item.whiskyOriginalName,
-    discountRate: 0,
-    krPrice: item.price?.amountKrw ?? 0,
-    jpPrice: item.price?.amountKrw ?? 0,
-    jpPriceYen: item.price?.amount,
-    volumeMl: item.volumeMl,
-  };
-}
+import { cn, whiskyToProduct } from '@/lib/utils';
 
 export function CollectionView() {
   const { data, isLoading } = useCollectionListQuery();
@@ -47,9 +31,8 @@ export function CollectionView() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const activeId = selectedId ?? collections[0]?.id ?? null;
   const activeCollection = collections.find((c) => c.id === activeId) ?? null;
-  const { data: itemsData, isLoading: isItemsLoading } = useCollectionItemQuery(
-    activeId ?? 0
-  );
+  const { data: itemsData, isLoading: isItemsLoading } =
+    useCollectionItemQuery(activeId);
   const items = itemsData?.items ?? [];
 
   const { open: openCreateModal } = useCreateCollectionModal();
@@ -147,17 +130,17 @@ export function CollectionView() {
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {items.map((item) => (
-            <div key={item.saleProductId} className="relative">
+            <div key={item.id} className="relative">
               <button
                 type="button"
-                onClick={() => handleRemoveItem(item.whiskyId)}
+                onClick={() => handleRemoveItem(item.id)}
                 disabled={removeItemMutation.isPending}
                 aria-label="관심 목록에서 빼기"
                 className="absolute top-2 right-2 z-10 flex size-6 items-center justify-center rounded-full bg-black/60 text-xs text-white"
               >
                 ✕
               </button>
-              <VerticalCard product={toProduct(item)} />
+              <VerticalCard product={whiskyToProduct(item)} />
             </div>
           ))}
         </div>

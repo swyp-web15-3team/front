@@ -1,4 +1,5 @@
 import {
+  skipToken,
   useMutation,
   useQueries,
   useQuery,
@@ -19,7 +20,7 @@ export const collectionKeys = {
   all: ['collections'] as const,
   lists: () => [...collectionKeys.all, 'list'] as const,
   items: () => [...collectionKeys.all, 'items'] as const,
-  item: (collectionId: number) =>
+  item: (collectionId: number | null) =>
     [...collectionKeys.items(), collectionId] as const,
 };
 
@@ -30,10 +31,15 @@ export function useCollectionListQuery() {
   });
 }
 
-export function useCollectionItemQuery(collectionId: number) {
+// 컬렉션이 아직 안 정해졌으면 null을 넘긴다. 0 같은 가짜 id로 요청이 나가면
+// 서버에 없는 컬렉션을 조회하게 된다.
+export function useCollectionItemQuery(collectionId: number | null) {
   return useQuery({
     queryKey: collectionKeys.item(collectionId),
-    queryFn: () => fetchCollectionItems(collectionId),
+    queryFn:
+      collectionId === null
+        ? skipToken
+        : () => fetchCollectionItems(collectionId),
   });
 }
 
