@@ -95,6 +95,22 @@ export async function moveCollectionItems(
   return data.data;
 }
 
+/** 복사 API가 한 번에 받는 최대 위스키 수 (초과하면 서버가 400) */
+export const COPY_COLLECTION_ITEMS_MAX = 20;
+
+// 이동과 달리 출발 그룹에도 그대로 남는다. 도착 그룹에 이미 있는 건 서버가 건너뛴다.
+// 204 No Content라 응답 본문이 없다.
+export async function copyCollectionItems(
+  collectionId: number,
+  targetCollectionId: number,
+  whiskyIds: number[]
+): Promise<void> {
+  await apiClient.post(`/collections/${collectionId}/whiskies/copy`, {
+    targetCollectionId,
+    whiskyIds,
+  });
+}
+
 // 서버는 에러를 ProblemDetail(detail에 사용자용 메시지)로 내려준다.
 // axios 에러의 message는 "Request failed with status code 409"라서 화면에 그대로 못 쓴다.
 export function getCollectionErrorMessage(error: unknown): string {

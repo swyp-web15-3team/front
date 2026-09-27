@@ -7,6 +7,10 @@ import {
   useAddCollectionItemModal,
 } from '@/components/common/AddCollectionItemModal';
 import {
+  CollectionMenuModal,
+  useCollectionMenuModal,
+} from '@/components/common/CollectionMenuModal';
+import {
   CreateCollectionModal,
   useCreateCollectionModal,
 } from '@/components/common/CreateCollectionModal';
@@ -43,6 +47,7 @@ export function CollectionView() {
   const { open: openCreateModal } = useCreateCollectionModal();
   const { open: openRenameModal } = useRenameCollectionModal();
   const { open: openAddItemModal } = useAddCollectionItemModal();
+  const { open: openMenuModal } = useCollectionMenuModal();
   const createCollectionMutation = useCreateCollectionMutation();
   const renameCollectionMutation = useRenameCollectionMutation();
   const deleteCollectionMutation = useDeleteCollectionMutation();
@@ -116,25 +121,46 @@ export function CollectionView() {
   return (
     <div className="mt-4 flex flex-col gap-4">
       <ul className="flex gap-2 overflow-x-auto">
-        {collections.map((collection) => (
-          <li key={collection.id}>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedId(collection.id);
-                exitEditing();
-              }}
-              className={cn(
-                'rounded-full px-3 py-1.5 text-sm whitespace-nowrap',
-                activeId === collection.id
-                  ? 'bg-amber-50 font-medium'
-                  : 'bg-gray-100 text-gray-500'
-              )}
-            >
-              {collection.name}
-            </button>
-          </li>
-        ))}
+        {collections.map((collection) => {
+          const isActive = activeId === collection.id;
+
+          return (
+            <li key={collection.id}>
+              {/* 탭 자체가 버튼이라 더보기를 중첩할 수 없다. 둘을 한 알약 안에
+                  나란히 두고 배경만 공유한다. */}
+              <div
+                className={cn(
+                  'flex items-center rounded-full text-sm whitespace-nowrap',
+                  isActive
+                    ? 'bg-amber-50 font-medium'
+                    : 'bg-gray-100 text-gray-500'
+                )}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedId(collection.id);
+                    exitEditing();
+                  }}
+                  className={cn('py-1.5 pl-3', isActive ? 'pr-1' : 'pr-3')}
+                >
+                  {collection.name}
+                </button>
+                {/* 이름 변경/삭제/편집은 활성 탭의 더보기 모달로 모은다. */}
+                {isActive && (
+                  <button
+                    type="button"
+                    onClick={openMenuModal}
+                    aria-label={`${collection.name} 더보기`}
+                    className="py-1.5 pr-3 pl-1 text-gray-500"
+                  >
+                    ⋯
+                  </button>
+                )}
+              </div>
+            </li>
+          );
+        })}
         <li>
           <button
             type="button"
@@ -146,33 +172,15 @@ export function CollectionView() {
         </li>
       </ul>
 
-      {activeCollection && (
-        <div className="flex gap-3 text-xs text-gray-400">
-          <button type="button" onClick={openAddItemModal}>
-            위스키 추가
+      {activeCollection && !isEditing && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={openAddItemModal}
+            className="text-xs text-gray-500"
+          >
+            + 위스키 추가
           </button>
-          {items.length > 0 && (
-            <button
-              type="button"
-              onClick={() => (isEditing ? exitEditing() : setIsEditing(true))}
-            >
-              {isEditing ? '편집 취소' : '편집하기'}
-            </button>
-          )}
-          {!activeCollection.isDefault && (
-            <>
-              <button type="button" onClick={openRenameModal}>
-                이름 변경
-              </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={deleteCollectionMutation.isPending}
-              >
-                삭제
-              </button>
-            </>
-          )}
         </div>
       )}
 
@@ -259,24 +267,40 @@ export function CollectionView() {
           >
             삭제
           </button>
+          <button
+            type="button"
+            onClick={exitEditing}
+            className="rounded-md px-3 py-1.5 text-xs text-gray-500"
+          >
+            완료
+          </button>
         </div>
       )}
 
       <CreateCollectionModal
         createCollectionMutation={createCollectionMutation}
         onCreated={setSelectedId}
+        copySources={collections}
       />
       {activeCollection && (
         <RenameCollectionModal
-          key={activeCollection.id}
+          key={`rename-${activeCollection.id}`}
           collectionId={activeCollection.id}
           initialName={activeCollection.name}
           renameCollectionMutation={renameCollectionMutation}
         />
       )}
       {activeCollection && (
+        <CollectionMenuModal
+          isDefault={activeCollection.isDefault}
+          onEdit={() => setIsEditing(true)}
+          onRename={openRenameModal}
+          onDelete={handleDelete}
+        />
+      )}
+      {activeCollection && (
         <AddCollectionItemModal
-          key={activeCollection.id}
+          key={`add-item-${activeCollection.id}`}
           collectionId={activeCollection.id}
           collectionName={activeCollection.name}
         />

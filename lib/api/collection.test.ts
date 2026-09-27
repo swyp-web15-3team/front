@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { apiClient } from '@/lib/api/client';
 import {
   addCollectionItem,
+  copyCollectionItems,
   moveCollectionItems,
   removeCollectionItems,
 } from '@/lib/api/collection';
@@ -63,6 +64,19 @@ describe('관심 그룹 위스키 이동', () => {
     expect(post).toHaveBeenCalledWith('/collections/1/whiskies/move', {
       targetCollectionId: 2,
       whiskyIds: [101, 102],
+    });
+  });
+});
+
+describe('관심 그룹 위스키 복사', () => {
+  it('POST /collections/{id}/whiskies/copy에 대상 그룹과 whiskyIds를 담아 보낸다', async () => {
+    const post = vi.spyOn(apiClient, 'post').mockResolvedValue({ data: '' });
+
+    await copyCollectionItems(3, 7, [101, 102, 103]);
+
+    expect(post).toHaveBeenCalledWith('/collections/3/whiskies/copy', {
+      targetCollectionId: 7,
+      whiskyIds: [101, 102, 103],
     });
   });
 });

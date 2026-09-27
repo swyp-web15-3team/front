@@ -8,6 +8,8 @@ import {
 
 import {
   addCollectionItem,
+  COPY_COLLECTION_ITEMS_MAX,
+  copyCollectionItems,
   createCollection,
   deleteCollection,
   fetchCollectionItems,
@@ -150,6 +152,38 @@ export function useMoveCollectionItemMutation() {
       queryClient.invalidateQueries({
         queryKey: collectionKeys.item(collectionId),
       });
+      queryClient.invalidateQueries({
+        queryKey: collectionKeys.item(targetCollectionId),
+      });
+    },
+  });
+}
+
+// 복사는 한 번에 20개까지라 그보다 많으면 나눠 보낸다. 서버가 도착 그룹의
+// 중복은 알아서 건너뛰므로 재시도로 중복이 쌓이지는 않는다.
+export function useCopyCollectionItemsMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      collectionId,
+      targetCollectionId,
+      whiskyIds,
+    }: {
+      collectionId: number;
+      targetCollectionId: number;
+      whiskyIds: number[];
+    }) => {
+      for (let i = 0; i < whiskyIds.length; i += COPY_COLLECTION_ITEMS_MAX) {
+        await copyCollectionItems(
+          collectionId,
+          targetCollectionId,
+          whiskyIds.slice(i, i + COPY_COLLECTION_ITEMS_MAX)
+        );
+      }
+    },
+    // 출발 그룹은 그대로라 도착 그룹만 다시 불러온다.
+    onSuccess: (_data, { targetCollectionId }) => {
       queryClient.invalidateQueries({
         queryKey: collectionKeys.item(targetCollectionId),
       });
