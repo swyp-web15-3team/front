@@ -6,6 +6,7 @@ export const MODAL_ID = {
   SEARCH: 'search',
   ADD_PLANNER_ITEM: 'add-planner-item',
   ADD_COLLECTION_ITEM: 'add-collection-item',
+  SEARCH_FILTER: 'search-filter',
 } as const;
 
 export type ModalId = (typeof MODAL_ID)[keyof typeof MODAL_ID];
