@@ -2,111 +2,118 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { FilterChips } from '@/app/(main)/search/_components/FilterChips';
+import {
+  FilterModal,
+  useFilterModal,
+} from '@/app/(main)/search/_components/FilterModal';
+import { PriceRangeField } from '@/app/(main)/search/_components/PriceRangeField';
+import {
+  EMPTY_SEARCH_FILTERS,
+  FILTER_GROUP_LABELS,
+} from '@/constants/search-filter';
+import { useSearchFilterOptions } from '@/hooks/use-search-filter-options';
 import { pushEscapeLayer } from '@/lib/escape-stack';
+import { getFilterChips, toggleFilterOption } from '@/lib/search-filter';
 import { cn } from '@/lib/utils';
+import { FilterGroupKey, SearchFilters } from '@/types/search';
+import { WhiskySort } from '@/types/whisky';
 
-interface FilterGroup {
-  key: string;
-  label: string;
-  options: string[];
+// TODO: 필터 API 연동 시 filters 값도 useWhiskyListQuery 파라미터로 전달한다
+// TODO: 가격·가격차 정렬은 백엔드 협의 후 sort 값이 추가되면 옵션에 넣는다
+const SORT_OPTIONS: { label: string; value: WhiskySort }[] = [
+  { label: '이름순', value: 'name,asc' },
+  { label: '최신순', value: 'id,desc' },
+];
+
+interface FilterBarProps {
+  sort: WhiskySort;
+  onSortChange: (sort: WhiskySort) => void;
 }
 
-// TODO: 필터/정렬 API 연동 후 옵션 목록을 서버 응답 기준으로 교체하고,
-// selected/sort 값을 useProductListQuery 파라미터로 전달한다.
-const FILTER_GROUPS: FilterGroup[] = [
-  {
-    key: 'region',
-    label: '생산 지역',
-    options: ['스코틀랜드', '일본', '아일랜드', '미국', '캐나다'],
-  },
-  {
-    key: 'blend',
-    label: '블렌딩',
-    options: ['싱글몰트', '블렌디드', '싱글그레인', '블렌디드 몰트'],
-  },
-  {
-    key: 'priceRange',
-    label: '가격대',
-    options: ['10만원 이하', '10~20만원', '20~30만원', '30만원 이상'],
-  },
-  {
-    key: 'priceGap',
-    label: '가격 차이',
-    options: ['10% 이상 차이', '20% 이상 차이', '30% 이상 차이'],
-  },
-];
-
-const SORT_OPTIONS = [
-  '추천순',
-  '할인율 높은순',
-  '한국가 낮은순',
-  '한국가 높은순',
-  '최신순',
-];
-
-const QUICK_TYPES = ['재패니스', '버번', '라이', '아이리시'];
-
-export function FilterBar() {
+export function FilterBar({ sort, onSortChange }: FilterBarProps) {
   const [openKey, setOpenKey] = useState<string | null>(null);
-  const [selected, setSelected] = useState<Record<string, string[]>>({});
-  const [sort, setSort] = useState(SORT_OPTIONS[0]);
-  const [activeTypes, setActiveTypes] = useState<string[]>([]);
+  const [filters, setFilters] = useState<SearchFilters>(EMPTY_SEARCH_FILTERS);
+  const { open: openFilterModal } = useFilterModal();
+  const filterOptions = useSearchFilterOptions();
+
+  const hasFilters = getFilterChips(filters).length > 0;
 
   const toggleOpen = (key: string) => {
     setOpenKey((prev) => (prev === key ? null : key));
   };
 
-  const toggleOption = (groupKey: string, option: string) => {
-    setSelected((prev) => {
-      const current = prev[groupKey] ?? [];
-      const next = current.includes(option)
-        ? current.filter((value) => value !== option)
-        : [...current, option];
-      return { ...prev, [groupKey]: next };
-    });
+  const toggleOption = (group: FilterGroupKey, option: string) => {
+    setFilters((prev) => toggleFilterOption(prev, group, option));
   };
 
-  const toggleType = (type: string) => {
-    setActiveTypes((prev) =>
-      prev.includes(type)
-        ? prev.filter((value) => value !== type)
-        : [...prev, type]
-    );
-  };
+  const renderOptionDropdown = (group: FilterGroupKey) => (
+    <FilterDropdown
+      key={group}
+      label={FILTER_GROUP_LABELS[group]}
+      variant="pill"
+      isOpen={openKey === group}
+      onToggle={() => toggleOpen(group)}
+      onClose={() => setOpenKey(null)}
+      hasActive={filters.options[group].length > 0}
+    >
+      <div className="flex flex-col gap-1">
+        {filterOptions[group].map((option) => (
+          <label
+            key={option}
+            className="flex items-center gap-2 rounded px-2 py-1.5 text-sm whitespace-nowrap hover:bg-gray-50"
+          >
+            <input
+              type="checkbox"
+              checked={filters.options[group].includes(option)}
+              onChange={() => toggleOption(group, option)}
+            />
+            {option}
+          </label>
+        ))}
+      </div>
+    </FilterDropdown>
+  );
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        {FILTER_GROUPS.map((group) => (
-          <FilterDropdown
-            key={group.key}
-            label={group.label}
-            variant="pill"
-            isOpen={openKey === group.key}
-            onToggle={() => toggleOpen(group.key)}
-            onClose={() => setOpenKey(null)}
-            hasActive={(selected[group.key]?.length ?? 0) > 0}
-          >
-            <div className="flex flex-col gap-1">
-              {group.options.map((option) => (
-                <label
-                  key={option}
-                  className="flex items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-gray-50"
-                >
-                  <input
-                    type="checkbox"
-                    checked={(selected[group.key] ?? []).includes(option)}
-                    onChange={() => toggleOption(group.key, option)}
-                  />
-                  {option}
-                </label>
-              ))}
-            </div>
-          </FilterDropdown>
-        ))}
+        <button
+          type="button"
+          aria-label="필터 열기"
+          onClick={openFilterModal}
+          className="relative rounded-full bg-gray-100 p-2"
+        >
+          <FilterIcon className="size-4" />
+          {hasFilters && (
+            <span className="bg-brand absolute top-1 right-1 size-1.5 rounded-full" />
+          )}
+        </button>
+
+        {renderOptionDropdown('category')}
 
         <FilterDropdown
-          label={sort}
+          label="가격대"
+          variant="pill"
+          isOpen={openKey === 'price'}
+          onToggle={() => toggleOpen('price')}
+          onClose={() => setOpenKey(null)}
+          hasActive={filters.price !== null}
+        >
+          <div className="w-80 p-2">
+            <PriceRangeField
+              value={filters.price}
+              onChange={(price) => setFilters((prev) => ({ ...prev, price }))}
+            />
+          </div>
+        </FilterDropdown>
+
+        {renderOptionDropdown('priceGap')}
+
+        <FilterDropdown
+          label={
+            SORT_OPTIONS.find((option) => option.value === sort)?.label ?? ''
+          }
           variant="plain"
           isOpen={openKey === 'sort'}
           onToggle={() => toggleOpen('sort')}
@@ -115,46 +122,34 @@ export function FilterBar() {
           className="ml-auto"
         >
           <div className="flex flex-col">
-            {SORT_OPTIONS.map((option) => (
+            {SORT_OPTIONS.map(({ label, value }) => (
               <button
-                key={option}
+                key={value}
                 type="button"
                 onClick={() => {
-                  setSort(option);
+                  onSortChange(value);
                   setOpenKey(null);
                 }}
                 className={cn(
                   'rounded px-3 py-1.5 text-left text-sm whitespace-nowrap hover:bg-gray-50',
-                  sort === option && 'font-bold'
+                  sort === value && 'font-bold'
                 )}
               >
-                {option}
+                {label}
               </button>
             ))}
           </div>
         </FilterDropdown>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {QUICK_TYPES.map((type) => {
-          const isActive = activeTypes.includes(type);
-          return (
-            <button
-              key={type}
-              type="button"
-              onClick={() => toggleType(type)}
-              className={cn(
-                'rounded-full border px-3 py-1.5 text-sm',
-                isActive
-                  ? 'border-black bg-black text-white'
-                  : 'border-gray-300'
-              )}
-            >
-              {type}
-            </button>
-          );
-        })}
-      </div>
+      <FilterChips
+        filters={filters}
+        onChange={setFilters}
+        onReset={() => setFilters(EMPTY_SEARCH_FILTERS)}
+        className="rounded-md"
+      />
+
+      <FilterModal filters={filters} onApply={setFilters} />
     </div>
   );
 }
@@ -236,6 +231,27 @@ function FilterDropdown({
         </div>
       )}
     </div>
+  );
+}
+
+function FilterIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" />
+      <circle cx="16" cy="6" r="2" />
+      <circle cx="10" cy="12" r="2" />
+      <circle cx="18" cy="18" r="2" />
+    </svg>
   );
 }
 
