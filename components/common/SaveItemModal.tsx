@@ -155,7 +155,7 @@ function SaveItemModalContent() {
       ...toRemove.map((collectionId) =>
         removeCollectionItemMutation.mutateAsync({
           collectionId,
-          whiskyId: whisky.id,
+          whiskyIds: [whisky.id],
         })
       ),
     ]);

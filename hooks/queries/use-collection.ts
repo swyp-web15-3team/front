@@ -12,7 +12,8 @@ import {
   deleteCollection,
   fetchCollectionItems,
   fetchCollections,
-  removeCollectionItem,
+  moveCollectionItems,
+  removeCollectionItems,
   renameCollection,
 } from '@/lib/api/collection';
 
@@ -118,14 +119,39 @@ export function useRemoveCollectionItemMutation() {
   return useMutation({
     mutationFn: ({
       collectionId,
-      whiskyId,
+      whiskyIds,
     }: {
       collectionId: number;
-      whiskyId: number;
-    }) => removeCollectionItem(collectionId, whiskyId),
+      whiskyIds: number[];
+    }) => removeCollectionItems(collectionId, whiskyIds),
     onSuccess: (_data, { collectionId }) => {
       queryClient.invalidateQueries({
         queryKey: collectionKeys.item(collectionId),
+      });
+    },
+  });
+}
+
+export function useMoveCollectionItemMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      collectionId,
+      targetCollectionId,
+      whiskyIds,
+    }: {
+      collectionId: number;
+      targetCollectionId: number;
+      whiskyIds: number[];
+    }) => moveCollectionItems(collectionId, targetCollectionId, whiskyIds),
+    // 출발지/도착지 둘 다 목록이 바뀐다.
+    onSuccess: (_data, { collectionId, targetCollectionId }) => {
+      queryClient.invalidateQueries({
+        queryKey: collectionKeys.item(collectionId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: collectionKeys.item(targetCollectionId),
       });
     },
   });

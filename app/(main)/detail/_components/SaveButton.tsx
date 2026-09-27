@@ -1,11 +1,12 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 
-import type { SaveItemWhisky } from '@/components/common/SaveItemModal';
+import {
+  type SaveItemWhisky,
+  useSaveItemModal,
+} from '@/components/common/SaveItemModal';
 import { rememberCurrentPath } from '@/lib/login-return';
-import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/use-auth-store';
 
 interface SaveButtonProps {
@@ -15,8 +16,7 @@ interface SaveButtonProps {
 export function SaveButton({ whisky }: SaveButtonProps) {
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  // TODO: 컬렉션 저장 API 연동 후 서버 상태(TanStack Query)로 교체
-  const [isSaved, setIsSaved] = useState(false);
+  const { open: openSaveItemModal } = useSaveItemModal();
 
   if (!isAuthenticated) {
     return (
@@ -35,19 +35,15 @@ export function SaveButton({ whisky }: SaveButtonProps) {
     );
   }
 
+  // 어느 관심 목록에 담을지는 모달이 정한다(카드의 저장 버튼과 동일).
   return (
     <button
       type="button"
-      onClick={() => setIsSaved((prev) => !prev)}
-      className={cn(
-        'flex items-center gap-1.5 rounded-md border px-4 py-2 text-sm',
-        isSaved
-          ? 'border-brand bg-brand text-white'
-          : 'border-black bg-black text-white'
-      )}
+      onClick={() => openSaveItemModal(whisky)}
+      className="flex items-center gap-1.5 rounded-md border border-black bg-black px-4 py-2 text-sm text-white"
     >
-      <BookmarkIcon filled={isSaved} />
-      {isSaved ? '저장됨' : '저장하기'}
+      <BookmarkIcon filled={false} />
+      저장하기
     </button>
   );
 }

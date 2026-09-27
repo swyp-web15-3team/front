@@ -63,12 +63,28 @@ export async function addCollectionItem(
   return data.data;
 }
 
-export async function removeCollectionItem(
+// 단건/다건 모두 whiskyIds 배열로 보낸다. DELETE는 axios에서 body를
+// config.data로 넘겨야 한다(두 번째 인자가 body가 아니다).
+export async function removeCollectionItems(
   collectionId: number,
-  whiskyId: number
+  whiskyIds: number[]
 ): Promise<RemoveCollectionItemResponse['data']> {
   const { data } = await apiClient.delete<RemoveCollectionItemResponse>(
-    `/collections/${collectionId}/whiskies/${whiskyId}`
+    `/collections/${collectionId}/whiskies`,
+    { data: { whiskyIds } }
+  );
+  return data.data;
+}
+
+// 다른 컬렉션으로 옮기기. 제거와 달리 POST라 body를 두 번째 인자로 넘긴다.
+export async function moveCollectionItems(
+  collectionId: number,
+  targetCollectionId: number,
+  whiskyIds: number[]
+): Promise<RemoveCollectionItemResponse['data']> {
+  const { data } = await apiClient.post<RemoveCollectionItemResponse>(
+    `/collections/${collectionId}/whiskies/move`,
+    { targetCollectionId, whiskyIds }
   );
   return data.data;
 }
