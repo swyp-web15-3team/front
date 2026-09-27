@@ -1,19 +1,20 @@
 'use client';
 
-import { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { FilterBar } from '@/app/(main)/search/_components/FilterBar';
 import { ProductGrid } from '@/components/common/ProductGrid';
 import { useWhiskyListQuery } from '@/hooks/queries/use-whisky';
 import { Product } from '@/types/product';
-import { WhiskyListItem } from '@/types/whisky';
+import { WhiskyListItem, WhiskySort } from '@/types/whisky';
 
 // TODO: WhiskyList.tsx, CollectionView.tsx의 toProduct와 중복 — 공용 위치로 추출 필요
 function toProduct(whisky: WhiskyListItem): Product {
   return {
     id: whisky.id,
-    imageUrl: '',
+    imageUrl: whisky.imageUrl || '',
     name: whisky.name,
     originalName: '',
     discountRate: whisky.comparison
@@ -42,7 +43,48 @@ export default function SearchPage() {
 
 function SearchPageContent() {
   const searchParams = useSearchParams();
-  const query = searchParams.get('q') ?? '';
+  const query = searchParams.get('q')?.trim() ?? '';
+
+  // q는 필수 — 없으면 API를 호출하지 않고 이동 안내만 보여준다
+  if (!query) return <MissingQuery />;
+
+  return <SearchResults query={query} />;
+}
+
+function MissingQuery() {
+  const router = useRouter();
+
+  // 직접 URL로 진입해 이전 기록이 없으면 back이 동작하지 않으므로 홈으로 보낸다
+  const handleBack = () => {
+    if (window.history.length > 1) router.back();
+    else router.replace('/');
+  };
+
+  return (
+    <div className="flex min-h-100 flex-col items-center justify-center gap-4">
+      <p>검색어를 입력해주세요</p>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="rounded border px-4 py-2 text-sm"
+        >
+          뒤로 가기
+        </button>
+        <Link href="/" className="rounded border px-4 py-2 text-sm">
+          홈으로
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+interface SearchResultsProps {
+  query: string;
+}
+
+function SearchResults({ query }: SearchResultsProps) {
+  const [sort, setSort] = useState<WhiskySort>('name,asc');
   const {
     data,
     isLoading,
@@ -51,14 +93,14 @@ function SearchPageContent() {
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useWhiskyListQuery({ query });
+  } = useWhiskyListQuery({ query, sort });
 
   const items =
     data?.pages.flatMap((page) => page.content.map(toProduct)) ?? [];
 
   return (
     <div className="mx-auto max-w-300">
-      <FilterBar />
+      <FilterBar sort={sort} onSortChange={setSort} />
       {isLoading ? (
         <div className="flex min-h-100 items-center justify-center">
           <p>불러오는 중...</p>

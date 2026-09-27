@@ -45,7 +45,10 @@ function getLocalNetworkOrigins(): string[] {
 const nextConfig: NextConfig = {
   output: 'standalone',
   images: {
-    remotePatterns: [new URL('https://placehold.co/**')],
+    remotePatterns: [
+      new URL('https://placehold.co/**'),
+      new URL('https://d1e2y5wc27crnp.cloudfront.net/media/**'),
+    ],
   },
   allowedDevOrigins: getLocalNetworkOrigins(),
 };
