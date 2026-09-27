@@ -2,9 +2,10 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
 import { SearchModal, useSearchModal } from '@/components/common/SearchModal';
+import { useCurrentSearchQuery } from '@/hooks/use-current-search-query';
 import { AuthNavAction } from '@/components/ui/AuthNavAction';
 import { cn } from '@/lib/utils';
 
@@ -54,6 +55,18 @@ export default function Header() {
     };
   }, []);
 
+  const placeholder = (
+    <span
+      className={cn(
+        'truncate text-sm text-gray-400 transition-opacity',
+        isPlaceholderVisible ? 'opacity-100' : 'opacity-0'
+      )}
+      style={{ transitionDuration: `${SEARCH_PLACEHOLDER_FADE_MS}ms` }}
+    >
+      {SEARCH_PLACEHOLDER_KEYWORDS[placeholderIndex]}
+    </span>
+  );
+
   return (
     <header
       className={cn(
@@ -77,15 +90,10 @@ export default function Header() {
           aria-label="검색"
           className="flex w-full items-center rounded-md bg-gray-100 py-2 pr-8 pl-2 text-left"
         >
-          <span
-            className={cn(
-              'truncate text-sm text-gray-400 transition-opacity',
-              isPlaceholderVisible ? 'opacity-100' : 'opacity-0'
-            )}
-            style={{ transitionDuration: `${SEARCH_PLACEHOLDER_FADE_MS}ms` }}
-          >
-            {SEARCH_PLACEHOLDER_KEYWORDS[placeholderIndex]}
-          </span>
+          {/* useSearchParams는 Suspense 경계가 필요하다 (layout에서 렌더되므로) */}
+          <Suspense fallback={placeholder}>
+            <SearchBarText placeholder={placeholder} />
+          </Suspense>
         </button>
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -107,7 +115,22 @@ export default function Header() {
         <Link href="/planner">플래너</Link>
         <AuthNavAction />
       </nav>
-      <SearchModal />
+      <Suspense fallback={null}>
+        <SearchModal />
+      </Suspense>
     </header>
   );
+}
+
+interface SearchBarTextProps {
+  placeholder: React.ReactNode;
+}
+
+// 검색 결과 페이지에서는 현재 검색어를, 그 외에는 추천 검색어 placeholder를 보여준다
+function SearchBarText({ placeholder }: SearchBarTextProps) {
+  const query = useCurrentSearchQuery();
+
+  if (!query) return placeholder;
+
+  return <span className="truncate text-sm text-black">{query}</span>;
 }
