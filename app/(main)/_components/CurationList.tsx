@@ -2,24 +2,7 @@
 
 import { ProductGrid } from '@/components/common/ProductGrid';
 import { useCurationListQuery } from '@/hooks/queries/use-curation';
-import { Product } from '@/types/product';
-import { WhiskyListItem } from '@/types/whisky';
-
-function toProduct(whisky: WhiskyListItem): Product {
-  return {
-    id: whisky.id,
-    imageUrl: '',
-    name: whisky.name,
-    originalName: '',
-    discountRate: whisky.comparison
-      ? -Math.round(whisky.comparison.diffRatio * 100)
-      : 0,
-    krPrice: whisky.kr?.amount ?? 0,
-    jpPrice: whisky.jp?.amountKrw ?? 0,
-    jpPriceYen: whisky.jp?.amount ?? 0,
-    volumeMl: whisky.volumeMl,
-  };
-}
+import { whiskyToProduct } from '@/lib/utils';
 
 export function CurationList() {
   const {
@@ -34,7 +17,7 @@ export function CurationList() {
 
   const title = data?.pages[0]?.title;
   const items =
-    data?.pages.flatMap((page) => page.content.map(toProduct)) ?? [];
+    data?.pages.flatMap((page) => page.content.map(whiskyToProduct)) ?? [];
 
   if (isLoading) {
     return (

@@ -7,10 +7,7 @@ import {
   SampleModal1,
   useSampleModal1,
 } from '@/components/common/SampleModal1';
-import {
-  SaveItemModal,
-  useSaveItemModal,
-} from '@/components/common/SaveItemModal';
+import { useSaveItemModal } from '@/components/common/SaveItemModal';
 
 export default function UiPage() {
   const { open: openSampleModal1 } = useSampleModal1();
@@ -74,7 +71,6 @@ export default function UiPage() {
         </button>
       </div>
       <SampleModal1 />
-      <SaveItemModal />
       <VerticalCard
         className="w-60"
         product={{

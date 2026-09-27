@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSaveItemModal } from '@/components/common/SaveItemModal';
+import { rememberCurrentPath } from '@/lib/login-return';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/use-auth-store';
 import { Product } from '@/types/product';
@@ -14,6 +15,15 @@ interface VerticalCardProps {
   loading?: 'eager' | 'lazy';
   className?: string;
   href?: string;
+  /**
+   * 저장 버튼을 "저장됨"으로 그린다. 관심목록 페이지처럼 이미 담긴 게
+   * 확실한 화면에서 쓴다. 생략하면 기존대로 저장 모달을 여는 버튼이 된다.
+   */
+  isSaved?: boolean;
+  /** isSaved일 때 버튼을 누르면 실행된다. 없으면 저장 모달을 연다. */
+  onUnsave?: () => void;
+  /** 제거 요청 중 버튼을 잠근다. */
+  isUnsaving?: boolean;
 }
 
 export function VerticalCard({
@@ -21,6 +31,9 @@ export function VerticalCard({
   loading = 'lazy',
   className,
   href,
+  isSaved,
+  onUnsave,
+  isUnsaving,
 }: VerticalCardProps) {
   const {
     imageUrl = '', // 추후 기본 이미지 URL로 변경 가능
@@ -68,7 +81,12 @@ export function VerticalCard({
           </span>
         )}
         <div className="absolute right-2 bottom-2">
-          <BookmarkButton product={product} />
+          <BookmarkButton
+            product={product}
+            isSaved={isSaved}
+            onUnsave={onUnsave}
+            isUnsaving={isUnsaving}
+          />
         </div>
       </div>
       <div className="flex flex-1 flex-col bg-gray-50 px-4 py-3">
@@ -105,17 +123,32 @@ export function VerticalCard({
   );
 }
 
-function BookmarkButton({ product }: { product: Product }) {
+function BookmarkButton({
+  product,
+  isSaved = false,
+  onUnsave,
+  isUnsaving = false,
+}: {
+  product: Product;
+  // TODO: 목록/검색 화면의 저장 여부는 컬렉션 조회 API 연동 후 서버 상태로 채운다
+  isSaved?: boolean;
+  onUnsave?: () => void;
+  isUnsaving?: boolean;
+}) {
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { open: openSaveItemModal } = useSaveItemModal();
-  // TODO: 저장 여부는 컬렉션 조회 API 연동 후 서버 상태로 교체
-  const isSaved = false;
 
   const handleToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (product.id === undefined) return;
+
+    // 이미 담긴 항목이면 모달을 열지 않고 바로 뺀다.
+    if (isSaved && onUnsave) {
+      onUnsave();
+      return;
+    }
 
     openSaveItemModal({
       id: product.id,
@@ -129,6 +162,16 @@ function BookmarkButton({ product }: { product: Product }) {
   const handleLoginRedirect = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    rememberCurrentPath(
+      product.id === undefined
+        ? undefined
+        : {
+            id: product.id,
+            name: product.name,
+            originalName: product.originalName,
+            imageUrl: product.imageUrl,
+          }
+    );
     router.push('/login');
   };
 
@@ -149,9 +192,11 @@ function BookmarkButton({ product }: { product: Product }) {
     <button
       type="button"
       onClick={handleToggle}
-      aria-label={isSaved ? '저장 취소' : '저장하기'}
+      disabled={isUnsaving}
+      aria-pressed={isSaved}
+      aria-label={isSaved ? '관심 목록에서 빼기' : '저장하기'}
       className={cn(
-        'flex size-8 shrink-0 items-center justify-center rounded-md border',
+        'flex size-8 shrink-0 items-center justify-center rounded-md border disabled:opacity-50',
         isSaved
           ? 'border-black bg-black text-white'
           : 'border-gray-200 bg-white text-black'

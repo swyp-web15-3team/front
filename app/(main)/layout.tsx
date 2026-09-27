@@ -1,5 +1,7 @@
 'use client';
 
+import { LoginReturnHandler } from '@/components/common/LoginReturnHandler';
+import { SaveItemModal } from '@/components/common/SaveItemModal';
 import { BottomNav } from '@/components/ui/BottomNav';
 import Footer from '@/components/ui/Footer';
 import Header from '@/components/ui/Header';
@@ -15,6 +17,8 @@ export default function MainLayout({ children }: LayoutProps<'/'>) {
         <Footer />
       </div>
       <BottomNav />
+      <SaveItemModal />
+      <LoginReturnHandler />
     </>
   );
 }

@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect } from 'react';
 
+import { peekLoginReturn } from '@/lib/login-return';
 import { useAuthStore } from '@/store/use-auth-store';
 
 function LoginCallback() {
@@ -23,7 +24,7 @@ function LoginCallback() {
         console.log('[login/callback] 수신', {
           accessToken: `${accessToken.slice(0, 12)}...`,
           isNewUser,
-          next: isNewUser ? '/signup/terms' : '/',
+          next: isNewUser ? '/signup/terms' : (peekLoginReturn()?.path ?? '/'),
         });
       }
 
@@ -35,7 +36,9 @@ function LoginCallback() {
       }
 
       setAccessToken(accessToken);
-      router.replace('/');
+      // 복귀 지점은 여기서 지우지 않는다. 도착한 페이지의 LoginReturnHandler가
+      // 저장 모달을 다시 열어야 해서, 소비 시점을 그쪽으로 넘긴다.
+      router.replace(peekLoginReturn()?.path ?? '/');
       return;
     }
 

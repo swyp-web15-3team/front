@@ -24,7 +24,7 @@ const OPTIMISTIC_ERROR_DISMISS_MS = 3000;
 export interface SaveItemWhisky {
   id: number;
   name: string;
-  originalName: string;
+  originalName?: string;
   imageUrl?: string;
 }
 
@@ -86,7 +86,7 @@ function SaveItemModalContent() {
     return new Set(
       collectionIds.filter((_, index) =>
         (collectionItemQueries[index]?.data?.items ?? []).some(
-          (item) => item.whiskyId === whisky.id
+          (item) => item.id === whisky.id
         )
       )
     );
@@ -155,7 +155,7 @@ function SaveItemModalContent() {
       ...toRemove.map((collectionId) =>
         removeCollectionItemMutation.mutateAsync({
           collectionId,
-          whiskyId: whisky.id,
+          whiskyIds: [whisky.id],
         })
       ),
     ]);

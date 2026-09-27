@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/nextjs';
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 
+import { rememberCurrentPath } from '@/lib/login-return';
 import { useAuthStore } from '@/store/use-auth-store';
 
 export const apiClient = axios.create({
@@ -19,13 +20,14 @@ apiClient.interceptors.request.use((config) => {
 });
 
 let isRefreshing = false;
-let refreshSubscribers: Array<(accessToken: string) => void> = [];
+// null이면 재발급 실패. 대기 중인 요청을 풀어주는 신호로 쓴다.
+let refreshSubscribers: Array<(accessToken: string | null) => void> = [];
 
-function subscribeTokenRefresh(callback: (accessToken: string) => void) {
+function subscribeTokenRefresh(callback: (accessToken: string | null) => void) {
   refreshSubscribers.push(callback);
 }
 
-function onTokenRefreshed(accessToken: string) {
+function onTokenRefreshed(accessToken: string | null) {
   refreshSubscribers.forEach((callback) => callback(accessToken));
   refreshSubscribers = [];
 }
@@ -44,6 +46,9 @@ function redirectToLogin() {
   // 이미 /login이면 다시 이동시키지 않는다. 로그인 페이지에서 뜬 401이
   // 또 리다이렉트를 부르면 새로고침이 무한 반복된다.
   if (window.location.pathname === '/login') return;
+
+  // 세션이 끊겨 튕겨나가는 경우에도 로그인 후 보던 페이지로 되돌린다.
+  rememberCurrentPath();
 
   // 인터셉터는 React 렌더 트리 밖에서 실행되어 useRouter를 쓸 수 없다
   // eslint-disable-next-line @next/next/no-location-assign-relative-destination
@@ -73,27 +78,41 @@ apiClient.interceptors.response.use(
     if (status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      if (!isRefreshing) {
-        isRefreshing = true;
-
-        try {
-          const newAccessToken = await reissueAccessToken();
-          useAuthStore.getState().setAccessToken(newAccessToken);
-          onTokenRefreshed(newAccessToken);
-        } catch (refreshError) {
-          redirectToLogin();
-          return Promise.reject(refreshError);
-        } finally {
-          isRefreshing = false;
-        }
+      // 재발급이 이미 돌고 있으면 그게 끝나기를 기다렸다가 새 토큰으로 재시도한다.
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh((newAccessToken) => {
+            if (newAccessToken === null) {
+              reject(error);
+              return;
+            }
+            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            resolve(apiClient(originalRequest));
+          });
+        });
       }
 
-      return new Promise((resolve) => {
-        subscribeTokenRefresh((newAccessToken) => {
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          resolve(apiClient(originalRequest));
-        });
-      });
+      // 재발급을 주도하는 요청. 대기자들에게 알린 뒤 자기 요청도 직접 재시도한다.
+      // (onTokenRefreshed 시점엔 자신은 아직 구독 전이라, 구독으로 기다리면
+      //  자기 콜백을 영영 못 받고 타임아웃까지 멈춘다.)
+      isRefreshing = true;
+
+      let newAccessToken: string;
+      try {
+        newAccessToken = await reissueAccessToken();
+        useAuthStore.getState().setAccessToken(newAccessToken);
+      } catch (refreshError) {
+        // 대기 중인 요청들도 같이 풀어줘야 타임아웃까지 매달리지 않는다.
+        onTokenRefreshed(null);
+        redirectToLogin();
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+
+      onTokenRefreshed(newAccessToken);
+      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+      return apiClient(originalRequest);
     }
 
     if (status === 403) {

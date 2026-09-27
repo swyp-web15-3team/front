@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { useSignUpMutation } from '@/hooks/queries/use-auth';
+import { peekLoginReturn } from '@/lib/login-return';
 import type { SignUpRequest } from '@/types/auth';
 
 const TERMS: Array<{
@@ -83,7 +84,11 @@ export default function TermsPage() {
       <button
         type="button"
         disabled={!requiredChecked || isPending}
-        onClick={() => signUp(checked, { onSuccess: () => router.push('/') })}
+        onClick={() =>
+          signUp(checked, {
+            onSuccess: () => router.push(peekLoginReturn()?.path ?? '/'),
+          })
+        }
         className="rounded-md bg-black py-3 font-medium text-white disabled:bg-black/30"
       >
         동의하고 계속하기

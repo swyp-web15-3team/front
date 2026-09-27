@@ -7,25 +7,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { FilterBar } from '@/app/(main)/search/_components/FilterBar';
 import { ProductGrid } from '@/components/common/ProductGrid';
 import { useWhiskyListQuery } from '@/hooks/queries/use-whisky';
-import { Product } from '@/types/product';
-import { WhiskyListItem, WhiskySort } from '@/types/whisky';
-
-// TODO: WhiskyList.tsx, CollectionView.tsx의 toProduct와 중복 — 공용 위치로 추출 필요
-function toProduct(whisky: WhiskyListItem): Product {
-  return {
-    id: whisky.id,
-    imageUrl: whisky.imageUrl || '',
-    name: whisky.name,
-    originalName: '',
-    discountRate: whisky.comparison
-      ? -Math.round(whisky.comparison.diffRatio * 100)
-      : 0,
-    krPrice: whisky.kr?.amount ?? 0,
-    jpPrice: whisky.jp?.amountKrw ?? 0,
-    jpPriceYen: whisky.jp?.amount ?? 0,
-    volumeMl: whisky.volumeMl,
-  };
-}
+import { whiskyToProduct } from '@/lib/utils';
+import { WhiskySort } from '@/types/whisky';
 
 export default function SearchPage() {
   return (
@@ -96,7 +79,7 @@ function SearchResults({ query }: SearchResultsProps) {
   } = useWhiskyListQuery({ query, sort });
 
   const items =
-    data?.pages.flatMap((page) => page.content.map(toProduct)) ?? [];
+    data?.pages.flatMap((page) => page.content.map(whiskyToProduct)) ?? [];
 
   return (
     <div className="mx-auto max-w-300">
