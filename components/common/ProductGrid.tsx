@@ -124,6 +124,7 @@ export function ProductGrid({
               <VerticalCard
                 key={`${virtualRow.index}-${colIndex}`}
                 product={product}
+                href={product.id != null ? `/detail/${product.id}` : undefined}
               />
             ))}
           </div>

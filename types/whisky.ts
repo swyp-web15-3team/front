@@ -50,6 +50,7 @@ export interface WhiskyCard {
   kr: WhiskyPriceKr | null;
   jp: WhiskyPriceJp | null;
   comparison: WhiskyComparison | null;
+  imageUrl?: string;
 }
 
 // 목록·검색 결과 한 행 (카드 + 원산지/지역)
@@ -69,9 +70,11 @@ export interface SaleProductPrice {
 export interface SaleProduct {
   id: number;
   retailerName: string;
+  retailerAddress?: string | null;
   countryCode: CountryCode;
   isDutyFree: boolean;
   productUrl: string;
+  imageUrl?: string;
   isSoldOut: boolean | null;
   price: SaleProductPrice | null;
 }

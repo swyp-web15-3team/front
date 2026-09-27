@@ -7,6 +7,7 @@ import { WhiskyListItem } from '@/types/whisky';
 
 function toProduct(whisky: WhiskyListItem): Product {
   return {
+    id: whisky.id,
     imageUrl: '',
     name: whisky.name,
     originalName: '',
