@@ -20,13 +20,14 @@ apiClient.interceptors.request.use((config) => {
 });
 
 let isRefreshing = false;
-let refreshSubscribers: Array<(accessToken: string) => void> = [];
+// null이면 재발급 실패. 대기 중인 요청을 풀어주는 신호로 쓴다.
+let refreshSubscribers: Array<(accessToken: string | null) => void> = [];
 
-function subscribeTokenRefresh(callback: (accessToken: string) => void) {
+function subscribeTokenRefresh(callback: (accessToken: string | null) => void) {
   refreshSubscribers.push(callback);
 }
 
-function onTokenRefreshed(accessToken: string) {
+function onTokenRefreshed(accessToken: string | null) {
   refreshSubscribers.forEach((callback) => callback(accessToken));
   refreshSubscribers = [];
 }
@@ -77,27 +78,41 @@ apiClient.interceptors.response.use(
     if (status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      if (!isRefreshing) {
-        isRefreshing = true;
-
-        try {
-          const newAccessToken = await reissueAccessToken();
-          useAuthStore.getState().setAccessToken(newAccessToken);
-          onTokenRefreshed(newAccessToken);
-        } catch (refreshError) {
-          redirectToLogin();
-          return Promise.reject(refreshError);
-        } finally {
-          isRefreshing = false;
-        }
+      // 재발급이 이미 돌고 있으면 그게 끝나기를 기다렸다가 새 토큰으로 재시도한다.
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh((newAccessToken) => {
+            if (newAccessToken === null) {
+              reject(error);
+              return;
+            }
+            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            resolve(apiClient(originalRequest));
+          });
+        });
       }
 
-      return new Promise((resolve) => {
-        subscribeTokenRefresh((newAccessToken) => {
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          resolve(apiClient(originalRequest));
-        });
-      });
+      // 재발급을 주도하는 요청. 대기자들에게 알린 뒤 자기 요청도 직접 재시도한다.
+      // (onTokenRefreshed 시점엔 자신은 아직 구독 전이라, 구독으로 기다리면
+      //  자기 콜백을 영영 못 받고 타임아웃까지 멈춘다.)
+      isRefreshing = true;
+
+      let newAccessToken: string;
+      try {
+        newAccessToken = await reissueAccessToken();
+        useAuthStore.getState().setAccessToken(newAccessToken);
+      } catch (refreshError) {
+        // 대기 중인 요청들도 같이 풀어줘야 타임아웃까지 매달리지 않는다.
+        onTokenRefreshed(null);
+        redirectToLogin();
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+
+      onTokenRefreshed(newAccessToken);
+      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+      return apiClient(originalRequest);
     }
 
     if (status === 403) {
