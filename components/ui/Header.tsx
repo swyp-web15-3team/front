@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
 import { SearchModal, useSearchModal } from '@/components/common/SearchModal';
@@ -21,8 +22,36 @@ const SEARCH_PLACEHOLDER_KEYWORDS = [
 const SEARCH_PLACEHOLDER_INTERVAL_MS = 3000;
 const SEARCH_PLACEHOLDER_FADE_MS = 200;
 
+interface NavItem {
+  href: string;
+  label: string;
+  isActive: (pathname: string) => boolean;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  {
+    href: '/',
+    label: '탐색',
+    isActive: (pathname) =>
+      pathname === '/' ||
+      pathname.startsWith('/search') ||
+      pathname.startsWith('/detail'),
+  },
+  {
+    href: '/mypage/collection',
+    label: '콜렉션',
+    isActive: (pathname) => pathname.startsWith('/mypage/collection'),
+  },
+  {
+    href: '/planner',
+    label: '플래너',
+    isActive: (pathname) => pathname.startsWith('/planner'),
+  },
+];
+
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const pathname = usePathname();
   const { open: openSearchModal } = useSearchModal();
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isPlaceholderVisible, setIsPlaceholderVisible] = useState(true);
@@ -58,7 +87,7 @@ export default function Header() {
   const placeholder = (
     <span
       className={cn(
-        'text-body-sm text-fg-subtle truncate transition-opacity',
+        'text-fg-subtle block truncate transition-opacity',
         isPlaceholderVisible ? 'opacity-100' : 'opacity-0'
       )}
       style={{ transitionDuration: `${SEARCH_PLACEHOLDER_FADE_MS}ms` }}
@@ -70,55 +99,67 @@ export default function Header() {
   return (
     <header
       className={cn(
-        'glass sticky top-0 z-[var(--z-sticky)] flex items-center justify-between border-b border-transparent px-2 py-4 transition-colors duration-[280ms] ease-[var(--ease-out-macos)] sm:px-6',
-        isScrolled && 'glass-edge-bottom border-transparent'
+        'glass sticky top-0 z-[var(--z-sticky)] border-b border-transparent transition-colors duration-[280ms] ease-[var(--ease-out-macos)]',
+        isScrolled && 'border-border'
       )}
     >
-      <Link href="/">
-        <Image
-          src="https://placehold.co/120x31.png"
-          alt="Logo"
-          width={120}
-          height={31}
-        />
-      </Link>
-      <div className="relative mx-2 max-w-300 flex-1 sm:mx-4">
-        <button
-          type="button"
-          onClick={openSearchModal}
-          id="search-bar"
-          aria-label="검색"
-          className="bg-surface-sunken/80 hover:bg-surface-sunken flex w-full items-center rounded-lg py-2 pr-8 pl-2 text-left transition-colors duration-[180ms]"
-        >
-          {/* useSearchParams는 Suspense 경계가 필요하다 (layout에서 렌더되므로) */}
-          <Suspense fallback={placeholder}>
-            <SearchBarText placeholder={placeholder} />
-          </Suspense>
-        </button>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="text-fg pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 cursor-pointer"
-          onClick={(e) => e.preventDefault()}
-        >
-          <circle cx="11" cy="11" r="7" />
-          <path d="m21 21-4.3-4.3" />
-        </svg>
+      <div className="mx-auto flex max-w-300 items-center gap-4 px-4 py-3 sm:px-6 md:gap-6">
+        <Link href="/" className="shrink-0">
+          <Image
+            src="https://placehold.co/120x31.png"
+            alt="Logo"
+            width={120}
+            height={31}
+          />
+        </Link>
+        <nav className="text-body-sm hidden shrink-0 items-center gap-4 whitespace-nowrap sm:flex md:gap-6">
+          {NAV_ITEMS.map(({ href, label, isActive }) => (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                'text-fg hover:text-primary-strong',
+                isActive(pathname) && 'font-bold'
+              )}
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
+        <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-4 md:gap-6">
+          <button
+            type="button"
+            onClick={openSearchModal}
+            id="search-bar"
+            aria-label="검색"
+            className="bg-surface-sunken/80 hover:bg-surface-sunken text-body-sm flex w-full min-w-0 items-center gap-2 rounded-full py-2 pr-3 pl-5 text-left transition-colors duration-[180ms] sm:max-w-72"
+          >
+            <span className="min-w-0 flex-1">
+              {/* useSearchParams는 Suspense 경계가 필요하다 (layout에서 렌더되므로) */}
+              <Suspense fallback={placeholder}>
+                <SearchBarText placeholder={placeholder} />
+              </Suspense>
+            </span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.75}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              className="text-fg-muted size-5 shrink-0"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+          </button>
+          <div className="hidden shrink-0 whitespace-nowrap sm:block">
+            <AuthNavAction />
+          </div>
+        </div>
       </div>
-      <nav className="text-body-sm hidden gap-2 sm:flex sm:gap-4">
-        <Link href="/mypage/collection" className="hover:text-primary-strong">
-          관심 목록
-        </Link>
-        <Link href="/planner" className="hover:text-primary-strong">
-          플래너
-        </Link>
-        <AuthNavAction />
-      </nav>
       <Suspense fallback={null}>
         <SearchModal />
       </Suspense>
@@ -136,5 +177,5 @@ function SearchBarText({ placeholder }: SearchBarTextProps) {
 
   if (!query) return placeholder;
 
-  return <span className="text-body-sm text-fg truncate">{query}</span>;
+  return <span className="text-fg block truncate">{query}</span>;
 }

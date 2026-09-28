@@ -21,7 +21,7 @@ export function AuthNavAction() {
           router.push('/login');
         }}
       >
-        로그인
+        회원가입/로그인
       </button>
     );
   }
