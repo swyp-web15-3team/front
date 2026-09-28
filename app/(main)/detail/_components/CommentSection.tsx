@@ -110,7 +110,7 @@ export function CommentSection() {
 
   return (
     <div className="mt-8">
-      <div className="rounded-md border border-gray-300">
+      <div className="border-border-strong rounded-md border">
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -121,34 +121,34 @@ export function CommentSection() {
               : '댓글을 작성하려면 로그인 해주세요.'
           }
           rows={3}
-          className="w-full resize-none rounded-md p-3 text-sm outline-none disabled:bg-gray-50 disabled:text-gray-400"
+          className="text-body-sm text-fg placeholder:text-fg-subtle disabled:bg-surface-muted disabled:text-fg-subtle w-full resize-none rounded-md p-3 outline-none"
         />
-        <div className="flex justify-end border-t border-gray-200 p-2">
+        <div className="border-border flex justify-end border-t p-2">
           <button
             type="button"
             onClick={handleSubmit}
             disabled={!isAuthenticated || !content.trim()}
-            className="rounded-md bg-gray-200 px-4 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+            className="bg-primary text-on-primary text-button rounded-md px-4 py-1.5 disabled:cursor-not-allowed disabled:opacity-60"
           >
             등록
           </button>
         </div>
       </div>
 
-      <ul className="mt-4 flex flex-col divide-y divide-gray-200">
+      <ul className="divide-border mt-4 flex flex-col divide-y">
         {visibleComments.map((comment) => (
           <li key={comment.id} className="flex gap-3 py-4">
-            <div className="size-8 shrink-0 rounded-full bg-gray-200" />
+            <div className="bg-surface-sunken size-8 shrink-0 rounded-full" />
             <div className="flex-1">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold">{comment.author}</span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-body-sm-strong">{comment.author}</span>
+                  <span className="text-caption text-fg-muted">
                     {comment.createdAt}
                   </span>
                 </div>
                 {comment.isOwner ? (
-                  <div className="flex gap-2 text-xs text-gray-500">
+                  <div className="text-caption text-fg-muted flex gap-2">
                     <button
                       type="button"
                       onClick={() => handleEditStart(comment)}
@@ -167,7 +167,7 @@ export function CommentSection() {
                     type="button"
                     onClick={() => handleReport(comment.id)}
                     disabled={reportedIds.includes(comment.id)}
-                    className="text-xs text-gray-500 disabled:text-gray-300"
+                    className="text-caption text-fg-muted hover:text-fg disabled:text-fg-subtle"
                   >
                     {reportedIds.includes(comment.id) ? '신고완료' : '신고'}
                   </button>
@@ -180,9 +180,9 @@ export function CommentSection() {
                     value={editingContent}
                     onChange={(e) => setEditingContent(e.target.value)}
                     rows={2}
-                    className="w-full resize-none rounded-md border border-gray-300 p-2 text-sm outline-none"
+                    className="border-border-strong text-body-sm text-fg w-full resize-none rounded-md border p-2 outline-none"
                   />
-                  <div className="flex justify-end gap-2 text-xs">
+                  <div className="text-caption flex justify-end gap-2">
                     <button type="button" onClick={handleEditCancel}>
                       취소
                     </button>
@@ -196,7 +196,7 @@ export function CommentSection() {
                   </div>
                 </div>
               ) : (
-                <p className="mt-1 text-sm text-gray-700">{comment.content}</p>
+                <p className="text-body-sm text-fg mt-1">{comment.content}</p>
               )}
             </div>
           </li>
@@ -207,7 +207,9 @@ export function CommentSection() {
         <button
           type="button"
           onClick={() => setVisibleCount((prev) => prev + 2)}
-          className={cn('mt-2 w-full bg-gray-100 py-2 text-sm text-gray-600')}
+          className={cn(
+            'bg-surface-sunken text-body-sm text-fg hover:bg-surface-muted mt-2 w-full rounded-md py-2'
+          )}
         >
           더보기
         </button>

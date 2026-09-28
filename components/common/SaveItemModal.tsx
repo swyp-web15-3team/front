@@ -7,6 +7,7 @@ import {
   CreateCollectionModal,
   useCreateCollectionModal,
 } from '@/components/common/CreateCollectionModal';
+import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { BOTTOM_SHEET_ID } from '@/constants/bottom-sheet';
 import {
@@ -186,8 +187,8 @@ function SaveItemModalContent() {
             className="size-16"
           />
           <div className="min-w-0">
-            <p className="truncate text-lg font-bold">{whisky?.name}</p>
-            <p className="truncate text-sm text-gray-500">
+            <p className="text-section-title truncate">{whisky?.name}</p>
+            <p className="text-body-sm text-fg-muted truncate">
               {whisky?.originalName
                 ? `${whisky.originalName} · 어디에 보관할까요?`
                 : '어디에 보관할까요?'}
@@ -206,14 +207,14 @@ function SaveItemModalContent() {
                   type="button"
                   onClick={() => toggle(collection.id)}
                   aria-pressed={isChecked}
-                  className="flex w-full items-center gap-3 rounded-lg px-1 py-2 text-left hover:bg-gray-50"
+                  className="hover:bg-surface-muted flex w-full items-center gap-3 rounded-lg px-1 py-2 text-left"
                 >
                   {/* 서버가 컬렉션 대표 이미지를 안 내려줘서 빈 타일로 둔다 */}
                   <CollectionThumbnail
                     alt={collection.name}
                     className="size-11"
                   />
-                  <span className="min-w-0 flex-1 truncate font-medium">
+                  <span className="text-card-title min-w-0 flex-1 truncate">
                     {collection.name}
                   </span>
                   <Checkbox checked={isChecked} />
@@ -225,15 +226,17 @@ function SaveItemModalContent() {
             <li
               className={cn(
                 'flex items-center gap-3 rounded-lg px-1 py-2',
-                isCreateCollectionError ? 'text-red-500' : 'text-gray-400'
+                isCreateCollectionError ? 'text-danger' : 'text-fg-subtle'
               )}
             >
-              <div className="size-11 shrink-0 rounded-lg bg-gray-100" />
+              <div className="bg-surface-sunken size-11 shrink-0 rounded-lg" />
               <span className="min-w-0 flex-1 truncate">
                 {pendingCollectionName}
               </span>
               {isCreateCollectionError && (
-                <span className="shrink-0 text-xs">생성에 실패했습니다</span>
+                <span className="text-caption shrink-0">
+                  생성에 실패했습니다
+                </span>
               )}
             </li>
           )}
@@ -242,7 +245,7 @@ function SaveItemModalContent() {
         <button
           type="button"
           onClick={openCreateCollectionModal}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 px-3 py-3 text-sm text-gray-600 hover:bg-gray-50"
+          className="border-border-strong text-body-sm text-fg hover:bg-surface-muted mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed px-3 py-3"
         >
           관심 목록 추가하기
           <span aria-hidden className="text-lg leading-none">
@@ -251,27 +254,22 @@ function SaveItemModalContent() {
         </button>
 
         {failedCount > 0 && (
-          <p className="mt-2 text-xs text-red-500">
+          <p className="text-caption text-danger mt-2">
             {failedCount}개 컬렉션 저장에 실패했어요. 다시 시도해주세요.
           </p>
         )}
 
         <div className="mt-4 flex gap-2">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="w-full rounded-lg border border-gray-300 px-3 py-3 text-sm font-medium"
-          >
+          <Button variant="secondary" fullWidth onClick={handleClose}>
             취소
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            fullWidth
             disabled={!hasChanges || isSaving}
             onClick={handleApply}
-            className="w-full rounded-lg bg-orange-500 px-3 py-3 text-sm font-medium text-white disabled:opacity-50"
           >
             {isSaving ? '저장 중...' : '적용하기'}
-          </button>
+          </Button>
         </div>
       </Modal>
       <CreateCollectionModal
@@ -296,7 +294,7 @@ function CollectionThumbnail({
   return (
     <div
       className={cn(
-        'relative shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50',
+        'border-border bg-surface-muted relative shrink-0 overflow-hidden rounded-lg border',
         className
       )}
     >
@@ -320,8 +318,8 @@ function Checkbox({ checked }: { checked: boolean }) {
       className={cn(
         'flex size-6 shrink-0 items-center justify-center rounded-md border',
         checked
-          ? 'border-orange-500 bg-orange-500 text-white'
-          : 'border-gray-300 bg-white'
+          ? 'border-primary bg-primary text-on-primary'
+          : 'border-border-strong bg-canvas'
       )}
     >
       {checked && (

@@ -238,16 +238,16 @@ function BannerCard({ banner }: { banner: Banner }) {
     <Link
       href={banner.href}
       draggable={false}
-      className="relative flex h-full w-full flex-col justify-between overflow-hidden rounded-2xl bg-gray-600 px-5 pt-5 pb-10.75 select-none"
+      className="bg-surface-inverse relative flex h-full w-full flex-col justify-between overflow-hidden rounded-[var(--radius-xxl)] px-5 pt-5 pb-11 select-none"
     >
       <div className="flex items-center gap-1.5">
-        <span className="rounded-full border border-purple-300 px-2 py-1 text-xs font-medium text-purple-300">
+        <span className="border-primary-on-dark/40 text-primary-on-dark text-caption rounded-full border bg-white/10 px-2 py-1 backdrop-blur-sm">
           {banner.badge}
         </span>
         <span
           className={cn(
-            'text-xs font-medium',
-            isFalling ? 'text-blue-400' : 'text-red-400'
+            'text-caption',
+            isFalling ? 'text-success' : 'text-danger'
           )}
         >
           {isFalling ? '' : '+'}
@@ -257,8 +257,8 @@ function BannerCard({ banner }: { banner: Banner }) {
 
       <div className="relative flex flex-1 items-center justify-between gap-2">
         <div className="z-10 flex flex-col gap-1">
-          <p className="text-lg font-semibold text-white">{banner.nameEn}</p>
-          <p className="text-lg font-semibold text-white">{banner.nameKr}</p>
+          <p className="text-section-title text-fg-on-dark">{banner.nameEn}</p>
+          <p className="text-section-title text-fg-on-dark">{banner.nameKr}</p>
         </div>
         <div className="relative h-full w-2/5 shrink-0">
           <Image
@@ -274,16 +274,16 @@ function BannerCard({ banner }: { banner: Banner }) {
 
       <div className="z-10 flex items-end justify-between">
         <div className="flex flex-col gap-1">
-          <p className="text-xs text-white/60">국내 평균 가격</p>
-          <p className="text-sm text-white/60 line-through">
+          <p className="text-caption text-fg-on-dark/60">국내 평균 가격</p>
+          <p className="text-price-sub text-fg-on-dark/60 line-through">
             {banner.krAvgPrice.toLocaleString('ko-KR')}원
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <p className="text-xs text-white/60">일본 최저가</p>
-          <p className="text-lg font-bold text-white">
+          <p className="text-caption text-fg-on-dark/60">일본 최저가</p>
+          <p className="text-section-title text-fg-on-dark tabular-nums">
             ¥{banner.jpLowestPriceYen.toLocaleString('ko-KR')}{' '}
-            <span className="text-sm font-medium text-white/85">
+            <span className="text-price-sub text-fg-on-dark/85">
               (약 {banner.jpLowestPriceKr.toLocaleString('ko-KR')}원)
             </span>
           </p>

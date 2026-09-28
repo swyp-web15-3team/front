@@ -22,7 +22,7 @@ export function CurationList() {
   if (isLoading) {
     return (
       <div className="flex min-h-100 items-center justify-center">
-        <p>불러오는 중...</p>
+        <p className="text-body text-fg-muted">불러오는 중...</p>
       </div>
     );
   }
@@ -30,11 +30,11 @@ export function CurationList() {
   if (isError) {
     return (
       <div className="flex min-h-100 flex-col items-center justify-center gap-2">
-        <p>일시적인 오류가 발생했습니다</p>
+        <p className="text-body text-fg-muted">일시적인 오류가 발생했습니다</p>
         <button
           type="button"
           onClick={() => refetch()}
-          className="text-sm underline"
+          className="text-body-sm text-fg-muted hover:text-fg underline"
         >
           다시 시도
         </button>
@@ -46,14 +46,14 @@ export function CurationList() {
   if (items.length === 0) {
     return (
       <div className="flex min-h-100 items-center justify-center">
-        <p>상품이 없습니다</p>
+        <p className="text-body text-fg-muted">상품이 없습니다</p>
       </div>
     );
   }
 
   return (
     <section>
-      {title && <h2 className="mb-4 text-xl font-bold">{title}</h2>}
+      {title && <h2 className="text-section-title mb-4">{title}</h2>}
       <ProductGrid
         items={items}
         hasNextPage={hasNextPage}

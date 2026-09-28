@@ -3,7 +3,7 @@ import { CollectionView } from '@/app/(main)/mypage/collection/_components/Colle
 export default function CollectionPage() {
   return (
     <>
-      <h1 className="text-lg font-bold">관심 목록</h1>
+      <h1 className="text-page-title">관심 목록</h1>
       <CollectionView />
     </>
   );

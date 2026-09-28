@@ -87,12 +87,12 @@ export function CardShop({
           height={40}
         />
         <div>
-          <p>
+          <p className="text-price">
             <span>{price}</span>
-            <span>{subPrice}</span>
+            <span className="text-price-sub text-fg-muted">{subPrice}</span>
           </p>
           <p
-            className="cursor-pointer text-sm text-gray-500"
+            className="text-body-sm text-fg-muted hover:text-fg cursor-pointer"
             onClick={() => openGoogleMapsApp(mapAddress)}
           >
             {addressName}

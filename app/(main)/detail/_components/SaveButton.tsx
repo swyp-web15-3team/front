@@ -27,7 +27,7 @@ export function SaveButton({ whisky }: SaveButtonProps) {
           rememberCurrentPath(whisky);
           router.push('/login');
         }}
-        className="flex items-center gap-1.5 rounded-md bg-black px-4 py-2 text-sm text-white"
+        className="bg-surface-inverse text-fg-on-dark text-button flex min-h-11 items-center gap-1.5 rounded-md px-4 py-2"
       >
         <BookmarkIcon filled={false} />
         로그인이 필요해요
@@ -40,7 +40,7 @@ export function SaveButton({ whisky }: SaveButtonProps) {
     <button
       type="button"
       onClick={() => openSaveItemModal(whisky)}
-      className="flex items-center gap-1.5 rounded-md border border-black bg-black px-4 py-2 text-sm text-white"
+      className="bg-primary text-on-primary text-button flex min-h-11 items-center gap-1.5 rounded-md px-4 py-2"
     >
       <BookmarkIcon filled={false} />
       저장하기

@@ -29,7 +29,7 @@ export function FilterChips({
         {chips.map((chip) => (
           <li
             key={chip.id}
-            className="flex items-center gap-0.5 text-sm text-gray-600"
+            className="border-border text-body-sm text-fg hover:bg-surface-muted flex items-center gap-0.5 rounded-full border px-2.5 py-1"
           >
             {chip.label}
             <button
@@ -45,7 +45,7 @@ export function FilterChips({
       <button
         type="button"
         onClick={onReset}
-        className="shrink-0 text-sm font-medium"
+        className="text-body-sm-strong text-fg-muted hover:text-fg shrink-0"
       >
         초기화
       </button>

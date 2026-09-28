@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 
 import { HorizontalCard } from '@/components/ui/HorizontalCard';
+import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { MODAL_ID } from '@/constants/modal';
 import { useAddCollectionItemMutation } from '@/hooks/queries/use-collection';
@@ -53,7 +54,7 @@ export function AddCollectionItemModal({
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} panelClassName="max-w-[520px]">
-      <p className="text-sm font-medium">
+      <p className="text-body-sm-strong">
         &apos;{collectionName}&apos;에 위스키 추가
       </p>
 
@@ -62,16 +63,16 @@ export function AddCollectionItemModal({
         value={keyword}
         onChange={(e) => setKeyword(e.target.value)}
         placeholder="위스키 이름으로 검색"
-        className="mt-3 w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none"
+        className="border-border-strong text-body bg-canvas text-fg mt-3 w-full rounded-md border px-3 py-2.5 outline-none"
       />
 
       <div className="mt-3 max-h-100 overflow-y-auto">
         {keyword.trim() === '' ? (
-          <p className="py-6 text-center text-xs text-gray-400">
+          <p className="text-caption text-fg-muted py-6 text-center">
             추가할 위스키를 검색해 주세요
           </p>
         ) : results.length === 0 ? (
-          <p className="py-6 text-center text-xs text-gray-400">
+          <p className="text-caption text-fg-muted py-6 text-center">
             해당하는 상품이 없습니다
           </p>
         ) : (
@@ -89,17 +90,13 @@ export function AddCollectionItemModal({
       </div>
 
       {errorMessage && (
-        <p className="mt-2 text-xs text-red-500">{errorMessage}</p>
+        <p className="text-caption text-danger mt-2">{errorMessage}</p>
       )}
 
       <div className="mt-4">
-        <button
-          type="button"
-          onClick={handleClose}
-          className="w-full rounded-md border-2 bg-amber-50 px-3 py-1.5 text-sm text-black"
-        >
+        <Button fullWidth onClick={handleClose}>
           완료
-        </button>
+        </Button>
       </div>
     </Modal>
   );
@@ -134,7 +131,7 @@ function CandidateRow({
           type="button"
           disabled={added}
           onClick={onAdd}
-          className="w-16 shrink-0 rounded-full border border-gray-300 py-1.5 text-xs disabled:opacity-30"
+          className="border-border-strong text-caption text-fg w-16 shrink-0 rounded-full border py-1.5 disabled:opacity-30"
         >
           {added ? '담김' : '담기'}
         </button>

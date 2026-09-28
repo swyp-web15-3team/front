@@ -1,10 +1,10 @@
 export default function LoginPage() {
   return (
     <div className="flex min-h-full flex-1 flex-col items-center justify-center gap-10 px-6">
-      <h1 className="text-2xl font-bold">로그인</h1>
+      <h1 className="text-page-title">로그인</h1>
       <a
         href="/api/auth/kakao"
-        className="flex w-full max-w-sm items-center justify-center gap-2 rounded-md bg-[#FEE500] py-3 font-medium text-black/85"
+        className="bg-kakao text-fg text-button flex min-h-11 w-full max-w-sm items-center justify-center gap-2 rounded-md py-3"
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
           <path
