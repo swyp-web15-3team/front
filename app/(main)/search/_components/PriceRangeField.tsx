@@ -48,7 +48,7 @@ export function PriceRangeField({ value, onChange }: PriceRangeFieldProps) {
           onClear={() => update({ min: 0, max })}
           onBlur={handleBlur}
         />
-        <span className="h-px w-3 bg-gray-300" />
+        <span className="bg-border-strong h-px w-3" />
         <PriceInput
           label="최대 가격"
           amount={max < PRICE_MAX ? max : null}
@@ -104,7 +104,7 @@ export function PriceRangeField({ value, onChange }: PriceRangeFieldProps) {
             className={THUMB_CLASSNAME}
           />
         </div>
-        <div className="mt-2 flex justify-between text-sm text-gray-500">
+        <div className="text-body-sm text-fg-muted mt-2 flex justify-between">
           <span>{formatWon(0)}</span>
           <span>{formatWon(PRICE_MAX / 2)}</span>
           <span>{formatWon(PRICE_MAX)} +</span>
@@ -138,7 +138,7 @@ function PriceInput({
   };
 
   return (
-    <div className="flex flex-1 items-center rounded-md border border-gray-200 px-3 py-2.5">
+    <div className="border-border-strong flex flex-1 items-center rounded-md border px-3 py-2.5">
       <input
         type="text"
         inputMode="numeric"
@@ -147,11 +147,11 @@ function PriceInput({
         value={amount === null ? '' : amount.toLocaleString('ko-KR')}
         onChange={(e) => handleChange(e.target.value)}
         onBlur={onBlur}
-        className="w-full min-w-0 text-sm outline-none placeholder:text-gray-400"
+        className="text-body-sm text-fg placeholder:text-fg-subtle w-full min-w-0 outline-none"
       />
       {amount !== null && (
         <>
-          <span className="mr-2 text-sm">원</span>
+          <span className="text-body-sm text-fg-muted mr-2">원</span>
           <button
             type="button"
             aria-label={`${label} 지우기`}
@@ -164,7 +164,7 @@ function PriceInput({
               stroke="currentColor"
               strokeWidth={2}
               strokeLinecap="round"
-              className="size-4 text-gray-400"
+              className="text-fg-muted size-4"
               aria-hidden="true"
             >
               <path d="M18 6 6 18" />

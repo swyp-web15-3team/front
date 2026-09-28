@@ -116,7 +116,7 @@ export function CollectionView() {
   }
 
   if (isLoading)
-    return <p className="mt-4 text-sm text-gray-400">불러오는 중...</p>;
+    return <p className="text-body-sm text-fg-muted mt-4">불러오는 중...</p>;
 
   return (
     <div className="mt-4 flex flex-col gap-4">
@@ -130,10 +130,10 @@ export function CollectionView() {
                   나란히 두고 배경만 공유한다. */}
               <div
                 className={cn(
-                  'flex items-center rounded-full text-sm whitespace-nowrap',
+                  'text-body-sm flex items-center rounded-full whitespace-nowrap',
                   isActive
-                    ? 'bg-amber-50 font-medium'
-                    : 'bg-gray-100 text-gray-500'
+                    ? 'bg-primary text-on-primary'
+                    : 'bg-surface-sunken text-fg-muted'
                 )}
               >
                 <button
@@ -152,7 +152,7 @@ export function CollectionView() {
                     type="button"
                     onClick={openMenuModal}
                     aria-label={`${collection.name} 더보기`}
-                    className="py-1.5 pr-3 pl-1 text-gray-500"
+                    className="py-1.5 pr-3 pl-1"
                   >
                     ⋯
                   </button>
@@ -165,7 +165,7 @@ export function CollectionView() {
           <button
             type="button"
             onClick={openCreateModal}
-            className="rounded-full bg-gray-100 px-3 py-1.5 text-sm whitespace-nowrap text-gray-500"
+            className="bg-surface-sunken text-body-sm text-fg-muted hover:text-fg rounded-full px-3 py-1.5 whitespace-nowrap"
           >
             + 새 관심 목록
           </button>
@@ -177,7 +177,7 @@ export function CollectionView() {
           <button
             type="button"
             onClick={openAddItemModal}
-            className="text-xs text-gray-500"
+            className="text-caption text-fg-muted hover:text-fg"
           >
             + 위스키 추가
           </button>
@@ -185,11 +185,13 @@ export function CollectionView() {
       )}
 
       {activeId === null ? (
-        <p className="text-sm text-gray-400">저장한 관심 목록이 없습니다.</p>
+        <p className="text-body-sm text-fg-muted">
+          저장한 관심 목록이 없습니다.
+        </p>
       ) : isItemsLoading ? (
-        <p className="text-sm text-gray-400">불러오는 중...</p>
+        <p className="text-body-sm text-fg-muted">불러오는 중...</p>
       ) : items.length === 0 ? (
-        <p className="text-sm text-gray-400">담긴 위스키가 없습니다.</p>
+        <p className="text-body-sm text-fg-muted">담긴 위스키가 없습니다.</p>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {/* 관심 목록에 있는 것들이라 저장 버튼은 전부 '저장됨'이고,
@@ -218,10 +220,10 @@ export function CollectionView() {
                 >
                   <span
                     className={cn(
-                      'absolute top-2 left-2 flex size-5 items-center justify-center rounded border text-xs',
+                      'text-caption absolute top-2 left-2 flex size-5 items-center justify-center rounded border',
                       selectedIds.has(item.id)
-                        ? 'border-black bg-black text-white'
-                        : 'border-gray-300 bg-white'
+                        ? 'border-primary bg-primary text-on-primary'
+                        : 'border-border-strong bg-canvas'
                     )}
                     aria-hidden="true"
                   >
@@ -244,8 +246,8 @@ export function CollectionView() {
       )}
 
       {isEditing && (
-        <div className="sticky bottom-0 flex items-center gap-2 border-t bg-white py-3 text-sm">
-          <span className="text-xs text-gray-500">
+        <div className="border-border bg-canvas text-body-sm sticky bottom-0 flex items-center gap-2 border-t py-3">
+          <span className="text-caption text-fg-muted">
             {selectedIds.size}개 선택
           </span>
           <select
@@ -253,7 +255,7 @@ export function CollectionView() {
             disabled={selectedIds.size === 0 || moveItemMutation.isPending}
             onChange={(e) => handleMoveSelected(Number(e.target.value))}
             aria-label="다른 관심 목록으로 이동"
-            className="ml-auto rounded-md border border-gray-300 px-2 py-1.5 text-xs disabled:opacity-50"
+            className="border-border-strong text-caption text-fg ml-auto rounded-md border px-2 py-1.5 disabled:opacity-50"
           >
             <option value="" disabled>
               다른 목록으로 이동
@@ -270,14 +272,14 @@ export function CollectionView() {
             type="button"
             onClick={handleRemoveSelected}
             disabled={selectedIds.size === 0 || removeItemMutation.isPending}
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-xs disabled:opacity-50"
+            className="border-border-strong text-caption text-fg rounded-md border px-3 py-1.5 disabled:opacity-50"
           >
             삭제
           </button>
           <button
             type="button"
             onClick={exitEditing}
-            className="rounded-md px-3 py-1.5 text-xs text-gray-500"
+            className="text-caption text-fg-muted hover:text-fg rounded-md px-3 py-1.5"
           >
             완료
           </button>

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { HorizontalCard } from '@/components/ui/HorizontalCard';
+import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { MODAL_ID } from '@/constants/modal';
 import {
@@ -228,27 +229,19 @@ export function AddPlannerItemModal({
         onClose={() => setIsConfirmingClose(false)}
         panelClassName="max-w-[360px]"
       >
-        <p className="text-center text-sm font-medium">
+        <p className="text-body-sm-strong text-center">
           추가하지 않고 종료하시겠습니까?
         </p>
-        <p className="mt-1 text-center text-xs text-gray-400">
+        <p className="text-caption text-fg-muted mt-1 text-center">
           선택한 상품 {totalSelectedCount}개가 저장되지 않습니다.
         </p>
         <div className="mt-4 flex gap-2">
-          <button
-            type="button"
-            onClick={() => setIsConfirmingClose(false)}
-            className="w-full rounded-md border-2 bg-amber-50 px-3 py-1.5 text-sm text-black"
-          >
+          <Button fullWidth onClick={() => setIsConfirmingClose(false)}>
             계속 담기
-          </button>
-          <button
-            type="button"
-            onClick={handleClose}
-            className="w-full rounded-md border-2 bg-amber-50 px-3 py-1.5 text-sm text-black"
-          >
+          </Button>
+          <Button variant="secondary" fullWidth onClick={handleClose}>
             종료
-          </button>
+          </Button>
         </div>
       </Modal>
     );
@@ -261,7 +254,7 @@ export function AddPlannerItemModal({
       panelClassName="flex h-[80vh] max-w-[760px] flex-col"
     >
       {isCollectionMode && (
-        <p className="mb-3 text-sm font-medium">
+        <p className="text-body-sm-strong mb-3">
           &apos;{collection.name}&apos;에 위스키 추가
         </p>
       )}
@@ -269,7 +262,7 @@ export function AddPlannerItemModal({
       <div className="flex min-h-0 flex-1 gap-3">
         {/* 1열: 컬렉션 / 검색 전환. 컬렉션 모드는 검색만 쓰므로 숨긴다 */}
         {!isCollectionMode && (
-          <div className="flex w-24 shrink-0 flex-col gap-1 text-sm">
+          <div className="text-body-sm flex w-24 shrink-0 flex-col gap-1">
             {(['collection', 'all'] as const).map((value) => (
               <button
                 key={value}
@@ -278,8 +271,8 @@ export function AddPlannerItemModal({
                 className={cn(
                   'rounded-md px-3 py-2 text-left',
                   tab === value
-                    ? 'bg-gray-100 font-semibold'
-                    : 'text-gray-500 hover:bg-gray-50'
+                    ? 'bg-surface-sunken font-bold'
+                    : 'text-fg-muted hover:bg-surface-muted'
                 )}
               >
                 {value === 'collection' ? '컬렉션' : '검색'}
@@ -291,7 +284,7 @@ export function AddPlannerItemModal({
         {tab === 'collection' && !isCollectionMode ? (
           <>
             {/* 2열: 컬렉션 목록 */}
-            <ul className="flex w-48 shrink-0 flex-col gap-1 overflow-y-auto text-sm">
+            <ul className="text-body-sm flex w-48 shrink-0 flex-col gap-1 overflow-y-auto">
               {collections.map((collection, index) => (
                 <li key={collection.id}>
                   <button
@@ -300,12 +293,12 @@ export function AddPlannerItemModal({
                     className={cn(
                       'flex w-full items-center justify-between rounded-md px-3 py-2 text-left',
                       openCollectionId === collection.id
-                        ? 'bg-gray-100 font-semibold'
-                        : 'hover:bg-gray-50'
+                        ? 'bg-surface-sunken font-bold'
+                        : 'hover:bg-surface-muted'
                     )}
                   >
                     <span className="truncate">{collection.name}</span>
-                    <span className="ml-2 shrink-0 text-xs text-gray-400">
+                    <span className="text-caption text-fg-muted ml-2 shrink-0">
                       ({collectionItemQueries[index]?.data?.items.length ?? 0})
                     </span>
                   </button>
@@ -333,7 +326,7 @@ export function AddPlannerItemModal({
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="위스키 검색"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none"
+              className="border-border-strong text-body bg-canvas text-fg w-full rounded-md border px-3 py-2.5 outline-none"
             />
             <div className="min-h-0 flex-1">
               <SearchResultList
@@ -358,7 +351,7 @@ export function AddPlannerItemModal({
       </div>
 
       {!isCollectionMode && (
-        <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+        <div className="text-caption text-fg-muted mt-3 flex items-center justify-between">
           <span>{totalSelectedCount}개의 상품 선택</span>
           {totalSelectedCount > 0 && (
             <button type="button" onClick={() => setCounts(new Map())}>
@@ -369,38 +362,29 @@ export function AddPlannerItemModal({
       )}
 
       {errorMessage && (
-        <p className="mt-2 text-xs text-red-500">{errorMessage}</p>
+        <p className="text-caption text-danger mt-2">{errorMessage}</p>
       )}
 
       {isCollectionMode ? (
         <div className="mt-4">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="w-full rounded-md border-2 bg-amber-50 px-3 py-1.5 text-sm text-black"
-          >
+          <Button fullWidth onClick={handleClose}>
             완료
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="mt-4 flex gap-2">
-          <button
-            type="button"
-            onClick={requestClose}
-            className="w-full rounded-md border-2 bg-amber-50 px-3 py-1.5 text-sm text-black"
-          >
+          <Button variant="secondary" fullWidth onClick={requestClose}>
             취소
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            fullWidth
             disabled={
               totalSelectedCount === 0 || addPlannerItemMutation.isPending
             }
             onClick={handleComplete}
-            className="w-full rounded-md border-2 bg-amber-50 px-3 py-1.5 text-sm text-black disabled:opacity-50"
           >
             {addPlannerItemMutation.isPending ? '추가 중...' : '완료'}
-          </button>
+          </Button>
         </div>
       )}
     </Modal>
@@ -463,7 +447,7 @@ function SearchResultList({
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center rounded-lg bg-gray-50 text-xs text-gray-400">
+      <div className="bg-surface-muted text-caption text-fg-muted flex h-full items-center justify-center rounded-lg">
         불러오는 중...
       </div>
     );
@@ -471,7 +455,7 @@ function SearchResultList({
 
   if (isError) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 rounded-lg bg-gray-50 text-xs text-gray-400">
+      <div className="bg-surface-muted text-caption text-fg-muted flex h-full flex-col items-center justify-center gap-2 rounded-lg">
         <p>일시적인 오류가 발생했습니다</p>
         <button type="button" onClick={onRetry} className="underline">
           다시 시도
@@ -482,14 +466,14 @@ function SearchResultList({
 
   if (items.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center rounded-lg bg-gray-50 text-xs text-gray-400">
+      <div className="bg-surface-muted text-caption text-fg-muted flex h-full items-center justify-center rounded-lg">
         해당하는 상품이 없습니다
       </div>
     );
   }
 
   return (
-    <ul className="h-full overflow-y-auto rounded-lg bg-gray-50 p-2">
+    <ul className="bg-surface-muted h-full overflow-y-auto rounded-lg p-2">
       {items.map((whisky) => (
         <li key={whisky.id} className="py-1">
           <div className="flex items-center gap-2 rounded-xl">
@@ -502,7 +486,7 @@ function SearchResultList({
                 type="button"
                 disabled={addedWhiskyIds?.has(whisky.id)}
                 onClick={() => onAddWhisky?.(whisky)}
-                className="w-16 shrink-0 rounded-full border border-gray-300 py-1.5 text-xs disabled:opacity-30"
+                className="border-border-strong text-caption w-16 shrink-0 rounded-full border py-1.5 disabled:opacity-30"
               >
                 {addedWhiskyIds?.has(whisky.id) ? '담김' : '담기'}
               </button>
@@ -515,7 +499,7 @@ function SearchResultList({
                   )
                 }
                 aria-expanded={expandedWhiskyId === whisky.id}
-                className="shrink-0 rounded-md border border-gray-300 px-3 py-1.5 text-xs"
+                className="border-border-strong text-caption shrink-0 rounded-md border px-3 py-1.5"
               >
                 {expandedWhiskyId === whisky.id ? '닫기' : '판매처'}
               </button>
@@ -536,7 +520,7 @@ function SearchResultList({
       <li ref={sentinelRef} aria-hidden className="h-px" />
 
       {isFetchingNextPage && (
-        <li className="py-2 text-center text-xs text-gray-400">
+        <li className="text-caption text-fg-muted py-2 text-center">
           불러오는 중...
         </li>
       )}
@@ -563,13 +547,15 @@ function SaleProductPicker({
 
   if (isLoading) {
     return (
-      <p className="py-3 text-center text-xs text-gray-400">불러오는 중...</p>
+      <p className="text-caption text-fg-muted py-3 text-center">
+        불러오는 중...
+      </p>
     );
   }
 
   if (isError) {
     return (
-      <div className="flex flex-col items-center gap-1 py-3 text-xs text-gray-400">
+      <div className="text-caption text-fg-muted flex flex-col items-center gap-1 py-3">
         <p>판매처를 불러오지 못했습니다</p>
         <button type="button" onClick={() => refetch()} className="underline">
           다시 시도
@@ -582,14 +568,14 @@ function SaleProductPicker({
 
   if (saleProducts.length === 0) {
     return (
-      <p className="py-3 text-center text-xs text-gray-400">
+      <p className="text-caption text-fg-muted py-3 text-center">
         판매 중인 곳이 없습니다
       </p>
     );
   }
 
   return (
-    <ul className="mt-1 ml-4 flex flex-col gap-1 border-l border-gray-200 pl-3">
+    <ul className="border-border mt-1 ml-4 flex flex-col gap-1 border-l pl-3">
       {saleProducts.map((saleProduct) => {
         const count = counts.get(saleProduct.id) ?? 0;
         const isAddable = !saleProduct.isSoldOut && saleProduct.price !== null;
@@ -597,7 +583,7 @@ function SaleProductPicker({
         return (
           <li
             key={saleProduct.id}
-            className="flex items-center gap-2 text-xs text-gray-600"
+            className="text-caption text-fg flex items-center gap-2"
           >
             <span className="min-w-0 flex-1 truncate">
               {saleProduct.retailerName}
@@ -616,7 +602,7 @@ function SaleProductPicker({
                 aria-label="개수 줄이기"
                 disabled={count === 0}
                 onClick={() => onDecrement(saleProduct.id)}
-                className="flex size-6 items-center justify-center rounded-full border border-gray-300 disabled:opacity-30"
+                className="border-border-strong flex size-6 items-center justify-center rounded-full border disabled:opacity-30"
               >
                 −
               </button>
@@ -626,7 +612,7 @@ function SaleProductPicker({
                 aria-label="개수 늘리기"
                 disabled={!isAddable}
                 onClick={() => onIncrement(saleProduct.id)}
-                className="flex size-6 items-center justify-center rounded-full border border-gray-300 disabled:opacity-30"
+                className="border-border-strong flex size-6 items-center justify-center rounded-full border disabled:opacity-30"
               >
                 +
               </button>

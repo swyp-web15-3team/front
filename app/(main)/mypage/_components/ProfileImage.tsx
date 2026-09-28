@@ -14,7 +14,7 @@ export function ProfileImage({ src, size = 50 }: ProfileImageProps) {
   if (!src || hasError) {
     return (
       <div
-        className="rounded-full bg-amber-200"
+        className="bg-surface-sunken rounded-full"
         style={{ width: size, height: size }}
       />
     );
@@ -26,7 +26,7 @@ export function ProfileImage({ src, size = 50 }: ProfileImageProps) {
       alt="Profile Image"
       width={size}
       height={size}
-      className="rounded-full bg-amber-200"
+      className="bg-surface-sunken rounded-full"
       onError={() => setHasError(true)}
     />
   );

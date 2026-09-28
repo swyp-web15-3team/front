@@ -30,7 +30,7 @@ export function HorizontalCard({
   return (
     <div
       className={cn(
-        'shadow-m1 flex w-full overflow-hidden rounded-xl border border-gray-200 bg-white',
+        'border-border bg-canvas flex w-full overflow-hidden rounded-lg border',
         className
       )}
     >
@@ -42,32 +42,37 @@ export function HorizontalCard({
             fill
             sizes="128px"
             loading={loading}
-            className="rounded-xl object-cover"
+            className="rounded-lg object-contain"
             onError={() => setHasError(true)}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center rounded-xl bg-gray-100 text-center text-xs text-gray-400">
+          <div className="bg-surface-sunken text-caption text-fg-subtle flex h-full w-full items-center justify-center rounded-lg text-center">
             이미지 로딩 실패
           </div>
         )}
       </div>
       <div className="min-w-0 flex-1 p-4">
-        <p className="truncate text-lg">{name}</p>
-        <p className="truncate text-gray-500">{originalName}</p>
-        <div className="mt-2">
+        <p className="text-section-title truncate">{name}</p>
+        <p className="text-body-sm text-fg-muted truncate">{originalName}</p>
+        <div className="text-price mt-2">
           {discountRate > 0 && (
-            <span className="mr-1 text-[#EC4B4B]">-{discountRate}%</span>
+            <span className="text-primary text-price-discount mr-1">
+              -{discountRate}%
+            </span>
           )}
           <span>
             {jpPrice?.toLocaleString('ko-KR')}원
-            <span className="text-gray-500">(일본 최저가)</span>
+            <span className="text-price-sub text-fg-muted">(일본 최저가)</span>
           </span>
         </div>
-        <p>
+        <p className="text-price">
           {krPrice?.toLocaleString('ko-KR')}원
-          <span className="text-gray-500">(한국 최저가)</span>
+          <span className="text-price-sub text-fg-muted">(한국 최저가)</span>
           {volumeMl != null && (
-            <span className="text-gray-500"> · {volumeMl}ml</span>
+            <span className="text-price-sub text-fg-muted">
+              {' '}
+              · {volumeMl}ml
+            </span>
           )}
         </p>
       </div>

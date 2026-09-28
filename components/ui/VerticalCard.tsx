@@ -54,7 +54,7 @@ export function VerticalCard({
   const card = (
     <div
       className={cn(
-        'flex w-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white',
+        'border-border bg-canvas flex w-full flex-col overflow-hidden rounded-lg border transition-transform duration-[180ms] ease-[var(--ease-spring-soft)] active:scale-[0.99]',
         className
       )}
     >
@@ -70,13 +70,13 @@ export function VerticalCard({
             onError={() => setHasError(true)}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gray-100 text-center text-sm text-gray-400">
+          <div className="bg-surface-sunken text-body-sm text-fg-subtle flex h-full w-full items-center justify-center text-center">
             {/* TODO: 이미지 로딩 실패 시 표시할 내용 추가 */}
             이미지 로딩 실패
           </div>
         )}
         {discountRate !== 0 && (
-          <span className="text-brand absolute bottom-0 left-0 rounded-tr-xl bg-white px-3 py-1.5 text-sm font-medium">
+          <span className="text-primary bg-canvas text-price-discount absolute bottom-0 left-0 rounded-tr-lg px-3 py-1.5">
             {discountRate}%
           </span>
         )}
@@ -89,24 +89,24 @@ export function VerticalCard({
           />
         </div>
       </div>
-      <div className="flex flex-1 flex-col bg-gray-50 px-4 py-3">
-        <p className="truncate font-medium">{name}</p>
+      <div className="bg-surface-muted flex flex-1 flex-col px-4 py-3">
+        <p className="text-card-title truncate">{name}</p>
         {originalName && (
-          <p className="truncate text-gray-500">{originalName}</p>
+          <p className="text-body-sm text-fg-muted truncate">{originalName}</p>
         )}
-        <p className="mt-2 font-medium">
+        <p className="text-price mt-2">
           {displayPrice
             ? `${displayPrice.toLocaleString('ko-KR')}원`
             : '가격 정보 없음'}
           {showYen && (
-            <span className="text-xs font-normal text-gray-500">
+            <span className="text-price-sub text-fg-muted">
               ({jpPriceYen?.toLocaleString('ko-KR')}엔)
             </span>
           )}
         </p>
         {/* TODO: "대중적인 브랜드" 등 태그 문구 — API 필드 확정 후 volumeMl 뒤에 ` · ` 구분자로 추가 */}
         {volumeMl ? (
-          <p className="mt-2 text-xs text-gray-500">
+          <p className="text-price-sub text-fg-muted mt-2">
             {volumeMl.toLocaleString('ko-KR')}ml
           </p>
         ) : null}
@@ -181,7 +181,7 @@ function BookmarkButton({
         type="button"
         onClick={handleLoginRedirect}
         aria-label="로그인이 필요해요"
-        className="flex size-8 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-white text-black"
+        className="border-border bg-canvas text-fg flex size-8 shrink-0 items-center justify-center rounded-md border"
       >
         <BookmarkIcon filled={false} />
       </button>
@@ -198,8 +198,8 @@ function BookmarkButton({
       className={cn(
         'flex size-8 shrink-0 items-center justify-center rounded-md border disabled:opacity-50',
         isSaved
-          ? 'border-black bg-black text-white'
-          : 'border-gray-200 bg-white text-black'
+          ? 'border-border-inverse bg-surface-inverse text-fg-on-dark'
+          : 'border-border bg-canvas text-fg'
       )}
     >
       <BookmarkIcon filled={isSaved} />

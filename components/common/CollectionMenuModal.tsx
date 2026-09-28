@@ -40,8 +40,13 @@ export function CollectionMenuModal({
   return (
     <Modal isOpen={isOpen} onClose={close} panelClassName="max-w-[360px]">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold">더보기</h2>
-        <button type="button" onClick={close} aria-label="닫기">
+        <h2 className="text-section-title">더보기</h2>
+        <button
+          type="button"
+          onClick={close}
+          aria-label="닫기"
+          className="text-fg-muted hover:text-fg"
+        >
           ✕
         </button>
       </div>
@@ -51,7 +56,7 @@ export function CollectionMenuModal({
             <button
               type="button"
               onClick={item.onClick}
-              className="w-full py-3 text-left text-sm text-gray-600"
+              className="text-body-sm text-fg hover:bg-surface-muted w-full rounded-md px-2 py-3 text-left"
             >
               {item.label}
             </button>

@@ -61,14 +61,14 @@ export default function TermsPage() {
 
   return (
     <div className="mx-auto flex min-h-full max-w-sm flex-1 flex-col justify-center gap-6 px-6">
-      <h1 className="text-2xl font-bold">약관 동의</h1>
+      <h1 className="text-page-title">약관 동의</h1>
 
-      <label className="flex items-center gap-2 border-b pb-4 font-medium">
+      <label className="border-border text-body-sm-strong flex items-center gap-2 border-b pb-4">
         <input type="checkbox" checked={allChecked} onChange={toggleAll} />
         전체 동의
       </label>
 
-      <div className="flex flex-col gap-3">
+      <div className="text-body-sm flex flex-col gap-3">
         {TERMS.map((term) => (
           <label key={term.id} className="flex items-center gap-2">
             <input
@@ -89,7 +89,7 @@ export default function TermsPage() {
             onSuccess: () => router.push(peekLoginReturn()?.path ?? '/'),
           })
         }
-        className="rounded-md bg-black py-3 font-medium text-white disabled:bg-black/30"
+        className="bg-primary text-on-primary text-button min-h-11 rounded-md py-3 disabled:opacity-50"
       >
         동의하고 계속하기
       </button>

@@ -15,6 +15,7 @@ export function AuthNavAction() {
     return (
       <button
         type="button"
+        className="text-body-sm hover:text-primary-strong"
         onClick={() => {
           rememberCurrentPath();
           router.push('/login');
@@ -26,7 +27,12 @@ export function AuthNavAction() {
   }
 
   return (
-    <button type="button" onClick={() => logout()} disabled={isPending}>
+    <button
+      type="button"
+      className="text-body-sm hover:text-primary-strong disabled:opacity-50"
+      onClick={() => logout()}
+      disabled={isPending}
+    >
       로그아웃
     </button>
   );

@@ -37,16 +37,16 @@ export function CurationSection({ id, title, content }: CurationSectionProps) {
     <section>
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="text-xl font-bold">{title}</h2>
+          <h2 className="text-section-title">{title}</h2>
           {maxDiscountRate > 0 && (
-            <p className="text-sm text-gray-500">
+            <p className="text-body-sm text-primary-strong">
               최대 {maxDiscountRate}% 할인
             </p>
           )}
         </div>
         <Link
           href={`/curations/${id}`}
-          className="text-sm text-gray-500 underline"
+          className="text-body-sm text-fg-muted hover:text-fg underline"
         >
           더보기
         </Link>

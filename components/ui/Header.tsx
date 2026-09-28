@@ -87,7 +87,7 @@ export default function Header() {
   const placeholder = (
     <span
       className={cn(
-        'block truncate text-sm text-gray-400 transition-opacity',
+        'text-fg-subtle block truncate transition-opacity',
         isPlaceholderVisible ? 'opacity-100' : 'opacity-0'
       )}
       style={{ transitionDuration: `${SEARCH_PLACEHOLDER_FADE_MS}ms` }}
@@ -99,8 +99,8 @@ export default function Header() {
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 border-b border-transparent bg-white',
-        isScrolled && 'border-gray-300'
+        'glass sticky top-0 z-[var(--z-sticky)] border-b border-transparent transition-colors duration-[280ms] ease-[var(--ease-out-macos)]',
+        isScrolled && 'border-border'
       )}
     >
       <div className="mx-auto flex max-w-300 items-center gap-4 px-4 py-3 sm:px-6 md:gap-6">
@@ -112,14 +112,14 @@ export default function Header() {
             height={31}
           />
         </Link>
-        <nav className="hidden shrink-0 items-center gap-4 text-sm whitespace-nowrap sm:flex md:gap-6">
+        <nav className="text-body-sm hidden shrink-0 items-center gap-4 whitespace-nowrap sm:flex md:gap-6">
           {NAV_ITEMS.map(({ href, label, isActive }) => (
             <Link
               key={href}
               href={href}
               className={cn(
-                'text-gray-900',
-                isActive(pathname) && 'font-bold text-black'
+                'text-fg hover:text-primary-strong',
+                isActive(pathname) && 'font-bold'
               )}
             >
               {label}
@@ -132,7 +132,7 @@ export default function Header() {
             onClick={openSearchModal}
             id="search-bar"
             aria-label="검색"
-            className="flex w-full min-w-0 items-center gap-2 rounded-full bg-gray-100 py-2 pr-3 pl-5 text-left sm:max-w-72"
+            className="bg-surface-sunken/80 hover:bg-surface-sunken text-body-sm flex w-full min-w-0 items-center gap-2 rounded-full py-2 pr-3 pl-5 text-left transition-colors duration-[180ms] sm:max-w-72"
           >
             <span className="min-w-0 flex-1">
               {/* useSearchParams는 Suspense 경계가 필요하다 (layout에서 렌더되므로) */}
@@ -149,13 +149,13 @@ export default function Header() {
               strokeLinecap="round"
               strokeLinejoin="round"
               aria-hidden="true"
-              className="size-5 shrink-0 text-gray-500"
+              className="text-fg-muted size-5 shrink-0"
             >
               <circle cx="11" cy="11" r="7" />
               <path d="m21 21-4.3-4.3" />
             </svg>
           </button>
-          <div className="hidden shrink-0 text-sm whitespace-nowrap sm:block">
+          <div className="hidden shrink-0 whitespace-nowrap sm:block">
             <AuthNavAction />
           </div>
         </div>
@@ -177,5 +177,5 @@ function SearchBarText({ placeholder }: SearchBarTextProps) {
 
   if (!query) return placeholder;
 
-  return <span className="block truncate text-sm text-black">{query}</span>;
+  return <span className="text-fg block truncate">{query}</span>;
 }
