@@ -27,11 +27,11 @@ describe('VerticalCard 저장 버튼', () => {
     useAuthStore.getState().setAccessToken('token');
   });
 
-  // 관심목록 페이지: 담긴 항목이라 이미 '저장됨'으로 보여야 한다.
+  // 콜렉션 페이지: 담긴 항목이라 이미 '저장됨'으로 보여야 한다.
   it('isSaved면 저장됨 상태로 그린다', () => {
     render(<VerticalCard product={PRODUCT} isSaved onUnsave={vi.fn()} />);
 
-    const button = screen.getByRole('button', { name: '관심 목록에서 빼기' });
+    const button = screen.getByRole('button', { name: '콜렉션에서 빼기' });
     expect(button).toHaveAttribute('aria-pressed', 'true');
   });
 
@@ -41,7 +41,7 @@ describe('VerticalCard 저장 버튼', () => {
     render(<VerticalCard product={PRODUCT} isSaved onUnsave={onUnsave} />);
 
     await userEvent.click(
-      screen.getByRole('button', { name: '관심 목록에서 빼기' })
+      screen.getByRole('button', { name: '콜렉션에서 빼기' })
     );
 
     expect(onUnsave).toHaveBeenCalledTimes(1);
@@ -68,7 +68,7 @@ describe('VerticalCard 저장 버튼', () => {
     );
 
     expect(
-      screen.getByRole('button', { name: '관심 목록에서 빼기' })
+      screen.getByRole('button', { name: '콜렉션에서 빼기' })
     ).toBeDisabled();
   });
 });

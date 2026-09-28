@@ -48,6 +48,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       new URL('https://placehold.co/**'),
       new URL('https://d1e2y5wc27crnp.cloudfront.net/media/**'),
+      // 카카오 프로필 이미지
+      new URL('https://*.kakaocdn.net/**'),
     ],
   },
   allowedDevOrigins: getLocalNetworkOrigins(),

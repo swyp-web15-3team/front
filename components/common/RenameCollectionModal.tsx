@@ -43,12 +43,12 @@ export function RenameCollectionModal({
   return (
     <Modal isOpen={isOpen} onClose={handleClose}>
       <form onSubmit={handleSubmit}>
-        <h2 className="text-section-title">관심 그룹 이름 변경</h2>
+        <h2 className="text-section-title">콜렉션 이름 변경</h2>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="관심 그룹 이름을 입력하세요"
+          placeholder="콜렉션 이름을 입력하세요"
           maxLength={COLLECTION_NAME_MAX_LENGTH}
           autoFocus
           className="border-border-strong text-body bg-canvas text-fg mt-4 w-full rounded-md border px-3 py-2.5"

@@ -11,7 +11,7 @@ import { useAuthStore } from '@/store/use-auth-store';
 vi.mock('@sentry/nextjs', () => ({ captureException: vi.fn() }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
-const COLLECTION = { id: 1, name: '위스키 컬렉션', isDefault: false };
+const COLLECTION = { id: 1, name: '위스키 콜렉션', isDefault: false };
 const WHISKY = {
   id: 4,
   name: '라가불린 16년',
@@ -43,7 +43,7 @@ describe('CollectionView 편집 모드', () => {
           data: { data: { collections: [COLLECTION] } },
         });
       }
-      // 위스키 목록(GET /whiskies)은 content, 컬렉션 아이템은 items로 내려온다.
+      // 위스키 목록(GET /whiskies)은 content, 콜렉션 아이템은 items로 내려온다.
       if (url.startsWith('/whiskies')) {
         return Promise.resolve({ data: { data: { content: [], ...page } } });
       }
@@ -54,7 +54,7 @@ describe('CollectionView 편집 모드', () => {
   async function enterEditMode() {
     render(<CollectionView />, { wrapper });
     await userEvent.click(
-      await screen.findByRole('button', { name: '위스키 컬렉션 더보기' })
+      await screen.findByRole('button', { name: '위스키 콜렉션 더보기' })
     );
     await userEvent.click(screen.getByText('편집하기'));
   }

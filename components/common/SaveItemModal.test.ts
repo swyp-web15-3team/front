@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { diffCollectionIds } from '@/components/common/SaveItemModal';
 
 describe('diffCollectionIds', () => {
-  it('새로 체크한 컬렉션만 추가 대상이다', () => {
+  it('새로 체크한 콜렉션만 추가 대상이다', () => {
     const { toAdd, toRemove } = diffCollectionIds(
       new Set([1]),
       new Set([1, 2, 3])
@@ -13,7 +13,7 @@ describe('diffCollectionIds', () => {
     expect(toRemove).toEqual([]);
   });
 
-  it('체크 해제한 컬렉션은 제거 대상이다', () => {
+  it('체크 해제한 콜렉션은 제거 대상이다', () => {
     const { toAdd, toRemove } = diffCollectionIds(
       new Set([1, 2]),
       new Set([2])

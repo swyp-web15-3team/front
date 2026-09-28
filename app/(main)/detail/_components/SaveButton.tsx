@@ -35,7 +35,7 @@ export function SaveButton({ whisky }: SaveButtonProps) {
     );
   }
 
-  // 어느 관심 목록에 담을지는 모달이 정한다(카드의 저장 버튼과 동일).
+  // 어느 콜렉션에 담을지는 모달이 정한다(카드의 저장 버튼과 동일).
   return (
     <button
       type="button"

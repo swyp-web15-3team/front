@@ -56,7 +56,7 @@ export function CollectionView() {
 
   function handleRemoveItem(whiskyId: number) {
     if (!activeCollection) return;
-    if (!window.confirm('이 위스키를 관심 목록에서 뺄까요?')) return;
+    if (!window.confirm('이 위스키를 콜렉션에서 뺄까요?')) return;
 
     setRemovingId(whiskyId);
     removeItemMutation.mutate(
@@ -80,7 +80,7 @@ export function CollectionView() {
 
   function handleRemoveSelected() {
     if (!activeCollection || selectedIds.size === 0) return;
-    if (!window.confirm(`선택한 ${selectedIds.size}개를 관심 목록에서 뺄까요?`))
+    if (!window.confirm(`선택한 ${selectedIds.size}개를 콜렉션에서 뺄까요?`))
       return;
 
     removeItemMutation.mutate(
@@ -167,7 +167,7 @@ export function CollectionView() {
             onClick={openCreateModal}
             className="bg-surface-sunken text-body-sm text-fg-muted hover:text-fg rounded-full px-3 py-1.5 whitespace-nowrap"
           >
-            + 새 관심 목록
+            + 새 콜렉션
           </button>
         </li>
       </ul>
@@ -185,16 +185,14 @@ export function CollectionView() {
       )}
 
       {activeId === null ? (
-        <p className="text-body-sm text-fg-muted">
-          저장한 관심 목록이 없습니다.
-        </p>
+        <p className="text-body-sm text-fg-muted">저장한 콜렉션이 없습니다.</p>
       ) : isItemsLoading ? (
         <p className="text-body-sm text-fg-muted">불러오는 중...</p>
       ) : items.length === 0 ? (
         <p className="text-body-sm text-fg-muted">담긴 위스키가 없습니다.</p>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {/* 관심 목록에 있는 것들이라 저장 버튼은 전부 '저장됨'이고,
+          {/* 콜렉션에 있는 것들이라 저장 버튼은 전부 '저장됨'이고,
               다시 누르면 목록에서 뺀다. 편집 중에는 카드 전체가 선택 토글이다. */}
           {items.map((item) =>
             isEditing ? (
@@ -254,7 +252,7 @@ export function CollectionView() {
             value=""
             disabled={selectedIds.size === 0 || moveItemMutation.isPending}
             onChange={(e) => handleMoveSelected(Number(e.target.value))}
-            aria-label="다른 관심 목록으로 이동"
+            aria-label="다른 콜렉션으로 이동"
             className="border-border-strong text-caption text-fg ml-auto rounded-md border px-2 py-1.5 disabled:opacity-50"
           >
             <option value="" disabled>

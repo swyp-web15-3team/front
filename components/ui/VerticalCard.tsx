@@ -16,7 +16,7 @@ interface VerticalCardProps {
   className?: string;
   href?: string;
   /**
-   * 저장 버튼을 "저장됨"으로 그린다. 관심목록 페이지처럼 이미 담긴 게
+   * 저장 버튼을 "저장됨"으로 그린다. 콜렉션 페이지처럼 이미 담긴 게
    * 확실한 화면에서 쓴다. 생략하면 기존대로 저장 모달을 여는 버튼이 된다.
    */
   isSaved?: boolean;
@@ -130,7 +130,7 @@ function BookmarkButton({
   isUnsaving = false,
 }: {
   product: Product;
-  // TODO: 목록/검색 화면의 저장 여부는 컬렉션 조회 API 연동 후 서버 상태로 채운다
+  // TODO: 목록/검색 화면의 저장 여부는 콜렉션 조회 API 연동 후 서버 상태로 채운다
   isSaved?: boolean;
   onUnsave?: () => void;
   isUnsaving?: boolean;
@@ -194,7 +194,7 @@ function BookmarkButton({
       onClick={handleToggle}
       disabled={isUnsaving}
       aria-pressed={isSaved}
-      aria-label={isSaved ? '관심 목록에서 빼기' : '저장하기'}
+      aria-label={isSaved ? '콜렉션에서 빼기' : '저장하기'}
       className={cn(
         'flex size-8 shrink-0 items-center justify-center rounded-md border disabled:opacity-50',
         isSaved

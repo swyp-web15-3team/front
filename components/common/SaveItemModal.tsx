@@ -30,7 +30,7 @@ export interface SaveItemWhisky {
   imageUrl?: string;
 }
 
-/** 서버에 담겨 있는 컬렉션(saved)과 체크된 컬렉션(checked)의 차이를 낸다. */
+/** 서버에 담겨 있는 콜렉션(saved)과 체크된 콜렉션(checked)의 차이를 낸다. */
 export function diffCollectionIds(
   saved: Set<number>,
   checked: Set<number>
@@ -54,7 +54,7 @@ export function useSaveItemModal() {
 export function SaveItemModal() {
   const { isOpen } = useSaveItemModal();
 
-  // 닫혀 있을 땐 마운트하지 않는다. 상시 마운트된 상태로 컬렉션 조회가 돌면
+  // 닫혀 있을 땐 마운트하지 않는다. 상시 마운트된 상태로 콜렉션 조회가 돌면
   // 비로그인 사용자는 401 -> /login 리다이렉트가 무한 반복된다.
   if (!isOpen) return null;
 
@@ -82,7 +82,7 @@ function SaveItemModalContent() {
     reset: resetCreateCollectionMutation,
   } = createCollectionMutation;
 
-  // 이 위스키가 이미 담겨 있는 컬렉션. 체크박스의 초기 상태가 된다.
+  // 이 위스키가 이미 담겨 있는 콜렉션. 체크박스의 초기 상태가 된다.
   const savedIds = useMemo(() => {
     if (!whisky) return new Set<number>();
     return new Set(
@@ -139,9 +139,9 @@ function SaveItemModalContent() {
     close();
   }
 
-  // 서버에 다건 저장 API가 없어서 컬렉션 수만큼 요청을 보낸다.
+  // 서버에 다건 저장 API가 없어서 콜렉션 수만큼 요청을 보낸다.
   // 체크된 것 중 새로 생긴 건 추가(POST), 해제된 건 제거(DELETE).
-  // 이미 담긴 컬렉션은 toAdd에서 빠지므로 같은 위스키를 POST로 중복 저장하지 않는다.
+  // 이미 담긴 콜렉션은 toAdd에서 빠지므로 같은 위스키를 POST로 중복 저장하지 않는다.
   // allSettled라 일부가 실패해도 나머지 저장은 그대로 반영되고,
   // 실패가 있으면 모달을 닫지 않아 사용자가 다시 시도할 수 있다.
   async function handleApply() {
@@ -197,7 +197,7 @@ function SaveItemModalContent() {
           </div>
         </div>
 
-        {/* 컬렉션 목록: 체크박스로 다건/단건 저장 */}
+        {/* 콜렉션 목록: 체크박스로 다건/단건 저장 */}
         <ul className="mt-6 flex min-h-0 flex-1 flex-col overflow-y-auto">
           {collections.map((collection) => {
             const isChecked = effectiveCheckedIds.has(collection.id);
@@ -210,7 +210,7 @@ function SaveItemModalContent() {
                   aria-pressed={isChecked}
                   className="hover:bg-surface-muted flex w-full items-center gap-3 rounded-lg px-1 py-2 text-left"
                 >
-                  {/* 서버가 컬렉션 대표 이미지를 안 내려줘서 빈 타일로 둔다 */}
+                  {/* 서버가 콜렉션 대표 이미지를 안 내려줘서 빈 타일로 둔다 */}
                   <CollectionThumbnail
                     alt={collection.name}
                     className="size-11"
@@ -252,7 +252,7 @@ function SaveItemModalContent() {
           onClick={openCreateCollectionModal}
           className="border-border-strong text-body-sm text-fg hover:bg-surface-muted mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed px-3 py-3"
         >
-          관심 목록 추가하기
+          콜렉션 추가하기
           <span aria-hidden className="text-lg leading-none">
             +
           </span>
@@ -260,7 +260,7 @@ function SaveItemModalContent() {
 
         {failedCount > 0 && (
           <p className="text-caption text-danger mt-2">
-            {failedCount}개 컬렉션 저장에 실패했어요. 다시 시도해주세요.
+            {failedCount}개 콜렉션 저장에 실패했어요. 다시 시도해주세요.
           </p>
         )}
 

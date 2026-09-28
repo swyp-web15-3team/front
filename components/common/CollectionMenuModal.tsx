@@ -5,7 +5,7 @@ import { MODAL_ID } from '@/constants/modal';
 import { useModal } from '@/hooks/use-modal';
 
 interface CollectionMenuModalProps {
-  /** 기본 관심 목록은 이름 변경/삭제를 막는다. */
+  /** 기본 콜렉션은 이름 변경/삭제를 막는다. */
   isDefault: boolean;
   onRename: () => void;
   onEdit: () => void;
