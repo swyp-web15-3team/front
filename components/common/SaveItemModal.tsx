@@ -8,6 +8,7 @@ import {
   useCreateCollectionModal,
 } from '@/components/common/CreateCollectionModal';
 import { Button } from '@/components/ui/Button';
+import { Checkbox } from '@/components/ui/Checkbox';
 import { Modal } from '@/components/ui/Modal';
 import { BOTTOM_SHEET_ID } from '@/constants/bottom-sheet';
 import {
@@ -217,7 +218,11 @@ function SaveItemModalContent() {
                   <span className="text-card-title min-w-0 flex-1 truncate">
                     {collection.name}
                   </span>
-                  <Checkbox checked={isChecked} />
+                  <Checkbox
+                    presentational
+                    checked={isChecked}
+                    className="size-6"
+                  />
                 </button>
               </li>
             );
@@ -308,33 +313,5 @@ function CollectionThumbnail({
         />
       )}
     </div>
-  );
-}
-
-function Checkbox({ checked }: { checked: boolean }) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        'flex size-6 shrink-0 items-center justify-center rounded-md border',
-        checked
-          ? 'border-primary bg-primary text-on-primary'
-          : 'border-border-strong bg-canvas'
-      )}
-    >
-      {checked && (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={3}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="size-4"
-        >
-          <path d="M20 6 9 17l-5-5" />
-        </svg>
-      )}
-    </span>
   );
 }

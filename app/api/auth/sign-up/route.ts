@@ -7,24 +7,37 @@ import type { SignUpRequest, SignUpResponse } from '@/types/auth';
 const REFRESH_TOKEN_COOKIE = 'refreshToken';
 
 export async function POST(request: NextRequest) {
-  const body: SignUpRequest = await request.json();
   const authorization = request.headers.get('authorization');
 
   try {
-    const { data } = await axios.post<{ data: SignUpResponse }>(
+    // 본문 파싱도 try 안에서 한다. 밖에 두면 중복 제출 등으로 본문이 소비된 요청이
+    // catch를 못 타고 로그 없는 500으로 새어 나간다.
+    const body: SignUpRequest = await request.json();
+
+    const { data } = await axios.post<{ data?: SignUpResponse }>(
       `${process.env.NEXT_PUBLIC_API_URL}/auth/sign-up`,
       body,
       authorization ? { headers: { Authorization: authorization } } : undefined
     );
 
-    const { accessToken, refreshToken } = data.data;
+    const { accessToken, refreshToken } = data?.data ?? {};
+
+    // 토큰을 받았으면 그걸로 세션을 새로 깐다. 아직 안 주는 동안에는
+    // 카카오 로그인 때 받아둔 pending accessToken + refreshToken 쿠키로 이어간다.
+    if (!accessToken) {
+      return new NextResponse(null, { status: 204 });
+    }
+
     const response = NextResponse.json({ accessToken });
-    response.cookies.set(REFRESH_TOKEN_COOKIE, refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-    });
+
+    if (refreshToken) {
+      response.cookies.set(REFRESH_TOKEN_COOKIE, refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+      });
+    }
 
     return response;
   } catch (error) {
@@ -37,10 +50,12 @@ export async function POST(request: NextRequest) {
       Sentry.captureException(error);
     }
 
-    if (process.env.NODE_ENV !== 'production' && axios.isAxiosError(error)) {
+    if (process.env.NODE_ENV !== 'production') {
+      // axios 에러가 아닌 경우(응답 파싱 실패 등)도 찍어야 원인이 보인다.
       console.error('[auth/sign-up] 실패', {
         status,
-        data: error.response?.data,
+        data: axios.isAxiosError(error) ? error.response?.data : undefined,
+        error: axios.isAxiosError(error) ? undefined : error,
       });
     }
 

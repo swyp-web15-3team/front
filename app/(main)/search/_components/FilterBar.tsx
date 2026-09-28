@@ -12,6 +12,7 @@ import {
   EMPTY_SEARCH_FILTERS,
   FILTER_GROUP_LABELS,
 } from '@/constants/search-filter';
+import { Checkbox } from '@/components/ui/Checkbox';
 import { useSearchFilterOptions } from '@/hooks/use-search-filter-options';
 import { pushEscapeLayer } from '@/lib/escape-stack';
 import { getFilterChips, toggleFilterOption } from '@/lib/search-filter';
@@ -59,17 +60,13 @@ export function FilterBar({ sort, onSortChange }: FilterBarProps) {
     >
       <div className="flex flex-col gap-1">
         {filterOptions[group].map((option) => (
-          <label
+          <Checkbox
             key={option}
-            className="text-body-sm hover:bg-surface-muted flex items-center gap-2 rounded px-2 py-1.5 whitespace-nowrap"
-          >
-            <input
-              type="checkbox"
-              checked={filters.options[group].includes(option)}
-              onChange={() => toggleOption(group, option)}
-            />
-            {option}
-          </label>
+            checked={filters.options[group].includes(option)}
+            onChange={() => toggleOption(group, option)}
+            label={option}
+            className="hover:bg-surface-muted rounded px-2 py-1.5 whitespace-nowrap"
+          />
         ))}
       </div>
     </FilterDropdown>
