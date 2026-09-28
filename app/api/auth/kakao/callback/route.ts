@@ -50,16 +50,16 @@ export async function GET(request: NextRequest) {
 
     const response = NextResponse.redirect(redirectUrl);
 
-    // 신규 유저는 회원가입(sign-up) 완료 전까지 로그인 상태로 만들지 않는다.
-    if (!isNewUser) {
-      // redirect 응답에는 cookies()가 아니라 response.cookies로 심어야 헤더에 실린다.
-      response.cookies.set(REFRESH_TOKEN_COOKIE, refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-      });
-    }
+    // 신규 유저도 refreshToken을 심어둔다. 가입 응답이 새 토큰 쌍을 주면
+    // sign-up 라우트가 이 쿠키를 덮어쓰므로, 그때까지의 fallback 역할만 한다.
+    // (로그인 상태로 취급할지는 accessToken을 store에 넣는 쪽에서 판단한다)
+    // redirect 응답에는 cookies()가 아니라 response.cookies로 심어야 헤더에 실린다.
+    response.cookies.set(REFRESH_TOKEN_COOKIE, refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
 
     return response;
   } catch (error) {

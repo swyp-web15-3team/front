@@ -12,6 +12,7 @@ export interface SignUpRequest {
   termsOfServiceAgreed: boolean;
   privacyPolicyAgreed: boolean;
   marketingAgreed: boolean;
+  nickname: string;
 }
 
 export type SignUpResponse = TokenPair;
