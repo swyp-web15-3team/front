@@ -35,6 +35,8 @@ export async function signUp(payload: SignUpRequest): Promise<string> {
 
 export interface WithdrawRequest {
   reason: string;
+  /** reason이 ETC일 때 사용자가 직접 적은 사유. */
+  detail?: string;
 }
 
 export async function withdraw(payload: WithdrawRequest): Promise<void> {
