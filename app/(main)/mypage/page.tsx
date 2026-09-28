@@ -2,6 +2,7 @@ import BookmarkIcon from '@heroicons/react/24/outline/BookmarkIcon';
 import CalendarDaysIcon from '@heroicons/react/24/outline/CalendarDaysIcon';
 import Link from 'next/link';
 
+import { LogoutButton } from '@/app/(main)/mypage/_components/LogoutButton';
 import { ProfileSummary } from '@/app/(main)/mypage/_components/ProfileSummary';
 import { KakaoIcon } from '@/components/ui/KakaoIcon';
 
@@ -13,7 +14,7 @@ const SHORTCUTS = [
 
 export default function MyPage() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-h-full flex-col gap-6">
       <ProfileSummary />
 
       {/* 모바일은 가로 한 줄, sm 이상에서는 세로 목록으로 쌓는다. */}
@@ -41,9 +42,12 @@ export default function MyPage() {
         </div>
       </section>
 
+      <LogoutButton />
+
+      {/* mt-auto로 화면 가장 아래에 붙인다. 내용이 길어지면 자연스럽게 밀리므로 fixed는 쓰지 않는다. */}
       <Link
         href="/mypage/withdraw"
-        className="text-body-sm text-fg-muted hover:text-fg self-start underline"
+        className="text-body-sm text-fg-muted hover:text-fg mt-auto self-start pt-6 underline"
       >
         회원탈퇴
       </Link>
