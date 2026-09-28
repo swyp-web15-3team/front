@@ -34,7 +34,7 @@ export default function WithdrawPage() {
 
     withdraw(
       { reason, detail: isEtc ? etcDetail.trim() : undefined },
-      { onSuccess: () => router.replace('/login') }
+      { onSuccess: () => router.replace('/') }
     );
   };
 
