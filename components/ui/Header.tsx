@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
 import { SearchModal, useSearchModal } from '@/components/common/SearchModal';
@@ -21,8 +22,36 @@ const SEARCH_PLACEHOLDER_KEYWORDS = [
 const SEARCH_PLACEHOLDER_INTERVAL_MS = 3000;
 const SEARCH_PLACEHOLDER_FADE_MS = 200;
 
+interface NavItem {
+  href: string;
+  label: string;
+  isActive: (pathname: string) => boolean;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  {
+    href: '/',
+    label: '탐색',
+    isActive: (pathname) =>
+      pathname === '/' ||
+      pathname.startsWith('/search') ||
+      pathname.startsWith('/detail'),
+  },
+  {
+    href: '/mypage/collection',
+    label: '콜렉션',
+    isActive: (pathname) => pathname.startsWith('/mypage/collection'),
+  },
+  {
+    href: '/planner',
+    label: '플래너',
+    isActive: (pathname) => pathname.startsWith('/planner'),
+  },
+];
+
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const pathname = usePathname();
   const { open: openSearchModal } = useSearchModal();
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isPlaceholderVisible, setIsPlaceholderVisible] = useState(true);
@@ -58,7 +87,7 @@ export default function Header() {
   const placeholder = (
     <span
       className={cn(
-        'truncate text-sm text-gray-400 transition-opacity',
+        'block truncate text-sm text-gray-400 transition-opacity',
         isPlaceholderVisible ? 'opacity-100' : 'opacity-0'
       )}
       style={{ transitionDuration: `${SEARCH_PLACEHOLDER_FADE_MS}ms` }}
@@ -70,51 +99,67 @@ export default function Header() {
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 flex items-center justify-between border-b border-transparent bg-white px-2 py-4 sm:px-6',
+        'sticky top-0 z-50 border-b border-transparent bg-white',
         isScrolled && 'border-gray-300'
       )}
     >
-      <Link href="/">
-        <Image
-          src="https://placehold.co/120x31.png"
-          alt="Logo"
-          width={120}
-          height={31}
-        />
-      </Link>
-      <div className="relative mx-2 max-w-300 flex-1 sm:mx-4">
-        <button
-          type="button"
-          onClick={openSearchModal}
-          id="search-bar"
-          aria-label="검색"
-          className="flex w-full items-center rounded-md bg-gray-100 py-2 pr-8 pl-2 text-left"
-        >
-          {/* useSearchParams는 Suspense 경계가 필요하다 (layout에서 렌더되므로) */}
-          <Suspense fallback={placeholder}>
-            <SearchBarText placeholder={placeholder} />
-          </Suspense>
-        </button>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 cursor-pointer text-black"
-          onClick={(e) => e.preventDefault()}
-        >
-          <circle cx="11" cy="11" r="7" />
-          <path d="m21 21-4.3-4.3" />
-        </svg>
+      <div className="mx-auto flex max-w-300 items-center gap-4 px-4 py-3 sm:px-6 md:gap-6">
+        <Link href="/" className="shrink-0">
+          <Image
+            src="https://placehold.co/120x31.png"
+            alt="Logo"
+            width={120}
+            height={31}
+          />
+        </Link>
+        <nav className="hidden shrink-0 items-center gap-4 text-sm whitespace-nowrap sm:flex md:gap-6">
+          {NAV_ITEMS.map(({ href, label, isActive }) => (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                'text-gray-900',
+                isActive(pathname) && 'font-bold text-black'
+              )}
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
+        <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-4 md:gap-6">
+          <button
+            type="button"
+            onClick={openSearchModal}
+            id="search-bar"
+            aria-label="검색"
+            className="flex w-full min-w-0 items-center gap-2 rounded-full bg-gray-100 py-2 pr-3 pl-5 text-left sm:max-w-72"
+          >
+            <span className="min-w-0 flex-1">
+              {/* useSearchParams는 Suspense 경계가 필요하다 (layout에서 렌더되므로) */}
+              <Suspense fallback={placeholder}>
+                <SearchBarText placeholder={placeholder} />
+              </Suspense>
+            </span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.75}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              className="size-5 shrink-0 text-gray-500"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+          </button>
+          <div className="hidden shrink-0 text-sm whitespace-nowrap sm:block">
+            <AuthNavAction />
+          </div>
+        </div>
       </div>
-      <nav className="hidden gap-2 sm:flex sm:gap-4">
-        <Link href="/mypage/collection">관심 목록</Link>
-        <Link href="/planner">플래너</Link>
-        <AuthNavAction />
-      </nav>
       <Suspense fallback={null}>
         <SearchModal />
       </Suspense>
@@ -132,5 +177,5 @@ function SearchBarText({ placeholder }: SearchBarTextProps) {
 
   if (!query) return placeholder;
 
-  return <span className="truncate text-sm text-black">{query}</span>;
+  return <span className="block truncate text-sm text-black">{query}</span>;
 }
