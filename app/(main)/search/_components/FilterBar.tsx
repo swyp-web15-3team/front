@@ -226,7 +226,7 @@ function FilterDropdown({
       {isOpen && (
         <div
           className={cn(
-            'border-border bg-canvas absolute top-full z-20 mt-2 min-w-40 rounded-md border p-2 shadow-md',
+            'border-border glass shadow-overlay absolute top-full z-20 mt-2 min-w-40 rounded-lg border p-2',
             align === 'right' ? 'right-0' : 'left-0'
           )}
         >

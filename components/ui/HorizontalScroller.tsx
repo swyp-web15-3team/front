@@ -124,7 +124,7 @@ function ArrowButton({
       aria-label={direction === 'left' ? '이전' : '다음'}
       onClick={onClick}
       className={cn(
-        'border-border bg-canvas text-fg absolute top-1/2 hidden -translate-y-1/2 rounded-full border p-1.5 opacity-0 shadow-md transition-opacity group-hover:opacity-100 sm:block',
+        'border-border glass text-fg shadow-overlay absolute top-1/2 hidden -translate-y-1/2 rounded-full border p-1.5 opacity-0 transition-opacity duration-[180ms] group-hover:opacity-100 sm:block',
         direction === 'left'
           ? 'left-0 -translate-x-1/2'
           : 'right-0 translate-x-1/2'

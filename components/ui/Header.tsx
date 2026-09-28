@@ -70,8 +70,8 @@ export default function Header() {
   return (
     <header
       className={cn(
-        'bg-canvas sticky top-0 z-50 flex items-center justify-between border-b border-transparent px-2 py-4 sm:px-6',
-        isScrolled && 'border-border-strong'
+        'glass sticky top-0 z-[var(--z-sticky)] flex items-center justify-between border-b border-transparent px-2 py-4 transition-colors duration-[280ms] ease-[var(--ease-out-macos)] sm:px-6',
+        isScrolled && 'glass-edge-bottom border-transparent'
       )}
     >
       <Link href="/">
@@ -88,7 +88,7 @@ export default function Header() {
           onClick={openSearchModal}
           id="search-bar"
           aria-label="검색"
-          className="bg-surface-sunken flex w-full items-center rounded-md py-2 pr-8 pl-2 text-left"
+          className="bg-surface-sunken/80 hover:bg-surface-sunken flex w-full items-center rounded-lg py-2 pr-8 pl-2 text-left transition-colors duration-[180ms]"
         >
           {/* useSearchParams는 Suspense 경계가 필요하다 (layout에서 렌더되므로) */}
           <Suspense fallback={placeholder}>

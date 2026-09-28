@@ -18,8 +18,8 @@ export function BottomNav() {
 
   return (
     <>
-      <div className="fixed inset-x-0 bottom-0 z-50 sm:hidden">
-        <nav className="border-surface-sunken bg-canvas flex justify-around border-t-2 py-2">
+      <div className="fixed inset-x-0 bottom-0 z-[var(--z-nav)] sm:hidden">
+        <nav className="glass glass-edge-top flex justify-around py-2">
           {NAV_ITEMS.map(({ href, label }) => {
             // 활성 표시만 담당한다. 이동 자체는 Link가 그대로 처리한다.
             const isActive =
@@ -31,8 +31,8 @@ export function BottomNav() {
                 href={href}
                 aria-current={isActive ? 'page' : undefined}
                 className={cn(
-                  'flex flex-col items-center',
-                  isActive ? 'text-primary' : 'text-fg'
+                  'flex flex-col items-center transition-transform duration-[180ms] ease-[var(--ease-spring-soft)] active:scale-90',
+                  isActive ? 'text-primary scale-105' : 'text-fg'
                 )}
               >
                 <Image

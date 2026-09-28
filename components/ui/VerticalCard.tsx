@@ -54,7 +54,7 @@ export function VerticalCard({
   const card = (
     <div
       className={cn(
-        'border-border bg-canvas flex w-full flex-col overflow-hidden rounded-lg border',
+        'border-border bg-canvas flex w-full flex-col overflow-hidden rounded-lg border transition-transform duration-[180ms] ease-[var(--ease-spring-soft)] active:scale-[0.99]',
         className
       )}
     >

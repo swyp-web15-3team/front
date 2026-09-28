@@ -22,7 +22,7 @@ const COLUMN_BREAKPOINTS: Array<[minWidth: number, columns: number]> = [
   [0, 2],
 ];
 
-const ROW_GAP_PX = 16;
+const ROW_GAP_PX = 12; // docs/DESIGN.md: 상품 그리드 gap 12px
 const ESTIMATED_ROW_HEIGHT_PX = 340;
 
 function getColumnCount(width: number) {
@@ -114,8 +114,11 @@ export function ProductGrid({
             key={virtualRow.key}
             ref={virtualizer.measureElement}
             data-index={virtualRow.index}
-            className="absolute top-0 left-0 grid w-full gap-4"
+            className="absolute top-0 left-0 grid w-full"
             style={{
+              // 열 간격도 ROW_GAP_PX를 쓴다. 가상화가 행 높이를 이 값으로
+              // 계산하므로 CSS와 상수가 어긋나면 행이 밀린다.
+              gap: ROW_GAP_PX,
               gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
               transform: `translateY(${virtualRow.start - parentOffset}px)`,
             }}

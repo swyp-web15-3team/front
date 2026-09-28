@@ -1,7 +1,7 @@
 ---
 version: alpha
 name: sulchedule-design-system
-description: A mobile-first commerce interface for whisky price comparison, collections, and drink planning. White canvas, a single warm orange accent for actions and savings, and a neutral gray ramp carrying all hierarchy. Cards and modals are the primary containers; a fixed bottom nav anchors mobile navigation and lifts page padding accordingly.
+description: A web-first commerce interface for whisky price comparison, collections, and drink planning. White canvas, a single warm orange accent for actions and savings, and a neutral gray ramp carrying all hierarchy. Cards and modals are the primary containers; the desktop layout is the reference, and a fixed bottom nav covers the narrow fallback below `sm`.
 
 colors:
   primary: "#ff8904"
@@ -163,11 +163,33 @@ typography:
 
 rounded:
   none: 0px
-  sm: 0.375rem
-  md: 0.5rem
-  lg: 0.75rem
-  xl: 1rem
+  sm: 0.5rem
+  md: 0.625rem
+  lg: 1rem
+  xl: 1.25rem
+  xxl: 1.75rem
   full: 9999px
+
+glass:
+  tint-light: "rgba(255, 255, 255, 0.88)"
+  tint-scrim: "rgba(0, 0, 0, 0.32)"
+  blur: 20px
+  saturate: 180%
+  hairline: "rgba(255, 255, 255, 0.55)"
+  edge: "rgba(0, 0, 0, 0.06)"
+
+motion:
+  spring: "cubic-bezier(0.34, 1.56, 0.64, 1)"
+  spring-soft: "cubic-bezier(0.32, 1.28, 0.58, 1)"
+  ease-out: "cubic-bezier(0.22, 0.61, 0.36, 1)"
+  duration-fast: 180ms
+  duration-base: 280ms
+  duration-slow: 420ms
+
+z-layer:
+  sticky: 30
+  nav: 40
+  overlay: 60
 
 spacing:
   xxs: 0.25rem
@@ -278,18 +300,18 @@ components:
 
 ## Overview
 
-Sulchedule is a mobile-first commerce app for comparing whisky prices across Korea and Japan, saving bottles into collections, and planning drinks. The interface is built to be scanned quickly on a phone: a white canvas, product cards in a two-column grid, and a fixed bottom nav that is always in thumb reach.
+Sulchedule is a web-first commerce app for comparing whisky prices across Korea and Japan, saving bottles into collections, and planning drinks. The reference layout is the desktop browser: a white canvas, a multi-column product grid under inline header navigation, with the numbers dense enough to compare at a glance.
 
 Hierarchy comes almost entirely from the neutral gray ramp and from weight, not from color. The orange accent is reserved for two jobs — the primary action, and the savings signal (discount rate). That restraint is what keeps a price-comparison screen from turning into noise, because in this product the *numbers* are the content.
 
-Desktop is a widened version of the same layout, not a separate design: the bottom nav is replaced by inline header links at `sm` and up, and the card grid gains columns.
+Phone width is a narrowed version of the same layout, not a separate design: the grid collapses to two columns and the inline header links give way to a fixed bottom nav below `sm`.
 
 ### Signature Traits
 
 - Single orange accent (`{colors.primary}` — #ff8904) for primary actions and discount rates. No second brand color.
 - Product card is the atom: bordered white container, `{rounded.lg}` radius, image on top, meta panel on `{colors.surface-muted}` below.
 - Neutral-driven hierarchy — `{colors.fg}` for primary text, `{colors.fg-muted}` for secondary, and that is usually the whole story.
-- Fixed bottom nav on mobile; every scrollable page reserves `{spacing.bottom-nav-safe}` of bottom padding so content clears it.
+- Inline header navigation at `sm` and up; below `sm` it falls back to a fixed bottom nav, and every scrollable page reserves `{spacing.bottom-nav-safe}` of bottom padding there so content clears it.
 - Overlays come in two forms only: centered `{component.modal}` and `{component.bottom-sheet}`, both over a 50% black scrim with backdrop blur.
 
 ## Colors
@@ -356,7 +378,7 @@ A `-static` variant of every step (`{font-size.t4-static}` = `14px`) holds a fix
 
 Weights: `{font-weight.regular}` 400, `{font-weight.medium}` 500, `{font-weight.bold}` 700.
 
-Per SEED's bands: `t1`–`t5` for body and decorative text, `t6`–`t10` for titles, `t11`–`t14` for large display headings. This app is mobile-first and currently tops out at `t9` — `t11`+ is available but should only appear on `sm` and above.
+Per SEED's bands: `t1`–`t5` for body and decorative text, `t6`–`t10` for titles, `t11`–`t14` for large display headings. The app currently tops out at `t9` — `t11`+ is available for desktop display headings but is not in use yet.
 
 ### Semantic Styles
 
@@ -386,32 +408,86 @@ Per SEED's bands: `t1`–`t5` for body and decorative text, `t6`–`t10` for tit
 
 ## Layout
 
-- **Mobile-first.** The base layout is a single column at phone width; `sm` (640px) and up is the widened variant.
+- **Web-first.** Design and review at desktop width first; the single-column phone layout below `sm` is the narrowed fallback. Tailwind is still authored mobile-first (unprefixed base, `sm:`/`md:`/`lg:` enhancements) — that is a syntax convention, not the design target.
 - **Page gutter**: `{spacing.xs}` (8px) at phone width, `{spacing.xl}` (24px) at `sm` and up. Cards carry their own internal padding on top.
 - **Product grid**: 2 columns at phone width, 3–4 at `sm` and up, gap `{spacing.sm}` (12px).
-- **Bottom nav clearance**: every scrollable page ends with `{spacing.bottom-nav-safe}` (5rem) of bottom padding on mobile, dropping to `{spacing.lg}` at `sm` where the nav is hidden. Forgetting this is the most common layout bug in this app — the last row of content hides under the nav.
+- **Bottom nav clearance**: below `sm`, every scrollable page ends with `{spacing.bottom-nav-safe}` (5rem) of bottom padding, dropping to `{spacing.lg}` at `sm` where the nav is hidden. Forgetting this is the most common layout bug in this app — the last row of content hides under the nav.
 - **Max content width**: 800px for overlays and forms; the product grid is allowed to fill wider viewports.
-- **Sticky header**: `{component.header}` is `sticky top-0 z-50`, transparent-bordered until scroll, then `{colors.border-strong}` on the bottom edge.
+- **Sticky header**: `{component.header}` is `sticky top-0` at `{z-layer.sticky}`, transparent-bordered until scroll, then a glass hairline on the bottom edge.
+- **Grid gap is a single source of truth.** `ProductGrid` is window-virtualized, so the CSS gap and the virtualizer's row-gap constant must be the same number. Both read `ROW_GAP_PX`; changing one without the other misaligns every row below the fold.
+
+### Stacking
+
+Three layers, and nothing shares a level — when everything sat at `z-50`, DOM order silently decided the winner.
+
+| Token | Value | What |
+|---|---|---|
+| `{z-layer.sticky}` | 30 | Sticky header |
+| `{z-layer.nav}` | 40 | Fixed bottom nav |
+| `{z-layer.overlay}` | 60 | Modals, bottom sheets, and their backdrops |
+
+**Overlays are portaled to `document.body`.** A `z-index` alone is not enough: `{component.header}` is `position: sticky` with a `z-index`, which creates a stacking context, so any overlay rendered *inside* it is trapped below the bottom nav no matter how high its own `z-index` goes. `{component.modal}` and `{component.bottom-sheet}` both `createPortal` to the body for this reason, guarded by `useMounted()` so SSR renders nothing and hydration stays clean. A new overlay must go through those two components rather than hand-rolling a `fixed inset-0` div.
 
 ## Elevation & Depth
 
-Depth is used sparingly — this is a flat, bordered system, not a shadowed one.
+Depth comes from **material**, not from shadows. The model follows macOS 26 (Tahoe) Liquid Glass: floating chrome is a translucent layer that lets the content behind it show through, while content itself sits flat on an opaque canvas.
 
-- **Flat (default)**: Cards, inputs, nav. Separation comes from a 1px `{colors.border}` and from surface tone, never a shadow.
-- **Overlay**: `{component.modal}` and `{component.bottom-sheet}` only. `box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1)` plus the `{colors.scrim}` backdrop with blur. The scrim, not the shadow, is what does the lifting.
-- **Never** put a shadow on a card, a button, or the header. A bordered card that also has a shadow reads as a modal, and the grid loses its calm.
+### The glass layer
+
+Glass is for **chrome that floats over scrolling content** — and nothing else. It needs something moving behind it to read as glass; applied to a card on a white canvas it is invisible cost.
+
+| Surface | Material |
+|---|---|
+| `{component.header}`, `{component.bottom-nav}` | `{glass.tint-light}` + blur, hairline top/bottom edge |
+| `{component.modal}`, `{component.bottom-sheet}` | **opaque** panel + blurred `{glass.tint-scrim}` backdrop |
+| Dropdowns, popovers, scroller arrows | `{glass.tint-light}` + blur |
+| Cards, inputs, buttons, page content | **opaque** — `{colors.canvas}` / `{colors.surface-muted}` |
+
+Overlay *panels* are opaque on purpose: nothing but the scrim sits behind them, so glass would add no depth while cutting the contrast of the secondary text they contain. The glass in an overlay is the **backdrop**, which is exactly where macOS puts it.
+
+The recipe: `background: {glass.tint-light}` · `backdrop-filter: blur({glass.blur}) saturate({glass.saturate})` · a `{glass.hairline}` top border to fake the specular edge · a `{glass.edge}` outer hairline to seat it. The saturate is what separates this from plain glassmorphism — it pulls color up out of the content behind instead of just fogging it.
+
+### Honest limits
+
+- **Refraction is not reproducible in CSS.** `backdrop-filter` cannot displace a pixel, so real Liquid Glass warping of the content behind it is out of reach. We get translucency, blur and saturation — that is the whole budget.
+- **Never animate blur.** It re-composites every frame. Animate `opacity` to fade glass in, keep the blur value static.
+- **Blur stays at or below `{glass.blur}` (20px)** on full-width surfaces like the header, which repaints on every scroll frame. A larger blur is affordable on a small chip, not on chrome.
+- **Always pair glass with an opaque fallback.** Where `backdrop-filter` is unsupported the tint alone must still be legible, so the tint sits at 88% rather than the 12% used in decorative demos.
+- **Only `{colors.fg}` goes directly on glass.** Native macOS uses vibrancy, which re-tints text against whatever is behind it; CSS has no equivalent. With dark content scrolling under the chrome, `{colors.fg-muted}` measures as low as 4.0:1 and `{colors.fg-subtle}` 2.5:1 even at a 92% tint. So: primary foreground only on glass, and if secondary text is needed there, put it on an opaque inset (as `{component.search-bar}` does) rather than on the glass itself. This is the reason the tint is 88% and not the 12% of the demos — legibility sets the floor, not aesthetics.
+
+### Shadow
+
+Shadows are a secondary cue, softer and wider than before: overlays carry `0 12px 32px rgb(0 0 0 / 0.12)`. Cards, buttons, inputs and the header carry none — the glass and the hairline do that work.
 
 ## Shapes
 
+macOS 26 rounds everything more generously, and radii are **concentric**: a child's radius equals the parent's minus the padding between them, so curves stay parallel instead of crossing.
+
 | Token | Value | Use |
 |---|---|---|
-| `{rounded.sm}` | 0.375rem (6px) | Small chips, tight badges |
-| `{rounded.md}` | 0.5rem (8px) | Buttons, inputs, icon buttons, search bar, modals — the workhorse |
-| `{rounded.lg}` | 0.75rem (12px) | Product cards |
-| `{rounded.xl}` | 1rem (16px) | Bottom sheet top corners |
-| `{rounded.full}` | 9999px | Avatars, dots, circular icon buttons, pill filters |
+| `{rounded.sm}` | 0.5rem (8px) | Chips, badges, small inner images |
+| `{rounded.md}` | 0.625rem (10px) | Buttons, inputs, icon buttons, dropdown items |
+| `{rounded.lg}` | 1rem (16px) | Product cards, dropdown panels, search bar |
+| `{rounded.xl}` | 1.25rem (20px) | Modal panel |
+| `{rounded.xxl}` | 1.75rem (28px) | Bottom sheet top corners, hero banner |
+| `{rounded.full}` | 9999px | Avatars, pills, filter chips, circular controls |
 
-`{rounded.md}` is the default: when in doubt, 8px. The card's `{rounded.lg}` is deliberately one step softer than the buttons inside it, so the container reads as the outer shape.
+`{rounded.md}` remains the default for controls. When nesting, subtract the gap: a card at `{rounded.lg}` (16px) with 4px padding takes a 12px inner radius, not another 16px.
+
+## Motion
+
+macOS 26 motion is elastic — things settle rather than stop. Two curves cover it:
+
+- **`{motion.spring}`** (`cubic-bezier(0.34, 1.56, 0.64, 1)`) — overshoots slightly then settles. For elements that *appear*: modals, sheets, popovers, newly inserted rows.
+- **`{motion.spring-soft}`** — a gentler overshoot for state changes on existing elements: selection, toggles, hover growth.
+- **`{motion.ease-out}`** — no overshoot. For things that *leave*, and for anything where bounce would read as sloppiness (scroll-linked header transitions).
+
+Durations: `{motion.duration-fast}` (180ms) for state flips, `{motion.duration-base}` (280ms) for overlays, `{motion.duration-slow}` (420ms) reserved for large sheets.
+
+Rules:
+- Exits are faster than entrances and never overshoot — a bouncing dismissal feels broken.
+- Never spring a `width`, `height` or `blur`; spring `transform` and `opacity`, which the compositor handles.
+- Respect `prefers-reduced-motion`: drop to a plain opacity fade at `{motion.duration-fast}`.
 
 ## Components
 
@@ -437,11 +513,11 @@ Depth is used sparingly — this is a flat, bordered system, not a shadowed one.
 
 **`modal`** — Centered overlay. `{colors.canvas}`, `{rounded.md}`, padding 24px, max-width 800px, over `{colors.scrim}` with `backdrop-blur-sm`. Escape closes the top layer only — via `pushEscapeLayer()` / `isTopLayer()` from `lib/escape-stack.ts`.
 
-**`bottom-sheet`** — Bottom-anchored overlay. Same scrim and padding as `{component.modal}`, but `{rounded.xl}` on the top corners only. Prefer this over a centered modal for mobile-primary flows (저장하기, 컬렉션 선택) — it is reachable by thumb.
+**`bottom-sheet`** — Bottom-anchored overlay. Same scrim and padding as `{component.modal}`, but `{rounded.xl}` on the top corners only. Below `sm`, prefer this over a centered modal for short action flows (저장하기, 컬렉션 선택) — it is reachable by thumb. At `sm` and up those same flows use `{component.modal}`.
 
 **`input`** — `{colors.canvas}`, text `{colors.fg}` in `{typography.body}`, 1px `{colors.border-strong}`, `{rounded.md}`, padding 10px × 12px, min-height 44px. Focus: 2px `{colors.primary-focus}` outline. **`input-error`** swaps the border to `{colors.danger}` with the message below in `{typography.caption}` / `{colors.danger}`.
 
-**`footer`** — `{colors.surface-footer}`, text `{colors.fg-muted}` in `{typography.body-sm}`, padding 20px, with 80px bottom padding on mobile to clear the bottom nav.
+**`footer`** — `{colors.surface-footer}`, text `{colors.fg-muted}` in `{typography.body-sm}`, padding 20px, with 80px bottom padding below `sm` to clear the bottom nav.
 
 ## Do's and Don'ts
 
@@ -450,10 +526,10 @@ Depth is used sparingly — this is a flat, bordered system, not a shadowed one.
 - Use `{colors.fg-muted}` as the floor for any text a user must read. It is the lightest AA-passing gray in the ramp.
 - Reserve `{colors.fg-subtle}` for placeholders and separators.
 - Give every interactive element a 44px minimum touch target, padding the hit area if the visual box is smaller.
-- Reserve `{spacing.bottom-nav-safe}` at the bottom of every scrollable mobile page.
+- Reserve `{spacing.bottom-nav-safe}` at the bottom of every scrollable page below `sm`.
 - Use `object-contain` for product imagery.
 - Use `tabular-nums` wherever numbers are compared.
-- Prefer `{component.bottom-sheet}` over `{component.modal}` for mobile-primary flows.
+- Prefer `{component.bottom-sheet}` over `{component.modal}` for short action flows below `sm`.
 
 ### Don't
 - Don't introduce a second accent color. Status colors (`{colors.danger}`, `{colors.success}`) are not accents, and `{colors.kakao}` belongs to one button.
@@ -469,12 +545,12 @@ Depth is used sparingly — this is a flat, bordered system, not a shadowed one.
 
 | Breakpoint | Width | Behavior |
 |---|---|---|
-| Mobile | < 640px | Single column, 2-col product grid, `{component.bottom-nav}` visible, 8px gutter, bottom-nav clearance applied |
-| `sm` | ≥ 640px | Bottom nav hidden and replaced by inline header links, 3-col grid, 24px gutter, footer padding relaxes |
-| `md` | ≥ 768px | 4-col grid, footer switches to a single row |
-| `lg` | ≥ 1024px | Content max-width caps; grid stops growing and centers |
+| `lg` | ≥ 1024px | Reference layout. Content max-width caps; grid stops growing and centers |
+| `md` | ≥ 768px | 4-col grid, footer is a single row |
+| `sm` | ≥ 640px | 3-col grid, 24px gutter, inline header links, footer padding relaxes |
+| Base | < 640px | Narrow fallback. Single column, 2-col product grid, `{component.bottom-nav}` visible, 8px gutter, bottom-nav clearance applied |
 
-Tailwind's default breakpoints; no custom values. Mobile is the base — every `sm:` prefix is an enhancement, never a mobile fix.
+Tailwind's default breakpoints; no custom values. Desktop is the reference layout; the rows below `sm` are the narrow fallback, and `sm:`/`md:`/`lg:` prefixes carry the layout back up to it.
 
 ## Iteration Guide
 
@@ -482,7 +558,7 @@ Tailwind's default breakpoints; no custom values. Mobile is the base — every `
 2. Hierarchy is neutrals and weight. Before reaching for a color, try `{colors.fg-muted}` or `{font-weight.medium}`.
 3. Sizes come from the `tN` ramp. If the design needs a size that is not a step, fix the design.
 4. Borders separate, surfaces group, shadows lift — and only overlays lift.
-5. Mobile layout is the real layout. Check any change at 375px before checking it at 1440px.
+5. Desktop layout is the real layout. Check any change at 1440px first, then confirm it survives 375px.
 
 ## Known Gaps
 

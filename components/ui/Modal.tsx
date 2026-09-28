@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
+import { useMounted } from '@/hooks/use-mounted';
 import { pushEscapeLayer } from '@/lib/escape-stack';
 import { cn } from '@/lib/utils';
 
@@ -16,9 +18,9 @@ interface ModalProps {
 }
 
 const DEFAULT_OVERLAY_CLASSNAME =
-  'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm duration-300';
+  'fixed inset-0 z-[var(--z-overlay)] flex items-center justify-center bg-[var(--glass-tint-scrim)] backdrop-blur-md transition-opacity duration-[280ms] ease-[var(--ease-out-macos)]';
 const DEFAULT_PANEL_CLASSNAME =
-  'bg-canvas text-fg w-full max-w-[800px] rounded-md p-6 shadow-lg duration-300 ';
+  'bg-canvas text-fg shadow-overlay w-full max-w-[800px] rounded-xl p-6 transition-[transform,opacity] duration-[280ms] ';
 
 /**
  * 모든 모달이 공유하는 오버레이/패널 레이아웃과 esc 닫힘을 담당하는 공용 컴포넌트.
@@ -31,6 +33,11 @@ export function Modal({
   overlayClassName,
   panelClassName,
 }: ModalProps) {
+  // body로 포탈해서 부모의 stacking context를 벗어난다.
+  // (예: Header가 sticky라 그 안의 오버레이는 z를 올려도 BottomNav 위로 못 간다)
+  // SSR에는 document가 없으니 마운트 후에만 포탈한다.
+  const isMounted = useMounted();
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -47,7 +54,7 @@ export function Modal({
     };
   }, [isOpen, onClose]);
 
-  return (
+  const overlay = (
     <div
       aria-label="모달 오버레이"
       className={cn(
@@ -64,8 +71,8 @@ export function Modal({
         className={cn(
           DEFAULT_PANEL_CLASSNAME,
           isOpen
-            ? 'scale-100 opacity-100'
-            : 'pointer-events-none scale-95 opacity-0',
+            ? 'scale-100 opacity-100 ease-[var(--ease-spring)]'
+            : 'pointer-events-none scale-95 opacity-0 ease-[var(--ease-out-macos)]',
           panelClassName
         )}
         onClick={(e) => e.stopPropagation()}
@@ -74,4 +81,7 @@ export function Modal({
       </div>
     </div>
   );
+
+  if (!isMounted) return null;
+  return createPortal(overlay, document.body);
 }

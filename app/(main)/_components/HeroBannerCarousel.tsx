@@ -238,10 +238,10 @@ function BannerCard({ banner }: { banner: Banner }) {
     <Link
       href={banner.href}
       draggable={false}
-      className="bg-surface-inverse relative flex h-full w-full flex-col justify-between overflow-hidden rounded-xl px-5 pt-5 pb-10.75 select-none"
+      className="bg-surface-inverse relative flex h-full w-full flex-col justify-between overflow-hidden rounded-[var(--radius-xxl)] px-5 pt-5 pb-11 select-none"
     >
       <div className="flex items-center gap-1.5">
-        <span className="border-primary-on-dark text-primary-on-dark text-caption rounded-full border px-2 py-1">
+        <span className="border-primary-on-dark/40 text-primary-on-dark text-caption rounded-full border bg-white/10 px-2 py-1 backdrop-blur-sm">
           {banner.badge}
         </span>
         <span

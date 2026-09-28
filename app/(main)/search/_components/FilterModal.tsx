@@ -60,7 +60,7 @@ export function FilterModal({ filters, onApply }: FilterModalProps) {
         onReset={() => setDraft(EMPTY_SEARCH_FILTERS)}
       />
 
-      <div className="flex flex-col gap-7 overflow-y-auto px-6 py-5">
+      <div className="flex flex-col gap-8 overflow-y-auto px-6 py-5">
         <OptionSection
           group="category"
           selected={draft.options.category}
