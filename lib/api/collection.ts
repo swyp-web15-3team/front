@@ -11,7 +11,7 @@ import {
 } from '@/types/collection';
 import { ApiErrorResponse } from '@/types/common';
 
-/** 관심 그룹 이름 최대 길이 (서버가 400으로 거절하는 기준) */
+/** 콜렉션 이름 최대 길이 (서버가 400으로 거절하는 기준) */
 export const COLLECTION_NAME_MAX_LENGTH = 100;
 
 export async function fetchCollections(): Promise<
@@ -82,7 +82,7 @@ export async function removeCollectionItems(
   return data.data;
 }
 
-// 다른 컬렉션으로 옮기기. 제거와 달리 POST라 body를 두 번째 인자로 넘긴다.
+// 다른 콜렉션으로 옮기기. 제거와 달리 POST라 body를 두 번째 인자로 넘긴다.
 export async function moveCollectionItems(
   collectionId: number,
   targetCollectionId: number,

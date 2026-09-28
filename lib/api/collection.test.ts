@@ -10,7 +10,7 @@ import {
 
 vi.mock('@sentry/nextjs', () => ({ captureException: vi.fn() }));
 
-describe('관심 그룹 위스키 추가/제거', () => {
+describe('콜렉션 위스키 추가/제거', () => {
   // whiskyId는 경로가 아니라 body로 나간다.
   it('POST /collections/{collectionId}/whiskies에 whiskyId를 담아 추가한다', async () => {
     const post = vi.spyOn(apiClient, 'post').mockResolvedValue({
@@ -53,7 +53,7 @@ describe('관심 그룹 위스키 추가/제거', () => {
   });
 });
 
-describe('관심 그룹 위스키 이동', () => {
+describe('콜렉션 위스키 이동', () => {
   it('POST /collections/{id}/whiskies/move에 대상 그룹과 whiskyIds를 담아 보낸다', async () => {
     const post = vi.spyOn(apiClient, 'post').mockResolvedValue({
       data: { data: { collectionId: 1, whiskyId: 101, saved: true } },
@@ -68,7 +68,7 @@ describe('관심 그룹 위스키 이동', () => {
   });
 });
 
-describe('관심 그룹 위스키 복사', () => {
+describe('콜렉션 위스키 복사', () => {
   it('POST /collections/{id}/whiskies/copy에 대상 그룹과 whiskyIds를 담아 보낸다', async () => {
     const post = vi.spyOn(apiClient, 'post').mockResolvedValue({ data: '' });
 

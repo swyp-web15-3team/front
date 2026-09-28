@@ -29,7 +29,7 @@ type Tab = 'collection' | 'all';
 
 interface AddPlannerItemModalProps {
   /**
-   * 넘기면 "컬렉션에 담기" 모드로 동작한다. 컬렉션 탭 없이 검색만 보여주고,
+   * 넘기면 "콜렉션에 담기" 모드로 동작한다. 콜렉션 탭 없이 검색만 보여주고,
    * 수량/판매처 대신 행마다 담기 버튼을 둬 한 번에 한 개씩 바로 추가한다.
    * 생략하면 기존 플래너 추가 모달 그대로다.
    */
@@ -45,7 +45,7 @@ export function AddPlannerItemModal({
 }: AddPlannerItemModalProps = {}) {
   const { isOpen, close } = useAddPlannerItemModal();
   const isCollectionMode = collection !== undefined;
-  // 컬렉션 모드엔 컬렉션 탭이 없다.
+  // 콜렉션 모드엔 콜렉션 탭이 없다.
   const [tab, setTab] = useState<Tab>(collection ? 'all' : 'collection');
   const [keyword, setKeyword] = useState('');
   const [selectedCollectionId, setSelectedCollectionId] = useState<
@@ -83,11 +83,11 @@ export function AddPlannerItemModal({
     [searchData]
   );
   const addPlannerItemMutation = useAddPlannerItemMutation();
-  // 컬렉션 모드: 담은 위스키 id. 행 버튼을 '담김'으로 바꾸는 데만 쓴다.
+  // 콜렉션 모드: 담은 위스키 id. 행 버튼을 '담김'으로 바꾸는 데만 쓴다.
   const [addedWhiskyIds, setAddedWhiskyIds] = useState<Set<number>>(new Set());
   const addCollectionItemMutation = useAddCollectionItemMutation();
 
-  // 컬렉션은 판매처가 아니라 위스키 단위라, 고르는 즉시 한 개씩 담는다.
+  // 콜렉션은 판매처가 아니라 위스키 단위라, 고르는 즉시 한 개씩 담는다.
   function handleAddToCollection(whisky: WhiskyListItem) {
     if (!collection) return;
     setErrorMessage('');
@@ -106,7 +106,7 @@ export function AddPlannerItemModal({
     [counts]
   );
 
-  // 컬렉션 탭에서 검색어가 있으면, 매칭되는 위스키가 속한 첫 컬렉션을 자동으로 연다.
+  // 콜렉션 탭에서 검색어가 있으면, 매칭되는 위스키가 속한 첫 콜렉션을 자동으로 연다.
   const keywordMatchedCollectionId = useMemo(() => {
     if (tab !== 'collection' || !keyword.trim()) return null;
 
@@ -171,7 +171,7 @@ export function AddPlannerItemModal({
   // 오버레이 클릭/Esc/취소 버튼으로 닫으려 할 때 호출된다.
   // 선택 내역이 있으면 바로 닫지 않고 확인 안내를 먼저 보여준다.
   function requestClose() {
-    // 컬렉션 모드는 고를 때마다 이미 저장돼서 잃을 선택이 없다.
+    // 콜렉션 모드는 고를 때마다 이미 저장돼서 잃을 선택이 없다.
     if (!isCollectionMode && totalSelectedCount > 0) {
       setIsConfirmingClose(true);
       return;
@@ -260,7 +260,7 @@ export function AddPlannerItemModal({
       )}
 
       <div className="flex min-h-0 flex-1 gap-3">
-        {/* 1열: 컬렉션 / 검색 전환. 컬렉션 모드는 검색만 쓰므로 숨긴다 */}
+        {/* 1열: 콜렉션 / 검색 전환. 콜렉션 모드는 검색만 쓰므로 숨긴다 */}
         {!isCollectionMode && (
           <div className="text-body-sm flex w-24 shrink-0 flex-col gap-1">
             {(['collection', 'all'] as const).map((value) => (
@@ -275,7 +275,7 @@ export function AddPlannerItemModal({
                     : 'text-fg-muted hover:bg-surface-muted'
                 )}
               >
-                {value === 'collection' ? '컬렉션' : '검색'}
+                {value === 'collection' ? '콜렉션' : '검색'}
               </button>
             ))}
           </div>
@@ -283,7 +283,7 @@ export function AddPlannerItemModal({
 
         {tab === 'collection' && !isCollectionMode ? (
           <>
-            {/* 2열: 컬렉션 목록 */}
+            {/* 2열: 콜렉션 목록 */}
             <ul className="text-body-sm flex w-48 shrink-0 flex-col gap-1 overflow-y-auto">
               {collections.map((collection, index) => (
                 <li key={collection.id}>
@@ -306,7 +306,7 @@ export function AddPlannerItemModal({
               ))}
             </ul>
 
-            {/* 3열: 위스키 리스트. 컬렉션 선택 시 부드럽게 펼쳐진다 */}
+            {/* 3열: 위스키 리스트. 콜렉션 선택 시 부드럽게 펼쳐진다 */}
             <div
               className={cn(
                 'grid min-w-0 flex-1 transition-all duration-300 ease-out',
@@ -422,7 +422,7 @@ function SearchResultList({
   counts: Map<number, number>;
   onIncrement: (saleProductId: number) => void;
   onDecrement: (saleProductId: number) => void;
-  /** 넘어오면 컬렉션 모드: 판매처/수량 대신 행마다 담기 버튼을 그린다. */
+  /** 넘어오면 콜렉션 모드: 판매처/수량 대신 행마다 담기 버튼을 그린다. */
   addedWhiskyIds?: Set<number>;
   onAddWhisky?: (whisky: WhiskyListItem) => void;
 }) {

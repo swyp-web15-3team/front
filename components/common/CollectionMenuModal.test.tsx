@@ -21,7 +21,7 @@ describe('CollectionMenuModal', () => {
     useModalStore.setState({ activeModal: MODAL_ID.COLLECTION_MENU });
   });
 
-  // 기본 관심 목록은 이름 변경/삭제를 막아야 한다.
+  // 기본 콜렉션은 이름 변경/삭제를 막아야 한다.
   it('기본 목록이면 편집하기만 보여준다', () => {
     renderMenu(true);
 

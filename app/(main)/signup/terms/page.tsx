@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { isAlreadySignedUp, useSignUpMutation } from '@/hooks/queries/use-auth';
+import { NICKNAME_MAX_LENGTH } from '@/lib/api/user';
 import { peekLoginReturn } from '@/lib/login-return';
 import type { SignUpRequest } from '@/types/auth';
 
@@ -68,8 +69,6 @@ const TERM_GROUPS: TermGroup[] = [
 ];
 
 const ALL_TERMS = TERM_GROUPS.flatMap((group) => group.terms);
-
-const NICKNAME_MAX_LENGTH = 12;
 
 const EMPTY_AGREEMENTS: Record<AgreementKey, boolean> = {
   ageOver14Agreed: false,
