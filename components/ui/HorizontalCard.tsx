@@ -8,12 +8,18 @@ import { Product } from '@/types/product';
 interface HorizontalCardProps {
   product: Product;
   loading?: 'eager' | 'lazy';
+  /**
+   * compact: 모달 목록용. 테두리/배경 없이 리스트 위에 바로 얹히고,
+   * 최저가 라벨 대신 원화 한 줄 + 엔화·용량 한 줄로 줄인다.
+   */
+  variant?: 'default' | 'compact';
   className?: string;
 }
 
 export function HorizontalCard({
   product,
   loading = 'lazy',
+  variant = 'default',
   className,
 }: HorizontalCardProps) {
   const {
@@ -23,59 +29,100 @@ export function HorizontalCard({
     discountRate = 0,
     krPrice,
     jpPrice,
+    jpPriceYen,
     volumeMl,
   } = product;
   const [hasError, setHasError] = useState(false);
+  const isCompact = variant === 'compact';
 
   return (
     <div
       className={cn(
-        'border-border bg-canvas flex w-full overflow-hidden rounded-lg border',
+        'flex w-full overflow-hidden rounded-lg',
+        !isCompact && 'border-border bg-canvas border',
         className
       )}
     >
-      <div className="relative aspect-square w-32 shrink-0">
+      <div
+        className={cn(
+          'relative aspect-square shrink-0',
+          isCompact ? 'w-24' : 'w-32'
+        )}
+      >
         {imageUrl && !hasError ? (
           <Image
             src={imageUrl}
             alt={`${name} ${originalName}` || ''}
             fill
-            sizes="128px"
+            sizes={isCompact ? '96px' : '128px'}
             loading={loading}
-            className="rounded-lg object-contain"
+            className={cn(
+              // compact(모달 목록)는 정사각 썸네일로 맞춰 자른다.
+              // 기본형은 상품 전체가 보여야 해서 여백을 남긴다.
+              isCompact
+                ? 'rounded-xl object-cover'
+                : 'rounded-lg object-contain'
+            )}
             onError={() => setHasError(true)}
           />
         ) : (
-          <div className="bg-surface-sunken text-caption text-fg-subtle flex h-full w-full items-center justify-center rounded-lg text-center">
+          <div
+            className={cn(
+              'bg-surface-sunken text-caption text-fg-subtle flex h-full w-full items-center justify-center text-center',
+              isCompact ? 'rounded-xl' : 'rounded-lg'
+            )}
+          >
             이미지 로딩 실패
           </div>
         )}
       </div>
-      <div className="min-w-0 flex-1 p-4">
-        <p className="text-section-title truncate">{name}</p>
-        <p className="text-body-sm text-fg-muted truncate">{originalName}</p>
-        <div className="text-price mt-2">
-          {discountRate > 0 && (
-            <span className="text-primary text-price-discount mr-1">
-              -{discountRate}%
-            </span>
-          )}
-          <span>
-            {jpPrice?.toLocaleString('ko-KR')}원
-            <span className="text-price-sub text-fg-muted">(일본 최저가)</span>
-          </span>
+
+      {isCompact ? (
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 px-4">
+          <p className="text-body-sm-strong truncate">{name}</p>
+          <p className="text-body-sm text-fg-muted truncate">{originalName}</p>
+          <p className="text-price">
+            {discountRate > 0 && (
+              <span className="text-primary text-price-discount mr-2">
+                -{discountRate}%
+              </span>
+            )}
+            {krPrice?.toLocaleString('ko-KR')}원
+          </p>
+          <p className="text-price-sub text-fg-muted">
+            ¥{jpPriceYen?.toLocaleString('ko-KR') ?? '-'}
+            {volumeMl != null && ` · ${volumeMl}ml`}
+          </p>
         </div>
-        <p className="text-price">
-          {krPrice?.toLocaleString('ko-KR')}원
-          <span className="text-price-sub text-fg-muted">(한국 최저가)</span>
-          {volumeMl != null && (
-            <span className="text-price-sub text-fg-muted">
-              {' '}
-              · {volumeMl}ml
+      ) : (
+        <div className="min-w-0 flex-1 p-4">
+          <p className="text-section-title truncate">{name}</p>
+          <p className="text-body-sm text-fg-muted truncate">{originalName}</p>
+          <div className="text-price mt-2">
+            {discountRate > 0 && (
+              <span className="text-primary text-price-discount mr-1">
+                -{discountRate}%
+              </span>
+            )}
+            <span>
+              {jpPrice?.toLocaleString('ko-KR')}원
+              <span className="text-price-sub text-fg-muted">
+                (일본 최저가)
+              </span>
             </span>
-          )}
-        </p>
-      </div>
+          </div>
+          <p className="text-price">
+            {krPrice?.toLocaleString('ko-KR')}원
+            <span className="text-price-sub text-fg-muted">(한국 최저가)</span>
+            {volumeMl != null && (
+              <span className="text-price-sub text-fg-muted">
+                {' '}
+                · {volumeMl}ml
+              </span>
+            )}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

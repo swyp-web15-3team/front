@@ -83,9 +83,12 @@ export function Checkbox({
   if (presentational) return box;
 
   return (
+    // relative: sr-only input(absolute)을 박스 옆에 붙잡아 둔다. 없으면 input이
+    // 먼 조상 기준으로 놓여, 스크롤 목록 안에서 포커스될 때 모달 패널이 그 위치로
+    // 스크롤돼 내용이 통째로 사라진 것처럼 보인다.
     <label
       className={cn(
-        'flex items-center gap-2',
+        'relative flex items-center gap-2',
         disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
         className
       )}

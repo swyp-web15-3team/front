@@ -50,6 +50,15 @@ const nextConfig: NextConfig = {
       new URL('https://d1e2y5wc27crnp.cloudfront.net/media/**'),
       // 카카오 프로필 이미지
       new URL('https://*.kakaocdn.net/**'),
+      // 일본 판매처(shop-pro) 상품 이미지. 샤드 번호(img07 등)는 상품마다
+      // 달라지고 늘어날 수 있어서 서브도메인을 와일드카드로 둔다.
+      // URL 객체로 주면 search가 ''로 잡혀 쿼리 있는 주소가 막힌다.
+      // 이 CDN은 ?cmsp_timestamp=... 를 붙여 내려주므로 search를 비워둔다.
+      {
+        protocol: 'https',
+        hostname: '*.shop-pro.jp',
+        pathname: '/**',
+      },
     ],
   },
   allowedDevOrigins: getLocalNetworkOrigins(),

@@ -3,11 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { apiClient } from '@/lib/api/client';
 import {
+  changePlannerItemSaleProduct,
   deletePlannerItem,
   deletePlannerItems,
   getPlannerErrorMessage,
   groupPlannerItems,
   movePlannerItems,
+  pickCheapestSaleProduct,
 } from '@/lib/api/planner';
 import { PlannerItem, PlannerListType } from '@/types/planner';
 
@@ -145,6 +147,80 @@ describe('플래너 항목 이동', () => {
     expect(patch).toHaveBeenCalledWith('/planners/move', {
       fromListType: 'PURCHASE',
       toListType: 'CANDIDATE',
+    });
+  });
+});
+
+function makeSaleProduct(
+  id: number,
+  amountKrw: number | null,
+  isSoldOut = false
+) {
+  return {
+    id,
+    retailerName: `판매처 ${id}`,
+    countryCode: 'JP' as const,
+    isDutyFree: false,
+    productUrl: '',
+    isSoldOut,
+    price:
+      amountKrw === null
+        ? null
+        : {
+            amount: amountKrw / 10,
+            currency: 'JPY' as const,
+            amountKrw,
+            collectedAt: '',
+            stale: false,
+          },
+  };
+}
+
+describe('pickCheapestSaleProduct', () => {
+  it('원화 기준 최저가를 고른다', () => {
+    const picked = pickCheapestSaleProduct([
+      makeSaleProduct(1, 20000),
+      makeSaleProduct(2, 10000),
+      makeSaleProduct(3, 30000),
+    ]);
+    expect(picked?.id).toBe(2);
+  });
+
+  // 서버가 400으로 거절하는 것들은 애초에 후보에서 뺀다
+  it('품절이거나 가격 없는 판매처는 제외한다', () => {
+    const picked = pickCheapestSaleProduct([
+      makeSaleProduct(1, 100, true),
+      makeSaleProduct(2, null),
+      makeSaleProduct(3, 50000),
+    ]);
+    expect(picked?.id).toBe(3);
+  });
+
+  it('살 수 있는 판매처가 없으면 null이다', () => {
+    expect(pickCheapestSaleProduct([makeSaleProduct(1, 100, true)])).toBeNull();
+  });
+});
+
+describe('changePlannerItemSaleProduct', () => {
+  // 판매처만 바꾸는 엔드포인트가 없어서 지우고 같은 수량으로 다시 넣는다
+  it('기존 행을 지우고 새 판매처로 같은 수량을 다시 넣는다', async () => {
+    const del = vi.spyOn(apiClient, 'delete').mockResolvedValue({ data: {} });
+    const post = vi
+      .spyOn(apiClient, 'post')
+      .mockResolvedValue({ data: { data: { items: [] } } });
+
+    await changePlannerItemSaleProduct({
+      listType: 'PURCHASE',
+      fromSaleProductId: 501,
+      toSaleProductId: 502,
+      quantity: 3,
+    });
+
+    expect(del).toHaveBeenCalledWith('/planners/items', {
+      params: { listType: 'PURCHASE', saleProductId: 501 },
+    });
+    expect(post).toHaveBeenCalledWith('/planners/items', {
+      items: [{ saleProductId: 502, quantity: 3, listType: 'PURCHASE' }],
     });
   });
 });

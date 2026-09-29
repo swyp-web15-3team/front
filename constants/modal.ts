@@ -5,6 +5,7 @@ export const MODAL_ID = {
   RENAME_COLLECTION: 'rename-collection',
   SEARCH: 'search',
   ADD_PLANNER_ITEM: 'add-planner-item',
+  MOVE_PLANNER_ITEM: 'move-planner-item',
   ADD_COLLECTION_ITEM: 'add-collection-item',
   SEARCH_FILTER: 'search-filter',
   COLLECTION_MENU: 'collection-menu',

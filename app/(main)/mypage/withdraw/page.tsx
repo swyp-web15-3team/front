@@ -130,7 +130,7 @@ interface ReasonRadioProps {
 // Checkbox 컴포넌트는 type이 checkbox로 고정이라 여기서 직접 그린다.
 function ReasonRadio({ value, label, checked, onSelect }: ReasonRadioProps) {
   return (
-    <label className="flex cursor-pointer items-center gap-2">
+    <label className="relative flex cursor-pointer items-center gap-2">
       <input
         type="radio"
         name="withdraw-reason"
