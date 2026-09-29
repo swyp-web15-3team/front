@@ -109,7 +109,7 @@ export function CommentSection() {
   const hasMore = visibleCount < comments.length;
 
   return (
-    <div className="mt-8">
+    <div className="mt-8 hidden">
       <div className="border-border-strong rounded-md border">
         <textarea
           value={content}
