@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { HorizontalCard } from '@/components/ui/HorizontalCard';
 import { Button } from '@/components/ui/Button';
+import { Checkbox } from '@/components/ui/Checkbox';
 import { Modal } from '@/components/ui/Modal';
 import { MODAL_ID } from '@/constants/modal';
 import {
@@ -13,24 +14,30 @@ import {
 import { useAddCollectionItemMutation } from '@/hooks/queries/use-collection';
 import { useAddPlannerItemMutation } from '@/hooks/queries/use-planner';
 import {
-  ADD_PLANNER_ITEM_MAX_QUANTITY,
   ADD_PLANNER_ITEM_MAX_TYPES,
   getPlannerErrorMessage,
 } from '@/lib/api/planner';
-import {
-  useWhiskyDetailQuery,
-  useWhiskyListQuery,
-} from '@/hooks/queries/use-whisky';
+import { fetchWhiskyDetail } from '@/lib/api/whisky';
+import { pickCheapestSaleProduct } from '@/lib/api/planner';
+import { useWhiskyListQuery, whiskyKeys } from '@/hooks/queries/use-whisky';
 import { useModal } from '@/hooks/use-modal';
 import { cn, whiskyToProduct } from '@/lib/utils';
-import { WhiskyListItem } from '@/types/whisky';
+import { WhiskyListItem, WhiskySort } from '@/types/whisky';
+import { useQueryClient } from '@tanstack/react-query';
 
-type Tab = 'collection' | 'all';
+// TODO: 추천순은 백엔드에 sort 값이 없다. 추가되면 첫 옵션으로 넣는다.
+const SORT_OPTIONS: { label: string; value: WhiskySort }[] = [
+  { label: '이름순', value: 'name,asc' },
+  { label: '최신순', value: 'id,desc' },
+];
+
+/** 왼쪽 목록에서 "전체 검색"을 가리키는 값. 콜렉션 id와 섞이지 않게 null을 쓴다. */
+type SourceId = number | null;
 
 interface AddPlannerItemModalProps {
   /**
-   * 넘기면 "콜렉션에 담기" 모드로 동작한다. 콜렉션 탭 없이 검색만 보여주고,
-   * 수량/판매처 대신 행마다 담기 버튼을 둬 한 번에 한 개씩 바로 추가한다.
+   * 넘기면 "콜렉션에 담기" 모드로 동작한다. 콜렉션 목록 없이 검색만 보여주고,
+   * 행마다 담기 버튼을 둬 한 번에 한 개씩 바로 추가한다.
    * 생략하면 기존 플래너 추가 모달 그대로다.
    */
   collection?: { id: number; name: string };
@@ -44,17 +51,21 @@ export function AddPlannerItemModal({
   collection,
 }: AddPlannerItemModalProps = {}) {
   const { isOpen, close } = useAddPlannerItemModal();
+  const queryClient = useQueryClient();
   const isCollectionMode = collection !== undefined;
-  // 콜렉션 모드엔 콜렉션 탭이 없다.
-  const [tab, setTab] = useState<Tab>(collection ? 'all' : 'collection');
+
+  // 왼쪽 목록에서 고른 출처. null이면 전체 검색.
+  const [sourceId, setSourceId] = useState<SourceId>(null);
+  // 입력 중인 검색어와 실제로 요청에 쓰는 검색어를 나눈다(돋보기/엔터로만 검색).
+  const [keywordInput, setKeywordInput] = useState('');
   const [keyword, setKeyword] = useState('');
-  const [selectedCollectionId, setSelectedCollectionId] = useState<
-    number | null
-  >(null);
-  // saleProductId -> 선택 개수. 동일한 술을 다시 클릭하면 개수만 늘어난다.
-  const [counts, setCounts] = useState<Map<number, number>>(new Map());
+  const [sort, setSort] = useState<WhiskySort>('name,asc');
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  // 체크한 위스키 id. 판매처는 추가 시점에 최저가로 자동 선택한다.
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [isConfirmingClose, setIsConfirmingClose] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isResolving, setIsResolving] = useState(false);
 
   const { data: collectionData } = useCollectionListQuery();
   const collections = useMemo(
@@ -67,7 +78,7 @@ export function AddPlannerItemModal({
   );
   const collectionItemQueries = useCollectionItemsQueries(collectionIds);
 
-  // 검색 탭은 검색 페이지와 같은 실제 목록 API(GET /whiskies)를 쓴다.
+  // 전체 검색은 검색 페이지와 같은 실제 목록 API(GET /whiskies)를 쓴다.
   const {
     data: searchData,
     isLoading: isSearchLoading,
@@ -76,12 +87,14 @@ export function AddPlannerItemModal({
     hasNextPage: hasNextSearchPage,
     isFetchingNextPage: isFetchingNextSearchPage,
     fetchNextPage: fetchNextSearchPage,
-  } = useWhiskyListQuery({ query: keyword.trim() || undefined });
+  } = useWhiskyListQuery({ query: keyword.trim() || undefined, sort });
 
   const searchResults = useMemo(
     () => searchData?.pages.flatMap((page) => page.content) ?? [],
     [searchData]
   );
+  const totalCount = searchData?.pages[0]?.totalElements ?? 0;
+
   const addPlannerItemMutation = useAddPlannerItemMutation();
   // 콜렉션 모드: 담은 위스키 id. 행 버튼을 '담김'으로 바꾸는 데만 쓴다.
   const [addedWhiskyIds, setAddedWhiskyIds] = useState<Set<number>>(new Set());
@@ -101,70 +114,43 @@ export function AddPlannerItemModal({
     );
   }
 
-  const totalSelectedCount = useMemo(
-    () => Array.from(counts.values()).reduce((sum, c) => sum + c, 0),
-    [counts]
-  );
+  // 콜렉션을 골랐으면 그 목록에서, 아니면 검색 결과에서 고른다.
+  // 콜렉션엔 검색창이 없고 전환할 때 검색어도 비우므로 목록을 그대로 쓴다.
+  const openCollectionIndex = collectionIds.indexOf(sourceId ?? -1);
+  const collectionItems =
+    collectionItemQueries[openCollectionIndex]?.data?.items;
 
-  // 콜렉션 탭에서 검색어가 있으면, 매칭되는 위스키가 속한 첫 콜렉션을 자동으로 연다.
-  const keywordMatchedCollectionId = useMemo(() => {
-    if (tab !== 'collection' || !keyword.trim()) return null;
+  const visibleItems =
+    sourceId === null ? searchResults : (collectionItems ?? []);
 
-    const lowerKeyword = keyword.trim().toLowerCase();
-    const matchedIndex = collectionIds.findIndex((_, index) =>
-      (collectionItemQueries[index]?.data?.items ?? []).some((item) =>
-        item.name.toLowerCase().includes(lowerKeyword)
-      )
-    );
-    return matchedIndex === -1 ? null : collectionIds[matchedIndex];
-  }, [tab, keyword, collectionIds, collectionItemQueries]);
-
-  const openCollectionId = selectedCollectionId ?? keywordMatchedCollectionId;
-  const openCollectionIndex = collectionIds.indexOf(openCollectionId ?? -1);
-  const openCollectionItems =
-    openCollectionIndex === -1
-      ? []
-      : (collectionItemQueries[openCollectionIndex]?.data?.items ?? []);
-
-  // 서버 한도(종류 20개, 종류당 20병)를 넘으면 400이라 입력 단계에서 막는다
-  function changeCount(saleProductId: number, diff: 1 | -1) {
+  function toggleSelected(whiskyId: number) {
     setErrorMessage('');
-    setCounts((prev) => {
-      const current = prev.get(saleProductId) ?? 0;
-
-      if (diff === 1) {
-        if (current === 0 && prev.size >= ADD_PLANNER_ITEM_MAX_TYPES) {
-          setErrorMessage(
-            `한 번에 추가할 수 있는 상품은 ${ADD_PLANNER_ITEM_MAX_TYPES}개까지입니다.`
-          );
-          return prev;
-        }
-        if (current >= ADD_PLANNER_ITEM_MAX_QUANTITY) {
-          setErrorMessage(
-            `한 상품은 ${ADD_PLANNER_ITEM_MAX_QUANTITY}병까지 담을 수 있어요.`
-          );
-          return prev;
-        }
+    setSelectedIds((prev) => {
+      if (prev.has(whiskyId)) {
+        const next = new Set(prev);
+        next.delete(whiskyId);
+        return next;
       }
-
-      const next = new Map(prev);
-      const count = Math.max(current + diff, 0);
-      if (count === 0) {
-        next.delete(saleProductId);
-      } else {
-        next.set(saleProductId, count);
+      // 서버가 한 요청당 20종류까지만 받는다
+      if (prev.size >= ADD_PLANNER_ITEM_MAX_TYPES) {
+        setErrorMessage(
+          `한 번에 추가할 수 있는 상품은 ${ADD_PLANNER_ITEM_MAX_TYPES}개까지입니다.`
+        );
+        return prev;
       }
-      return next;
+      return new Set(prev).add(whiskyId);
     });
   }
 
   function handleClose() {
+    setSourceId(null);
+    setKeywordInput('');
     setKeyword('');
-    setSelectedCollectionId(null);
-    setCounts(new Map());
+    setSelectedIds(new Set());
     setAddedWhiskyIds(new Set());
     setIsConfirmingClose(false);
     setErrorMessage('');
+    setIsSortOpen(false);
     close();
   }
 
@@ -172,55 +158,68 @@ export function AddPlannerItemModal({
   // 선택 내역이 있으면 바로 닫지 않고 확인 안내를 먼저 보여준다.
   function requestClose() {
     // 콜렉션 모드는 고를 때마다 이미 저장돼서 잃을 선택이 없다.
-    if (!isCollectionMode && totalSelectedCount > 0) {
+    if (!isCollectionMode && selectedIds.size > 0) {
       setIsConfirmingClose(true);
       return;
     }
     handleClose();
   }
 
-  function handleComplete() {
-    const items = Array.from(counts.entries()).map(
-      ([saleProductId, quantity]) => ({ saleProductId, quantity })
-    );
+  /**
+   * 체크한 위스키를 플래너에 넣는다. 목록 API엔 saleProductId가 없어서
+   * 상세를 병렬로 불러 최저가 판매처를 고른 뒤 한 요청으로 보낸다.
+   * 판매처는 추가된 뒤 플래너 행의 드롭다운에서 바꾼다.
+   */
+  async function handleComplete() {
     setErrorMessage('');
-    // mutate에 넘긴 onSuccess는 훅(use-planner.ts)의 onSuccess가 반환한
-    // invalidateQueries Promise가 끝난 뒤에 실행된다. 그래서 이 순서만으로도
-    // "리스트 갱신 → 모달 닫힘" 순서가 보장된다.
-    addPlannerItemMutation.mutate(items, {
-      onSuccess: handleClose,
-      // 품절/가격 없음 등은 서버가 어떤 상품인지까지 detail로 알려준다
-      onError: (error) =>
+    setIsResolving(true);
+
+    try {
+      const details = await Promise.all(
+        Array.from(selectedIds).map((whiskyId) =>
+          queryClient.fetchQuery({
+            queryKey: whiskyKeys.detail(whiskyId),
+            queryFn: () => fetchWhiskyDetail(whiskyId),
+          })
+        )
+      );
+
+      const items = details.flatMap((detail) => {
+        const saleProduct = pickCheapestSaleProduct(detail.saleProducts);
+        return saleProduct ? [{ saleProductId: saleProduct.id }] : [];
+      });
+
+      if (items.length === 0) {
+        setErrorMessage('구매 가능한 판매처가 없어요.');
+        return;
+      }
+      // 전부 품절이면 서버에 보내기 전에 알린다
+      if (items.length < details.length) {
         setErrorMessage(
-          getPlannerErrorMessage(error, '추가에 실패했어요. 다시 시도해주세요.')
-        ),
-    });
+          `${details.length - items.length}개는 구매 가능한 판매처가 없어 제외했어요.`
+        );
+      }
+
+      // mutate에 넘긴 onSuccess는 훅(use-planner.ts)의 onSuccess가 반환한
+      // invalidateQueries Promise가 끝난 뒤에 실행된다. 그래서 이 순서만으로도
+      // "리스트 갱신 → 모달 닫힘" 순서가 보장된다.
+      addPlannerItemMutation.mutate(items, {
+        onSuccess: handleClose,
+        // 품절/가격 없음 등은 서버가 어떤 상품인지까지 detail로 알려준다
+        onError: (error) =>
+          setErrorMessage(
+            getPlannerErrorMessage(
+              error,
+              '추가에 실패했어요. 다시 시도해주세요.'
+            )
+          ),
+      });
+    } catch {
+      setErrorMessage('판매처를 불러오지 못했어요. 다시 시도해주세요.');
+    } finally {
+      setIsResolving(false);
+    }
   }
-
-  function filterByKeyword(items: WhiskyListItem[]) {
-    if (!keyword.trim()) return items;
-    const lowerKeyword = keyword.trim().toLowerCase();
-    return items.filter((item) =>
-      item.name.toLowerCase().includes(lowerKeyword)
-    );
-  }
-
-  const visibleItems = filterByKeyword(openCollectionItems);
-
-  const whiskyList = (
-    <SearchResultList
-      items={visibleItems}
-      isLoading={false}
-      isError={false}
-      onRetry={() => {}}
-      hasNextPage={false}
-      isFetchingNextPage={false}
-      onLoadMore={() => {}}
-      counts={counts}
-      onIncrement={(saleProductId) => changeCount(saleProductId, 1)}
-      onDecrement={(saleProductId) => changeCount(saleProductId, -1)}
-    />
-  );
 
   if (isConfirmingClose) {
     return (
@@ -233,7 +232,7 @@ export function AddPlannerItemModal({
           추가하지 않고 종료하시겠습니까?
         </p>
         <p className="text-caption text-fg-muted mt-1 text-center">
-          선택한 상품 {totalSelectedCount}개가 저장되지 않습니다.
+          선택한 상품 {selectedIds.size}개가 저장되지 않습니다.
         </p>
         <div className="mt-4 flex gap-2">
           <Button fullWidth onClick={() => setIsConfirmingClose(false)}>
@@ -247,99 +246,92 @@ export function AddPlannerItemModal({
     );
   }
 
+  const isPending = isResolving || addPlannerItemMutation.isPending;
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={requestClose}
-      panelClassName="flex h-[80vh] max-w-[760px] flex-col"
+      panelClassName="bg-surface-muted flex h-[80vh] max-w-[900px] flex-col overflow-hidden p-0"
     >
-      {isCollectionMode && (
-        <p className="text-body-sm-strong mb-3">
-          &apos;{collection.name}&apos;에 위스키 추가
-        </p>
-      )}
+      <div className="flex min-h-0 flex-1 flex-col p-8">
+        <h2 className="text-section-title">
+          {isCollectionMode
+            ? `'${collection.name}'에 위스키 추가`
+            : '구매 후보 상품 추가하기'}
+        </h2>
 
-      <div className="flex min-h-0 flex-1 gap-3">
-        {/* 1열: 콜렉션 / 검색 전환. 콜렉션 모드는 검색만 쓰므로 숨긴다 */}
-        {!isCollectionMode && (
-          <div className="text-body-sm flex w-24 shrink-0 flex-col gap-1">
-            {(['collection', 'all'] as const).map((value) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setTab(value)}
-                className={cn(
-                  'rounded-md px-3 py-2 text-left',
-                  tab === value
-                    ? 'bg-surface-sunken font-bold'
-                    : 'text-fg-muted hover:bg-surface-muted'
-                )}
-              >
-                {value === 'collection' ? '콜렉션' : '검색'}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {tab === 'collection' && !isCollectionMode ? (
-          <>
-            {/* 2열: 콜렉션 목록 */}
-            <ul className="text-body-sm flex w-48 shrink-0 flex-col gap-1 overflow-y-auto">
-              {collections.map((collection, index) => (
-                <li key={collection.id}>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCollectionId(collection.id)}
-                    className={cn(
-                      'flex w-full items-center justify-between rounded-md px-3 py-2 text-left',
-                      openCollectionId === collection.id
-                        ? 'bg-surface-sunken font-bold'
-                        : 'hover:bg-surface-muted'
-                    )}
-                  >
-                    <span className="truncate">{collection.name}</span>
-                    <span className="text-caption text-fg-muted ml-2 shrink-0">
-                      ({collectionItemQueries[index]?.data?.items.length ?? 0})
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-
-            {/* 3열: 위스키 리스트. 콜렉션 선택 시 부드럽게 펼쳐진다 */}
-            <div
-              className={cn(
-                'grid min-w-0 flex-1 transition-all duration-300 ease-out',
-                openCollectionId !== null
-                  ? 'grid-cols-[1fr] opacity-100'
-                  : 'grid-cols-[0fr] opacity-0'
+        <div className="mt-6 flex min-h-0 flex-1 gap-4">
+          {/* 1열: 전체 검색 + 콜렉션들. 콜렉션 모드는 검색만 쓰므로 숨긴다 */}
+          {!isCollectionMode && (
+            <SourceList
+              sourceId={sourceId}
+              onSelect={(id) => {
+                setSourceId(id);
+                setIsSortOpen(false);
+              }}
+              totalCount={totalCount}
+              collections={collections}
+              collectionCounts={collectionIds.map(
+                (_, index) =>
+                  collectionItemQueries[index]?.data?.items.length ?? 0
               )}
-            >
-              <div className="min-w-0 overflow-hidden">{whiskyList}</div>
-            </div>
-          </>
-        ) : (
-          /* 검색 탭은 2열: 검색창 아래에 위스키 리스트가 바로 붙는다 */
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
-            <input
-              type="text"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              placeholder="위스키 검색"
-              className="border-border-strong text-body bg-canvas text-fg w-full rounded-md border px-3 py-2.5 outline-none"
             />
+          )}
+
+          {/* 2열: 검색창 + 정렬 + 위스키 리스트 */}
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+            {sourceId === null && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setKeyword(keywordInput);
+                }}
+                className="flex gap-2"
+              >
+                <input
+                  type="search"
+                  value={keywordInput}
+                  onChange={(e) => setKeywordInput(e.target.value)}
+                  placeholder="어떤 위스키를 찾으세요?"
+                  aria-label="위스키 검색"
+                  className="bg-canvas text-body text-fg placeholder:text-fg-subtle min-w-0 flex-1 rounded-xl px-5 py-3.5 outline-none"
+                />
+                <button
+                  type="submit"
+                  aria-label="검색"
+                  className="bg-surface-inverse text-fg-on-dark flex size-12 shrink-0 items-center justify-center rounded-xl"
+                >
+                  <SearchIcon />
+                </button>
+              </form>
+            )}
+
+            {!isCollectionMode && (
+              <SortSelect
+                sort={sort}
+                isOpen={isSortOpen}
+                onToggle={() => setIsSortOpen((prev) => !prev)}
+                onClose={() => setIsSortOpen(false)}
+                onChange={(value) => {
+                  setSort(value);
+                  setIsSortOpen(false);
+                }}
+              />
+            )}
+
             <div className="min-h-0 flex-1">
-              <SearchResultList
-                items={searchResults}
-                isLoading={isSearchLoading}
-                isError={isSearchError}
+              <WhiskyPickerList
+                items={visibleItems}
+                // 콜렉션 목록은 이미 받아둔 데이터라 로딩/에러/무한스크롤이 없다
+                isLoading={sourceId === null && isSearchLoading}
+                isError={sourceId === null && isSearchError}
                 onRetry={refetchSearch}
-                hasNextPage={hasNextSearchPage}
+                hasNextPage={sourceId === null && hasNextSearchPage}
                 isFetchingNextPage={isFetchingNextSearchPage}
                 onLoadMore={fetchNextSearchPage}
-                counts={counts}
-                onIncrement={(saleProductId) => changeCount(saleProductId, 1)}
-                onDecrement={(saleProductId) => changeCount(saleProductId, -1)}
+                selectedIds={selectedIds}
+                onToggle={toggleSelected}
                 addedWhiskyIds={isCollectionMode ? addedWhiskyIds : undefined}
                 onAddWhisky={
                   isCollectionMode ? handleAddToCollection : undefined
@@ -347,58 +339,183 @@ export function AddPlannerItemModal({
               />
             </div>
           </div>
+        </div>
+
+        {errorMessage && (
+          <p className="text-caption text-danger mt-2">{errorMessage}</p>
         )}
       </div>
 
-      {!isCollectionMode && (
-        <div className="text-caption text-fg-muted mt-3 flex items-center justify-between">
-          <span>{totalSelectedCount}개의 상품 선택</span>
-          {totalSelectedCount > 0 && (
-            <button type="button" onClick={() => setCounts(new Map())}>
-              모두 선택 취소
-            </button>
-          )}
-        </div>
-      )}
-
-      {errorMessage && (
-        <p className="text-caption text-danger mt-2">{errorMessage}</p>
-      )}
-
-      {isCollectionMode ? (
-        <div className="mt-4">
+      {/* 버튼 바만 흰 배경이라 회색 본문과 분리된다 */}
+      <div className="bg-canvas shrink-0 px-8 py-6">
+        {isCollectionMode ? (
           <Button fullWidth onClick={handleClose}>
             완료
           </Button>
-        </div>
-      ) : (
-        <div className="mt-4 flex gap-2">
-          <Button variant="secondary" fullWidth onClick={requestClose}>
-            취소
-          </Button>
-          <Button
-            fullWidth
-            disabled={
-              totalSelectedCount === 0 || addPlannerItemMutation.isPending
-            }
-            onClick={handleComplete}
-          >
-            {addPlannerItemMutation.isPending ? '추가 중...' : '완료'}
-          </Button>
-        </div>
-      )}
+        ) : (
+          <div className="flex gap-4">
+            <Button variant="secondary" fullWidth onClick={requestClose}>
+              취소
+            </Button>
+            <Button
+              fullWidth
+              disabled={selectedIds.size === 0 || isPending}
+              onClick={handleComplete}
+            >
+              {isPending ? '추가 중...' : `${selectedIds.size}개 상품 추가하기`}
+            </Button>
+          </div>
+        )}
+      </div>
     </Modal>
   );
 }
 
+/** 왼쪽 목록: 전체 검색 + 콜렉션들. 각 줄 오른쪽에 개수가 붙는다. */
+function SourceList({
+  sourceId,
+  onSelect,
+  totalCount,
+  collections,
+  collectionCounts,
+}: {
+  sourceId: SourceId;
+  onSelect: (id: SourceId) => void;
+  totalCount: number;
+  collections: { id: number; name: string }[];
+  collectionCounts: number[];
+}) {
+  return (
+    <ul className="flex w-56 shrink-0 flex-col gap-1 overflow-y-auto">
+      <SourceRow
+        label="전체 검색"
+        // 서버 총계가 커지면 자릿수가 늘어 레이아웃이 흔들려서 999+로 자른다
+        count={totalCount > 999 ? '999+' : totalCount}
+        isActive={sourceId === null}
+        onClick={() => onSelect(null)}
+      />
+      {collections.map((collection, index) => (
+        <SourceRow
+          key={collection.id}
+          label={collection.name}
+          count={collectionCounts[index] ?? 0}
+          isActive={sourceId === collection.id}
+          onClick={() => onSelect(collection.id)}
+        />
+      ))}
+    </ul>
+  );
+}
+
+function SourceRow({
+  label,
+  count,
+  isActive,
+  onClick,
+}: {
+  label: string;
+  count: number | string;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={isActive}
+        className={cn(
+          'flex w-full items-center justify-between gap-2 rounded-xl px-5 py-4 text-left transition-colors',
+          isActive
+            ? 'bg-canvas text-fg font-bold'
+            : 'text-fg-muted hover:bg-surface-sunken'
+        )}
+      >
+        <span className="text-body-sm truncate">{label}</span>
+        <span className="text-body-sm shrink-0">({count})</span>
+      </button>
+    </li>
+  );
+}
+
+/** 정렬 드롭다운. 바깥 클릭/Esc로 닫힌다. */
+function SortSelect({
+  sort,
+  isOpen,
+  onToggle,
+  onClose,
+  onChange,
+}: {
+  sort: WhiskySort;
+  isOpen: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+  onChange: (sort: WhiskySort) => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // 모달 자체의 esc 스택과 겹치지 않게, 드롭다운이 열려 있을 때만 먼저 가로챈다.
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      onClose();
+    };
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!containerRef.current?.contains(e.target as Node)) onClose();
+    };
+
+    document.addEventListener('keydown', handleKeyDown, true);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown, true);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+
+  const label =
+    SORT_OPTIONS.find((option) => option.value === sort)?.label ?? '';
+
+  return (
+    <div ref={containerRef} className="relative self-end">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        className="text-body-sm text-fg flex items-center gap-1 underline underline-offset-4"
+      >
+        {label}
+        <ChevronDownIcon className={cn(isOpen && 'rotate-180')} />
+      </button>
+
+      {isOpen && (
+        <div className="border-border bg-canvas shadow-overlay absolute right-0 z-10 mt-2 flex flex-col rounded-lg border p-1">
+          {SORT_OPTIONS.map(({ label: optionLabel, value }) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => onChange(value)}
+              className={cn(
+                'text-body-sm hover:bg-surface-muted rounded px-3 py-1.5 text-left whitespace-nowrap',
+                sort === value && 'font-bold'
+              )}
+            >
+              {optionLabel}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /**
- * 검색 탭 결과. 검색 페이지와 같은 GET /whiskies를 쓰고 로딩/에러/빈 결과와
- * 무한 스크롤 처리도 그대로 맞춘다.
- *
- * 목록 API는 saleProductId를 안 내려주는데 플래너 추가엔 그게 필요하다.
- * 그래서 행을 펼칠 때만 상세(GET /whiskies/{id})를 불러 판매처를 고르게 한다.
+ * 위스키 목록. 체크박스로 여러 개를 고른다. 판매처는 고르지 않고,
+ * 추가 후 플래너 행의 판매처 드롭다운에서 바꾼다.
  */
-function SearchResultList({
+function WhiskyPickerList({
   items,
   isLoading,
   isError,
@@ -406,9 +523,8 @@ function SearchResultList({
   hasNextPage,
   isFetchingNextPage,
   onLoadMore,
-  counts,
-  onIncrement,
-  onDecrement,
+  selectedIds,
+  onToggle,
   addedWhiskyIds,
   onAddWhisky,
 }: {
@@ -419,15 +535,13 @@ function SearchResultList({
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   onLoadMore: () => void;
-  counts: Map<number, number>;
-  onIncrement: (saleProductId: number) => void;
-  onDecrement: (saleProductId: number) => void;
-  /** 넘어오면 콜렉션 모드: 판매처/수량 대신 행마다 담기 버튼을 그린다. */
+  selectedIds: Set<number>;
+  onToggle: (whiskyId: number) => void;
+  /** 넘어오면 콜렉션 모드: 체크박스 대신 행마다 담기 버튼을 그린다. */
   addedWhiskyIds?: Set<number>;
   onAddWhisky?: (whisky: WhiskyListItem) => void;
 }) {
   const sentinelRef = useRef<HTMLLIElement>(null);
-  const [expandedWhiskyId, setExpandedWhiskyId] = useState<number | null>(null);
   const isCollectionMode = onAddWhisky !== undefined;
 
   useEffect(() => {
@@ -447,7 +561,7 @@ function SearchResultList({
 
   if (isLoading) {
     return (
-      <div className="bg-surface-muted text-caption text-fg-muted flex h-full items-center justify-center rounded-lg">
+      <div className="bg-canvas text-caption text-fg-muted flex h-full items-center justify-center rounded-2xl">
         불러오는 중...
       </div>
     );
@@ -455,7 +569,7 @@ function SearchResultList({
 
   if (isError) {
     return (
-      <div className="bg-surface-muted text-caption text-fg-muted flex h-full flex-col items-center justify-center gap-2 rounded-lg">
+      <div className="bg-canvas text-caption text-fg-muted flex h-full flex-col items-center justify-center gap-2 rounded-2xl">
         <p>일시적인 오류가 발생했습니다</p>
         <button type="button" onClick={onRetry} className="underline">
           다시 시도
@@ -466,54 +580,51 @@ function SearchResultList({
 
   if (items.length === 0) {
     return (
-      <div className="bg-surface-muted text-caption text-fg-muted flex h-full items-center justify-center rounded-lg">
+      <div className="bg-canvas text-caption text-fg-muted flex h-full items-center justify-center rounded-2xl">
         해당하는 상품이 없습니다
       </div>
     );
   }
 
   return (
-    <ul className="bg-surface-muted h-full overflow-y-auto rounded-lg p-2">
+    <ul className="bg-canvas h-full overflow-y-auto rounded-2xl p-3">
       {items.map((whisky) => (
         <li key={whisky.id} className="py-1">
-          <div className="flex items-center gap-2 rounded-xl">
-            <HorizontalCard
-              product={whiskyToProduct(whisky)}
-              className="flex-1"
-            />
+          <div className="flex items-center gap-3">
             {isCollectionMode ? (
-              <button
-                type="button"
-                disabled={addedWhiskyIds?.has(whisky.id)}
-                onClick={() => onAddWhisky?.(whisky)}
-                className="border-border-strong text-caption w-16 shrink-0 rounded-full border py-1.5 disabled:opacity-30"
-              >
-                {addedWhiskyIds?.has(whisky.id) ? '담김' : '담기'}
-              </button>
+              <>
+                <HorizontalCard
+                  product={whiskyToProduct(whisky)}
+                  variant="compact"
+                  className="min-w-0 flex-1"
+                />
+                <button
+                  type="button"
+                  disabled={addedWhiskyIds?.has(whisky.id)}
+                  onClick={() => onAddWhisky?.(whisky)}
+                  className="border-border-strong text-caption w-16 shrink-0 rounded-full border py-1.5 disabled:opacity-30"
+                >
+                  {addedWhiskyIds?.has(whisky.id) ? '담김' : '담기'}
+                </button>
+              </>
             ) : (
-              <button
-                type="button"
-                onClick={() =>
-                  setExpandedWhiskyId((prev) =>
-                    prev === whisky.id ? null : whisky.id
-                  )
-                }
-                aria-expanded={expandedWhiskyId === whisky.id}
-                className="border-border-strong text-caption shrink-0 rounded-md border px-3 py-1.5"
-              >
-                {expandedWhiskyId === whisky.id ? '닫기' : '판매처'}
-              </button>
+              /* 카드 전체가 체크 토글이다. label로 감싸면 카드 안 이미지까지
+                 클릭 영역이 되어 행 어디를 눌러도 선택된다. */
+              <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
+                <Checkbox
+                  checked={selectedIds.has(whisky.id)}
+                  onChange={() => onToggle(whisky.id)}
+                  aria-label={whisky.name}
+                  className="ml-1 [&_span]:size-7"
+                />
+                <HorizontalCard
+                  product={whiskyToProduct(whisky)}
+                  variant="compact"
+                  className="min-w-0 flex-1"
+                />
+              </label>
             )}
           </div>
-
-          {!isCollectionMode && expandedWhiskyId === whisky.id && (
-            <SaleProductPicker
-              whiskyId={whisky.id}
-              counts={counts}
-              onIncrement={onIncrement}
-              onDecrement={onDecrement}
-            />
-          )}
         </li>
       ))}
 
@@ -528,98 +639,38 @@ function SearchResultList({
   );
 }
 
-/**
- * 펼친 위스키의 판매처 목록. saleProductId는 상세에만 있어서 여기서 불러온다.
- * 품절이거나 가격이 없는 판매처는 서버가 400으로 거절하므로 담기를 막는다.
- */
-function SaleProductPicker({
-  whiskyId,
-  counts,
-  onIncrement,
-  onDecrement,
-}: {
-  whiskyId: number;
-  counts: Map<number, number>;
-  onIncrement: (saleProductId: number) => void;
-  onDecrement: (saleProductId: number) => void;
-}) {
-  const { data, isLoading, isError, refetch } = useWhiskyDetailQuery(whiskyId);
-
-  if (isLoading) {
-    return (
-      <p className="text-caption text-fg-muted py-3 text-center">
-        불러오는 중...
-      </p>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="text-caption text-fg-muted flex flex-col items-center gap-1 py-3">
-        <p>판매처를 불러오지 못했습니다</p>
-        <button type="button" onClick={() => refetch()} className="underline">
-          다시 시도
-        </button>
-      </div>
-    );
-  }
-
-  const saleProducts = data?.saleProducts ?? [];
-
-  if (saleProducts.length === 0) {
-    return (
-      <p className="text-caption text-fg-muted py-3 text-center">
-        판매 중인 곳이 없습니다
-      </p>
-    );
-  }
-
+function SearchIcon() {
   return (
-    <ul className="border-border mt-1 ml-4 flex flex-col gap-1 border-l pl-3">
-      {saleProducts.map((saleProduct) => {
-        const count = counts.get(saleProduct.id) ?? 0;
-        const isAddable = !saleProduct.isSoldOut && saleProduct.price !== null;
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      className="size-6"
+      aria-hidden
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </svg>
+  );
+}
 
-        return (
-          <li
-            key={saleProduct.id}
-            className="text-caption text-fg flex items-center gap-2"
-          >
-            <span className="min-w-0 flex-1 truncate">
-              {saleProduct.retailerName}
-              {saleProduct.isDutyFree && ' · 면세'}
-            </span>
-            <span className="shrink-0">
-              {saleProduct.price
-                ? `${saleProduct.price.amountKrw?.toLocaleString('ko-KR') ?? saleProduct.price.amount.toLocaleString('ko-KR')}원`
-                : saleProduct.isSoldOut
-                  ? '품절'
-                  : '가격 정보 없음'}
-            </span>
-            <span className="flex shrink-0 items-center gap-1.5">
-              <button
-                type="button"
-                aria-label="개수 줄이기"
-                disabled={count === 0}
-                onClick={() => onDecrement(saleProduct.id)}
-                className="border-border-strong flex size-6 items-center justify-center rounded-full border disabled:opacity-30"
-              >
-                −
-              </button>
-              <span className="w-4 text-center">{count}</span>
-              <button
-                type="button"
-                aria-label="개수 늘리기"
-                disabled={!isAddable}
-                onClick={() => onIncrement(saleProduct.id)}
-                className="border-border-strong flex size-6 items-center justify-center rounded-full border disabled:opacity-30"
-              >
-                +
-              </button>
-            </span>
-          </li>
-        );
-      })}
-    </ul>
+function ChevronDownIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn('size-4 transition-transform', className)}
+      aria-hidden
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
   );
 }

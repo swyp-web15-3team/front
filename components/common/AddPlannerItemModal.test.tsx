@@ -48,16 +48,15 @@ describe('AddPlannerItemModal 콜렉션 모드', () => {
     });
   });
 
-  // 콜렉션 모드는 검색만 쓴다. 콜렉션 탭이 보이면 안 된다.
-  it('콜렉션 탭을 보여주지 않는다', async () => {
+  // 콜렉션 모드는 검색만 쓴다. 왼쪽 출처 목록이 보이면 안 된다.
+  it('출처 목록을 보여주지 않는다', async () => {
     render(
       <AddPlannerItemModal collection={{ id: 5, name: '위스키 콜렉션' }} />,
       { wrapper }
     );
 
     await screen.findByText('라가불린 16년');
-    expect(screen.queryByRole('button', { name: '콜렉션' })).toBeNull();
-    expect(screen.queryByRole('button', { name: '검색' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /전체 검색/ })).toBeNull();
   });
 
   // 판매처/수량이 아니라 위스키 단위로 한 개씩 담는다.
@@ -82,14 +81,14 @@ describe('AddPlannerItemModal 콜렉션 모드', () => {
     );
   });
 
-  it('판매처 버튼 대신 담기 버튼을 그린다', async () => {
+  it('체크박스 대신 담기 버튼을 그린다', async () => {
     render(
       <AddPlannerItemModal collection={{ id: 5, name: '위스키 콜렉션' }} />,
       { wrapper }
     );
 
     await screen.findByText('라가불린 16년');
-    expect(screen.queryByRole('button', { name: '판매처' })).toBeNull();
+    expect(screen.queryByRole('checkbox')).toBeNull();
   });
 });
 
@@ -97,16 +96,88 @@ describe('AddPlannerItemModal 플래너 모드', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     useModalStore.setState({ activeModal: MODAL_ID.ADD_PLANNER_ITEM });
-    vi.spyOn(apiClient, 'get').mockResolvedValue({
-      data: { data: { collections: [] } },
+    // /collections 는 콜렉션 목록, /whiskies 는 검색 결과를 내려준다.
+    vi.spyOn(apiClient, 'get').mockImplementation(async (url: string) => {
+      if (url.startsWith('/collections')) {
+        return { data: { data: { collections: [] } } };
+      }
+      if (url === `/whiskies/${WHISKY.id}`) {
+        return {
+          data: {
+            data: {
+              ...WHISKY,
+              saleProducts: [
+                {
+                  id: 901,
+                  retailerName: '비싼 곳',
+                  countryCode: 'JP',
+                  isDutyFree: false,
+                  productUrl: '',
+                  isSoldOut: false,
+                  price: { amount: 2000, currency: 'JPY', amountKrw: 20000 },
+                },
+                {
+                  id: 902,
+                  retailerName: '싼 곳',
+                  countryCode: 'JP',
+                  isDutyFree: false,
+                  productUrl: '',
+                  isSoldOut: false,
+                  price: { amount: 1000, currency: 'JPY', amountKrw: 10000 },
+                },
+                {
+                  id: 903,
+                  retailerName: '품절',
+                  countryCode: 'JP',
+                  isDutyFree: false,
+                  productUrl: '',
+                  isSoldOut: true,
+                  price: { amount: 10, currency: 'JPY', amountKrw: 100 },
+                },
+              ],
+            },
+          },
+        };
+      }
+      return {
+        data: {
+          data: {
+            content: [WHISKY],
+            page: 0,
+            size: 20,
+            totalElements: 1,
+            totalPages: 1,
+          },
+        },
+      };
     });
   });
 
-  // 기존 동작이 그대로여야 한다.
-  it('collection prop이 없으면 콜렉션/검색 탭을 보여준다', () => {
+  it('collection prop이 없으면 전체 검색 출처를 보여준다', async () => {
     render(<AddPlannerItemModal />, { wrapper });
 
-    expect(screen.getByRole('button', { name: '콜렉션' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '검색' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: /전체 검색/ })
+    ).toBeInTheDocument();
+  });
+
+  // 모달은 위스키만 고르고, 판매처는 최저가로 자동 선택된다(품절 제외).
+  it('체크한 위스키를 최저가 판매처로 추가한다', async () => {
+    const post = vi
+      .spyOn(apiClient, 'post')
+      .mockResolvedValue({ data: { data: { items: [] } } });
+
+    render(<AddPlannerItemModal />, { wrapper });
+
+    await userEvent.click(await screen.findByRole('checkbox'));
+    await userEvent.click(
+      screen.getByRole('button', { name: '1개 상품 추가하기' })
+    );
+
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith('/planners/items', {
+        items: [{ saleProductId: 902 }],
+      })
+    );
   });
 });

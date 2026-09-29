@@ -9,42 +9,44 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { PlannerList } from '@/app/(main)/planner/_components/PlannerList';
+import {
+  MovePlannerItemModal,
+  useMovePlannerItemModal,
+} from '@/app/(main)/planner/_components/MovePlannerItemModal';
 import { PlannerSummary } from '@/app/(main)/planner/_components/PlannerSummary';
 import {
   findRate,
   useExchangeRatesQuery,
 } from '@/hooks/queries/use-exchange-rate';
 import {
+  useAddPlannerItemMutation,
+  useChangePlannerSaleProductMutation,
+  useDeletePlannerItemMutation,
   useDeletePlannerItemsMutation,
   useMovePlannerItemsMutation,
   usePlannerQuery,
 } from '@/hooks/queries/use-planner';
 import { calculateLiquorDuty } from '@/lib/customs-duty';
-import { PlannerListType } from '@/types/planner';
-
-const RESET_CONTENT: Record<
-  PlannerListType,
-  { message: string; confirmLabel: string }
-> = {
-  PURCHASE: {
-    message: '구매 예정 목록의 상품을 모두 후보로 이동할까요?',
-    confirmLabel: '이동',
-  },
-  CANDIDATE: {
-    message: '구매 후보 목록이 전체 삭제됩니다. 동의하시나요?',
-    confirmLabel: '삭제',
-  },
-};
+import { PlannerItemGroup, PlannerListType } from '@/types/planner';
 
 export default function PlanPage() {
   const { data, isLoading, isError, refetch } = usePlannerQuery();
   const { open: openAddPlannerItemModal } = useAddPlannerItemModal();
+  const { open: openMovePlannerItemModal } = useMovePlannerItemModal();
   const { mutate: deletePlannerItems } = useDeletePlannerItemsMutation();
   const { mutate: movePlannerItems } = useMovePlannerItemsMutation();
+  const { mutate: deletePlannerItem } = useDeletePlannerItemMutation();
+  const { mutate: addPlannerItems } = useAddPlannerItemMutation();
+  const { mutate: changeSaleProduct, isPending: isChangingSaleProduct } =
+    useChangePlannerSaleProductMutation();
   const { data: exchangeRates } = useExchangeRatesQuery();
 
   const [draggingId, setDraggingId] = useState<number | null>(null);
-  const [resetTarget, setResetTarget] = useState<PlannerListType | null>(null);
+  // 편집 모드에서 삭제를 누르면 확인을 먼저 받는다. 되돌릴 수 없어서다.
+  const [deleteTarget, setDeleteTarget] = useState<{
+    listType: PlannerListType;
+    saleProductIds: number[];
+  } | null>(null);
 
   const items = useMemo(() => data ?? [], [data]);
 
@@ -81,14 +83,42 @@ export default function PlanPage() {
     setDraggingId(null);
   }
 
-  function handleConfirmReset() {
-    if (resetTarget === 'PURCHASE') {
-      // 구매 예정 목록 초기화는 삭제가 아니라 전체를 후보로 내리는 이동이다
-      movePlannerItems({ fromListType: 'PURCHASE', toListType: 'CANDIDATE' });
-    } else if (resetTarget === 'CANDIDATE') {
-      deletePlannerItems({ listType: 'CANDIDATE' });
+  // 서버에 수량 컬럼이 없어서 + 는 같은 상품 한 병을 더 넣는 것이다
+  function handleIncrement(item: PlannerItemGroup) {
+    addPlannerItems([
+      {
+        saleProductId: item.saleProductId,
+        quantity: 1,
+        listType: item.listType,
+      },
+    ]);
+  }
+
+  // − 는 그룹의 행 하나를 지운다. 어느 plannerItemId든 한 병이라 상관없다.
+  function handleDecrement(item: PlannerItemGroup) {
+    const [plannerItemId] = item.plannerItemIds;
+    if (plannerItemId !== undefined) deletePlannerItem(plannerItemId);
+  }
+
+  function handleChangeSaleProduct(
+    item: PlannerItemGroup,
+    saleProductId: number
+  ) {
+    changeSaleProduct({
+      listType: item.listType,
+      fromSaleProductId: item.saleProductId,
+      toSaleProductId: saleProductId,
+      quantity: item.quantity,
+    });
+  }
+
+  // 범위 삭제는 saleProductId 하나씩만 받아서 고른 개수만큼 호출한다.
+  function handleConfirmDelete() {
+    if (!deleteTarget) return;
+    for (const saleProductId of deleteTarget.saleProductIds) {
+      deletePlannerItems({ listType: deleteTarget.listType, saleProductId });
     }
-    setResetTarget(null);
+    setDeleteTarget(null);
   }
 
   return (
@@ -126,8 +156,17 @@ export default function PlanPage() {
             onDragStart={setDraggingId}
             onDragEnd={() => setDraggingId(null)}
             onDrop={handleDrop}
-            onEdit={() => setResetTarget('PURCHASE')}
-            onAdd={() => openAddPlannerItemModal()}
+            onDelete={(saleProductIds) =>
+              setDeleteTarget({ listType: 'PURCHASE', saleProductIds })
+            }
+            onAdd={() => openMovePlannerItemModal()}
+            // 후보가 비면 구매 예정으로 가져올 게 없다
+            isAddDisabled={candidateItems.length === 0}
+            showQuantity
+            isPending={isChangingSaleProduct}
+            onIncrement={handleIncrement}
+            onDecrement={handleDecrement}
+            onChangeSaleProduct={handleChangeSaleProduct}
           />
 
           <PlannerList
@@ -139,31 +178,41 @@ export default function PlanPage() {
             onDragStart={setDraggingId}
             onDragEnd={() => setDraggingId(null)}
             onDrop={handleDrop}
-            onEdit={() => setResetTarget('CANDIDATE')}
+            onDelete={(saleProductIds) =>
+              setDeleteTarget({ listType: 'CANDIDATE', saleProductIds })
+            }
             onAdd={() => openAddPlannerItemModal()}
+            isPending={isChangingSaleProduct}
+            onIncrement={handleIncrement}
+            onDecrement={handleDecrement}
+            onChangeSaleProduct={handleChangeSaleProduct}
           />
         </div>
       )}
 
       <AddPlannerItemModal />
+      <MovePlannerItemModal candidates={candidateItems} />
       <Modal
-        isOpen={resetTarget !== null}
-        onClose={() => setResetTarget(null)}
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
         panelClassName="max-w-[360px]"
       >
         <p className="text-body-sm-strong text-center">
-          {resetTarget ? RESET_CONTENT[resetTarget].message : ''}
+          선택한 상품 {deleteTarget?.saleProductIds.length ?? 0}개를 삭제할까요?
+        </p>
+        <p className="text-caption text-fg-muted mt-1 text-center">
+          삭제한 상품은 되돌릴 수 없습니다.
         </p>
         <div className="mt-4 flex gap-2">
           <Button
             variant="secondary"
             fullWidth
-            onClick={() => setResetTarget(null)}
+            onClick={() => setDeleteTarget(null)}
           >
             취소
           </Button>
-          <Button fullWidth onClick={handleConfirmReset}>
-            {resetTarget ? RESET_CONTENT[resetTarget].confirmLabel : ''}
+          <Button fullWidth onClick={handleConfirmDelete}>
+            삭제
           </Button>
         </div>
       </Modal>

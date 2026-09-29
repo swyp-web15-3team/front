@@ -2,11 +2,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   addPlannerItems,
+  changePlannerItemSaleProduct,
   deletePlannerItem,
   deletePlannerItems,
   fetchPlanner,
   groupPlannerItems,
   movePlannerItems,
+  movePlannerItemsBulk,
 } from '@/lib/api/planner';
 import {
   AddPlannerItemRequest,
@@ -161,6 +163,36 @@ export function useDeletePlannerItemsMutation() {
         queryClient.setQueryData(plannerKeys.all, context.previous);
       }
     },
+    onSettled: () => {
+      return queryClient.invalidateQueries({ queryKey: plannerKeys.all });
+    },
+  });
+}
+
+/**
+ * 판매처 변경. 서버에 전용 엔드포인트가 없어 삭제 후 재추가로 처리하므로
+ * 낙관적 업데이트 없이 성공 후 목록을 다시 불러온다.
+ */
+export function useChangePlannerSaleProductMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: changePlannerItemSaleProduct,
+    // 삭제가 끝난 뒤 추가가 실패하면 재시도로 병이 늘 수 있다
+    retry: false,
+    onSettled: () => {
+      return queryClient.invalidateQueries({ queryKey: plannerKeys.all });
+    },
+  });
+}
+
+/** 모달에서 고른 여러 상품을 한 번에 옮긴다. 직렬 호출이라 낙관적 업데이트는 생략한다. */
+export function useMovePlannerItemsBulkMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: movePlannerItemsBulk,
+    retry: false,
     onSettled: () => {
       return queryClient.invalidateQueries({ queryKey: plannerKeys.all });
     },
