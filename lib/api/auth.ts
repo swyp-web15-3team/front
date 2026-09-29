@@ -39,11 +39,15 @@ export interface WithdrawRequest {
   detail?: string;
 }
 
-export async function withdraw(payload: WithdrawRequest): Promise<void> {
+export async function withdraw({
+  reason,
+  detail,
+}: WithdrawRequest): Promise<void> {
   const { accessToken } = useAuthStore.getState();
+  // 서버는 reason 하나만 받는다. ETC 직접 입력은 여기 붙여야 남는다.
   await axios.post(
     '/api/auth/withdraw',
-    payload,
+    { reason: detail ? `${reason}: ${detail}` : reason },
     accessToken
       ? { headers: { Authorization: `Bearer ${accessToken}` } }
       : undefined
