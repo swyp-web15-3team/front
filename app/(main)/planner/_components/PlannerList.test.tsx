@@ -54,6 +54,7 @@ function makeItem(saleProductId: number, whiskyName: string): PlannerItemGroup {
     saleProductId,
     whiskyId: saleProductId,
     whiskyName,
+    category: { id: 9, name: '블렌디드' },
     volumeMl: 700,
     abv: 43,
     retailerId: 1,

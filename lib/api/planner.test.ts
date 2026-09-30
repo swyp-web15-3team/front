@@ -24,6 +24,7 @@ function makeItem(
     saleProductId,
     whiskyId: 101,
     whiskyName: 'Lagavulin 16',
+    category: { id: 9, name: '블렌디드' },
     volumeMl: 700,
     abv: 43,
     retailerId: 3,

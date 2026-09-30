@@ -22,6 +22,7 @@ function makeCandidate(
     saleProductId,
     whiskyId: saleProductId,
     whiskyName,
+    category: { id: 9, name: '블렌디드' },
     volumeMl: 700,
     abv: 43,
     retailerId: 1,
