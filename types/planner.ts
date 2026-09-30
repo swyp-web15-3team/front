@@ -1,4 +1,5 @@
 import { ApiSuccessResponse, CountryCode } from '@/types/common';
+import { WhiskyCategory } from '@/types/whisky';
 
 export interface PlannerItemPrice {
   amount: number;
@@ -24,6 +25,7 @@ export interface PlannerItem {
   saleProductId: number;
   whiskyId: number;
   whiskyName: string;
+  category: WhiskyCategory;
   volumeMl: number;
   abv: number | null;
   retailerId: number;
