@@ -8,6 +8,7 @@ import { HorizontalScroller } from '@/components/ui/HorizontalScroller';
 beforeAll(() => {
   Element.prototype.setPointerCapture = vi.fn();
   Element.prototype.releasePointerCapture = vi.fn();
+  Element.prototype.hasPointerCapture = vi.fn(() => false);
 });
 
 function makeCards(count: number) {
@@ -130,5 +131,28 @@ describe('HorizontalScroller', () => {
     );
 
     expect(screen.queryByLabelText('이전')).not.toBeInTheDocument();
+  });
+
+  // pointerdown에서 바로 포인터 캡처를 걸면 클릭이 트랙으로 가서
+  // 카드 링크/북마크 버튼이 동작하지 않는다.
+  it('드래그 없이 누르면 포인터를 캡처하지 않고 카드 클릭이 그대로 전달된다', () => {
+    const onClick = vi.fn();
+    render(
+      <HorizontalScroller>
+        <button type="button" onClick={onClick}>
+          카드
+        </button>
+      </HorizontalScroller>
+    );
+    const card = screen.getByRole('button', { name: '카드' });
+    vi.mocked(Element.prototype.setPointerCapture).mockClear();
+
+    fireEvent.pointerDown(card, { clientX: 100, pointerId: 1 });
+    fireEvent.pointerMove(card, { clientX: 102, pointerId: 1 });
+    fireEvent.pointerUp(card, { pointerId: 1 });
+    fireEvent.click(card);
+
+    expect(Element.prototype.setPointerCapture).not.toHaveBeenCalled();
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 });
