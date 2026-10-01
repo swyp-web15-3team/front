@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import { Button } from '@/components/ui/Button';
+
 export function ShareButton() {
   const [copied, setCopied] = useState(false);
 
@@ -23,14 +25,15 @@ export function ShareButton() {
   };
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="secondary"
       onClick={handleShare}
-      className="border-border-strong text-button text-fg flex min-h-11 items-center gap-1.5 rounded-md border px-4 py-2"
+      fullWidth
+      className="gap-1.5 border-transparent"
     >
-      <ShareIcon />
       {copied ? '링크가 복사되었어요' : '공유하기'}
-    </button>
+      <ShareIcon />
+    </Button>
   );
 }
 
@@ -44,7 +47,7 @@ function ShareIcon() {
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="size-4"
+      className="size-5"
       aria-hidden="true"
     >
       <circle cx="18" cy="5" r="3" />
