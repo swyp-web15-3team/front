@@ -2,45 +2,15 @@ import { isAxiosError } from 'axios';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 
-import { CardShop } from '@/app/(main)/detail/_components/CardShop';
 import { CommentSection } from '@/app/(main)/detail/_components/CommentSection';
+import { EstimatedDuty } from '@/app/(main)/detail/_components/EstimatedDuty';
+import { RelatedWhiskySection } from '@/app/(main)/detail/_components/RelatedWhiskySection';
 import { SaveButton } from '@/app/(main)/detail/_components/SaveButton';
 import { ShareButton } from '@/app/(main)/detail/_components/ShareButton';
-import { fetchWhiskyDetail } from '@/lib/api/whisky';
-import { SaleProduct, WhiskyDetail } from '@/types/whisky';
-
-const PLACEHOLDER_IMAGE_URL = 'https://placehold.co/300x350.png';
-
-const SHOP_GROUPS: Array<{
-  title: string;
-  filter: (sale: SaleProduct) => boolean;
-}> = [
-  {
-    title: '국내 대형마트',
-    filter: (sale) => sale.countryCode === 'KR' && !sale.isDutyFree,
-  },
-  { title: '면세점', filter: (sale) => sale.isDutyFree },
-  {
-    title: '일본 로컬샵',
-    filter: (sale) => sale.countryCode === 'JP' && !sale.isDutyFree,
-  },
-];
-
-function formatKrw(amount: number) {
-  return `${Math.round(amount).toLocaleString('ko-KR')}원`;
-}
-
-function formatSalePrice(sale: SaleProduct) {
-  const { price } = sale;
-  if (!price) return { price: '가격 정보 없음' };
-
-  if (price.currency === 'KRW') return { price: formatKrw(price.amount) };
-
-  const yen = `¥${Math.round(price.amount).toLocaleString('ko-KR')}`;
-  return price.amountKrw != null
-    ? { price: formatKrw(price.amountKrw), subPrice: ` (${yen})` }
-    : { price: yen };
-}
+import { ShopTable } from '@/app/(main)/detail/_components/ShopTable';
+import { fetchRelatedWhiskies, fetchWhiskyDetail } from '@/lib/api/whisky';
+import { findLowestPriceKrw, formatKrw } from '@/lib/sale-price';
+import { WhiskyCard, WhiskyDetail } from '@/types/whisky';
 
 async function getWhiskyDetail(whiskyId: number): Promise<WhiskyDetail> {
   try {
@@ -51,6 +21,16 @@ async function getWhiskyDetail(whiskyId: number): Promise<WhiskyDetail> {
   }
 }
 
+// 연관 위스키는 부가 정보라 실패해도 상세 화면은 그대로 보여준다
+async function getRelatedWhiskies(whiskyId: number): Promise<WhiskyCard[]> {
+  try {
+    const { whiskies } = await fetchRelatedWhiskies(whiskyId);
+    return whiskies;
+  } catch {
+    return [];
+  }
+}
+
 export default async function DetailPage({
   params,
 }: PageProps<'/detail/[id]'>) {
@@ -58,7 +38,19 @@ export default async function DetailPage({
   const whiskyId = Number(id);
   if (!Number.isInteger(whiskyId) || whiskyId <= 0) notFound();
 
-  const whisky = await getWhiskyDetail(whiskyId);
+  const [whisky, relatedWhiskies] = await Promise.all([
+    getWhiskyDetail(whiskyId),
+    getRelatedWhiskies(whiskyId),
+  ]);
+
+  const availableSales = whisky.saleProducts.filter((sale) => !sale.isSoldOut);
+  const lowestPriceKrw = findLowestPriceKrw(availableSales);
+  // 예상 관세는 들고 들어오는 경우(해외·면세점 구매)만 의미가 있다
+  const lowestImportPriceKrw = findLowestPriceKrw(
+    availableSales.filter(
+      (sale) => sale.countryCode !== 'KR' || sale.isDutyFree
+    )
+  );
 
   const specs = [
     { label: '종류', value: whisky.category?.name },
@@ -70,7 +62,7 @@ export default async function DetailPage({
     },
     {
       label: '도수',
-      value: whisky.abv != null ? `${Number(whisky.abv).toFixed(1)}%` : null,
+      value: whisky.abv != null ? `${Number(whisky.abv)}%` : null,
     },
     {
       label: '원산지',
@@ -78,38 +70,54 @@ export default async function DetailPage({
         .filter(Boolean)
         .join(' · '),
     },
+    {
+      label: '예상 관세',
+      value: (
+        <EstimatedDuty
+          priceKrw={lowestImportPriceKrw}
+          volumeMl={whisky.volumeMl}
+        />
+      ),
+    },
   ];
 
   return (
-    <>
-      <div className="flex gap-4">
-        <div>
-          <Image
-            src={whisky.imageUrl || PLACEHOLDER_IMAGE_URL}
-            alt={whisky.name}
-            width={300}
-            height={350}
-            priority
-            className="object-contain"
-          />
+    <div className="flex flex-col gap-12 py-6 sm:gap-16 sm:py-10">
+      <section className="grid gap-6 md:grid-cols-2 md:gap-8">
+        <div className="border-border bg-canvas relative aspect-square w-full overflow-hidden rounded-lg border">
+          {whisky.imageUrl ? (
+            <Image
+              src={whisky.imageUrl}
+              alt={whisky.name}
+              fill
+              sizes="(max-width: 768px) 100vw, 560px"
+              priority
+              className="object-contain"
+            />
+          ) : (
+            <div className="bg-surface-sunken text-body-sm text-fg-subtle flex h-full items-center justify-center">
+              이미지 준비 중
+            </div>
+          )}
         </div>
-        <div>
-          <p className="text-page-title">{whisky.name}</p>
-          <div>{/* 태그들 */}</div>
-          <div className="text-body-sm flex flex-col">
-            {specs.map(({ label, value }) => (
-              <div key={label} className="flex justify-between py-1">
-                <p className="text-fg-muted">{label}</p>
-                <p className="text-fg">{value || '-'}</p>
-              </div>
-            ))}
-            {/* TODO: 예상 총 관세 계산 로직/API 연동 */}
+
+        <div className="flex flex-col md:pt-12">
+          <h1 className="text-t7 font-bold">{whisky.name}</h1>
+          {/* TODO: 영문명 필드가 API에 추가되면 이름 아래에 표시 */}
+
+          <div className="mt-6">
+            <p className="text-t8 text-danger font-bold tabular-nums">
+              {lowestPriceKrw !== null
+                ? formatKrw(lowestPriceKrw)
+                : '가격 정보 없음'}
+            </p>
+            <p className="text-body-sm text-fg-muted mt-1">
+              국내외 최저가 기준
+            </p>
           </div>
-          <p className="border-border text-body-sm text-fg-muted rounded-md border p-3">
-            1인당 주류 면세 한도는 합산 2L 이하, $400 이하입니다. (병 수 제한
-            없음)
-          </p>
-          <div className="my-2 flex gap-2">
+
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <ShareButton />
             <SaveButton
               whisky={{
                 id: whisky.id,
@@ -117,41 +125,35 @@ export default async function DetailPage({
                 imageUrl: whisky.imageUrl,
               }}
             />
-            <ShareButton />
           </div>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-3">
-        {SHOP_GROUPS.map(({ title, filter }) => {
-          const sales = whisky.saleProducts.filter(filter);
-
-          return (
-            <div key={title}>
-              <p className="text-section-title mb-2">{title}</p>
-              <div className="flex flex-col gap-2">
-                {sales.length === 0 ? (
-                  <p className="text-body-sm text-fg-muted">
-                    판매처 정보가 없습니다
-                  </p>
-                ) : (
-                  sales.map((sale) => (
-                    <CardShop
-                      key={sale.id}
-                      shopName={sale.retailerName}
-                      {...formatSalePrice(sale)}
-                      addressName={sale.retailerAddress ?? sale.retailerName}
-                      mapAddress={sale.retailerAddress ?? undefined}
-                    />
-                  ))
-                )}
+          <dl className="text-body mt-6 flex max-w-80 flex-col gap-2">
+            {specs.map(({ label, value }) => (
+              <div key={label} className="flex justify-between">
+                <dt className="text-fg-muted">{label}</dt>
+                <dd className="text-fg font-medium">{value || '-'}</dd>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            ))}
+          </dl>
+
+          <p className="border-border bg-canvas text-body-sm text-fg mt-6 rounded-md border px-4 py-4">
+            1인당 주류 면세 한도는 2병(합산 2L 이하, $400 이하)입니다.
+            <br />약 $125 내외는 단독 반입 시 세금이 부과되지 않는 면세
+            상태입니다.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <ShopTable
+          sales={whisky.saleProducts}
+          lowestPriceKrw={lowestPriceKrw}
+        />
+      </section>
+
+      <RelatedWhiskySection whiskies={relatedWhiskies} />
 
       <CommentSection />
-    </>
+    </div>
   );
 }
