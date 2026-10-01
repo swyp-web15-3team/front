@@ -9,6 +9,10 @@ const openSaveItemModal = vi.fn();
 vi.mock('@/components/common/SaveItemModal', () => ({
   useSaveItemModal: () => ({ open: openSaveItemModal }),
 }));
+let savedWhiskyIds = new Set<number>();
+vi.mock('@/hooks/queries/use-collection', () => ({
+  useSavedWhiskyIds: () => savedWhiskyIds,
+}));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const PRODUCT = {
@@ -24,6 +28,7 @@ const PRODUCT = {
 describe('VerticalCard 저장 버튼', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    savedWhiskyIds = new Set();
     useAuthStore.getState().setAccessToken('token');
   });
 
@@ -70,5 +75,17 @@ describe('VerticalCard 저장 버튼', () => {
     expect(
       screen.getByRole('button', { name: '콜렉션에서 빼기' })
     ).toBeDisabled();
+  });
+
+  // 목록/검색/추천: prop 없이도 내 콜렉션에 담긴 위스키면 저장됨으로 보여야 한다.
+  it('내 콜렉션에 담긴 위스키면 저장됨으로 그리고, 누르면 저장 모달을 연다', async () => {
+    savedWhiskyIds = new Set([7]);
+    render(<VerticalCard product={PRODUCT} />);
+
+    const button = screen.getByRole('button', { name: '저장됨' });
+    expect(button).toHaveAttribute('aria-pressed', 'true');
+
+    await userEvent.click(button);
+    expect(openSaveItemModal).toHaveBeenCalledTimes(1);
   });
 });
