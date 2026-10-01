@@ -47,7 +47,8 @@ export function HorizontalScroller({
     const track = trackRef.current;
     if (!track || !dragScroll) return;
     dragStateRef.current = { startX: e.clientX, scrollLeft: track.scrollLeft };
-    track.setPointerCapture(e.pointerId);
+    // 이전 드래그가 클릭 없이 끝났으면 남아 있을 수 있어 매번 초기화한다
+    suppressClickRef.current = false;
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
@@ -56,15 +57,21 @@ export function HorizontalScroller({
     if (!dragState || !track) return;
 
     const delta = e.clientX - dragState.startX;
-    if (Math.abs(delta) > DRAG_THRESHOLD_PX) {
+    if (!suppressClickRef.current && Math.abs(delta) > DRAG_THRESHOLD_PX) {
       suppressClickRef.current = true;
+      // 캡처는 드래그로 확정된 뒤에만 건다. pointerdown에서 바로 걸면
+      // 클릭 이벤트가 트랙으로 가서 카드 링크/북마크 버튼이 눌리지 않는다.
+      track.setPointerCapture(e.pointerId);
     }
     track.scrollLeft = dragState.scrollLeft - delta;
   };
 
   const endDrag = (e: React.PointerEvent) => {
     dragStateRef.current = null;
-    trackRef.current?.releasePointerCapture(e.pointerId);
+    const track = trackRef.current;
+    if (track?.hasPointerCapture(e.pointerId)) {
+      track.releasePointerCapture(e.pointerId);
+    }
   };
 
   // 드래그로 끝난 포인터 조작은 클릭으로 이어지지 않게 한 번 삼킨다
