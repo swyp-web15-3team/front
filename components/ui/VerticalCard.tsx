@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSaveItemModal } from '@/components/common/SaveItemModal';
+import { useSavedWhiskyIds } from '@/hooks/queries/use-collection';
 import { rememberCurrentPath } from '@/lib/login-return';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/use-auth-store';
@@ -125,12 +126,11 @@ export function VerticalCard({
 
 function BookmarkButton({
   product,
-  isSaved = false,
+  isSaved: isSavedProp,
   onUnsave,
   isUnsaving = false,
 }: {
   product: Product;
-  // TODO: 목록/검색 화면의 저장 여부는 콜렉션 조회 API 연동 후 서버 상태로 채운다
   isSaved?: boolean;
   onUnsave?: () => void;
   isUnsaving?: boolean;
@@ -138,6 +138,10 @@ function BookmarkButton({
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { open: openSaveItemModal } = useSaveItemModal();
+  const savedWhiskyIds = useSavedWhiskyIds();
+  // prop이 없으면 내 콜렉션에 담겨 있는지로 판단한다
+  const isSaved =
+    isSavedProp ?? (product.id !== undefined && savedWhiskyIds.has(product.id));
 
   const handleToggle = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -194,7 +198,9 @@ function BookmarkButton({
       onClick={handleToggle}
       disabled={isUnsaving}
       aria-pressed={isSaved}
-      aria-label={isSaved ? '콜렉션에서 빼기' : '저장하기'}
+      aria-label={
+        isSaved ? (onUnsave ? '콜렉션에서 빼기' : '저장됨') : '저장하기'
+      }
       className={cn(
         'flex size-8 shrink-0 items-center justify-center rounded-md border disabled:opacity-50',
         isSaved
