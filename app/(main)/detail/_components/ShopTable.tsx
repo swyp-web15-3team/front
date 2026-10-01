@@ -124,16 +124,21 @@ function ShopRow({ sale, isLowest }: { sale: SaleProduct; isLowest: boolean }) {
               <ExternalLinkIcon />
             </a>
           )}
-          {sale.retailerAddress && (
-            <button
-              type="button"
-              onClick={() => openGoogleMaps(sale.retailerAddress ?? undefined)}
-              aria-label={`${sale.retailerName} 위치 보기`}
-              className="text-fg hover:text-fg-muted -ml-1 flex size-8 shrink-0 items-center justify-center"
-            >
-              <MapPinIcon />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => {
+              // TODO: 공통 토스트 유틸 도입 후 alert 교체
+              if (!sale.retailerAddress) {
+                alert('등록된 매장 주소가 없습니다.');
+                return;
+              }
+              openGoogleMaps(sale.retailerAddress);
+            }}
+            aria-label={`${sale.retailerName} 위치 보기`}
+            className="text-fg hover:text-fg-muted -ml-1 flex size-8 shrink-0 items-center justify-center"
+          >
+            <MapPinIcon />
+          </button>
         </div>
       </td>
       <td className="text-body text-fg py-3">
