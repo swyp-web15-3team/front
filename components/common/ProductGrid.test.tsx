@@ -4,6 +4,11 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProductGrid } from '@/components/common/ProductGrid';
 import { Product } from '@/types/product';
 
+// 카드의 저장 여부 조회는 이 테스트의 관심사가 아니다 (QueryClient 없이 렌더링)
+vi.mock('@/hooks/queries/use-collection', () => ({
+  useSavedWhiskyIds: () => new Set<number>(),
+}));
+
 let latestObserverCallback: IntersectionObserverCallback | null = null;
 const observeSpy = vi.fn();
 const disconnectSpy = vi.fn();
