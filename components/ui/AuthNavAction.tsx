@@ -1,15 +1,16 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 
-import { useLogoutMutation } from '@/hooks/queries/use-auth';
 import { rememberCurrentPath } from '@/lib/login-return';
+import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/use-auth-store';
 
 export function AuthNavAction() {
   const router = useRouter();
+  const pathname = usePathname();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const { mutate: logout, isPending } = useLogoutMutation();
 
   if (!isAuthenticated) {
     return (
@@ -26,14 +27,16 @@ export function AuthNavAction() {
     );
   }
 
+  // 로그아웃은 마이페이지 안에서 한다.
   return (
-    <button
-      type="button"
-      className="text-body-sm hover:text-primary-strong disabled:opacity-50"
-      onClick={() => logout()}
-      disabled={isPending}
+    <Link
+      href="/mypage"
+      className={cn(
+        'text-body-sm hover:text-primary-strong',
+        pathname === '/mypage' && 'font-bold'
+      )}
     >
-      로그아웃
-    </button>
+      마이페이지
+    </Link>
   );
 }
