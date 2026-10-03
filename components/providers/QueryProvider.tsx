@@ -24,7 +24,16 @@ interface QueryProviderProps {
 export function subscribeAuthInvalidation(queryClient: QueryClient) {
   return useAuthStore.subscribe((state, prevState) => {
     if (state.isAuthenticated === prevState.isAuthenticated) return;
-    queryClient.invalidateQueries();
+
+    if (state.isAuthenticated) {
+      queryClient.invalidateQueries();
+      return;
+    }
+
+    // 로그아웃 시점엔 화면이 아직 다시 그려지기 전이라, 로그인 전용 쿼리도 enabled인 채로
+    // 남아 있다. 여기서 다시 조회하면 토큰 없이 나가 401 → /login으로 튕기므로
+    // 다시 조회하지 않고 캐시만 비운다.
+    queryClient.removeQueries();
   });
 }
 
