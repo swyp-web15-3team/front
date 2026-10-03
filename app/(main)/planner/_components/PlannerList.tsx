@@ -327,7 +327,7 @@ function PlannerRow({
           />
         )}
       </div>
-      <span className="text-body-sm text-fg">{item.category.name}</span>
+      <span className="text-body-sm text-fg">{item.category?.name ?? '-'}</span>
       <RetailerSelect
         item={item}
         isPending={isPending || isEditing}

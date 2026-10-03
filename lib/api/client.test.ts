@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { apiClient } from '@/lib/api/client';
+import { apiClient, reissueAccessToken } from '@/lib/api/client';
 import { useAuthStore } from '@/store/use-auth-store';
 
 vi.mock('@sentry/nextjs', () => ({ captureException: vi.fn() }));
@@ -137,5 +137,59 @@ describe('401 -> 재발급 성공', () => {
     ]);
 
     expect(results.map((r) => r.status)).toEqual(['rejected', 'rejected']);
+  });
+});
+
+describe('재발급 중복 방지', () => {
+  afterEach(() => {
+    apiClient.defaults.adapter = originalAdapter;
+    vi.restoreAllMocks();
+  });
+
+  // 마운트 시 재발급과 401 인터셉터가 겹쳐 refresh가 두 번 나가던 버그.
+  it('reissueAccessToken 동시 호출은 요청 한 번을 공유한다', async () => {
+    const post = vi
+      .spyOn(axios, 'post')
+      .mockResolvedValue({ data: { accessToken: 't' } });
+
+    const [a, b] = await Promise.all([
+      reissueAccessToken(),
+      reissueAccessToken(),
+    ]);
+
+    expect([a, b]).toEqual(['t', 't']);
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  it('요청 후 store에 새 토큰이 들어왔으면 재발급 없이 그 토큰으로 재시도한다', async () => {
+    useAuthStore.getState().clear();
+    stubLocation('/planner');
+    const post = vi.spyOn(axios, 'post');
+
+    apiClient.defaults.adapter = (config) => {
+      if (!config.headers?.Authorization) {
+        // 응답이 오기 전에 마운트 재발급이 끝난 상황
+        useAuthStore.getState().setAccessToken('fresh');
+        return Promise.reject(
+          Object.assign(new Error('Unauthorized'), {
+            isAxiosError: true,
+            config,
+            response: { status: 401, data: {}, headers: {}, config },
+          })
+        );
+      }
+      return Promise.resolve({
+        data: {},
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config,
+      });
+    };
+
+    const response = await apiClient.get('/planners');
+
+    expect(response.status).toBe(200);
+    expect(post).not.toHaveBeenCalled();
   });
 });

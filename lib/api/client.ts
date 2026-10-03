@@ -19,24 +19,18 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-let isRefreshing = false;
-// null이면 재발급 실패. 대기 중인 요청을 풀어주는 신호로 쓴다.
-let refreshSubscribers: Array<(accessToken: string | null) => void> = [];
+// refresh token은 rotation이라 같은 토큰으로 두 번 보내면 늦게 간 쪽이 실패해
+// 쿠키가 지워진다. 진행 중인 재발급은 호출자 모두가 같은 Promise를 공유한다.
+let refreshPromise: Promise<string> | null = null;
 
-function subscribeTokenRefresh(callback: (accessToken: string | null) => void) {
-  refreshSubscribers.push(callback);
-}
-
-function onTokenRefreshed(accessToken: string | null) {
-  refreshSubscribers.forEach((callback) => callback(accessToken));
-  refreshSubscribers = [];
-}
-
-export async function reissueAccessToken(): Promise<string> {
-  const { data } = await axios.post<{ accessToken: string }>(
-    '/api/auth/refresh'
-  );
-  return data.accessToken;
+export function reissueAccessToken(): Promise<string> {
+  refreshPromise ??= axios
+    .post<{ accessToken: string }>('/api/auth/refresh')
+    .then(({ data }) => data.accessToken)
+    .finally(() => {
+      refreshPromise = null;
+    });
+  return refreshPromise;
 }
 
 function redirectToLogin() {
@@ -78,40 +72,27 @@ apiClient.interceptors.response.use(
     if (status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      // 재발급이 이미 돌고 있으면 그게 끝나기를 기다렸다가 새 토큰으로 재시도한다.
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          subscribeTokenRefresh((newAccessToken) => {
-            if (newAccessToken === null) {
-              reject(error);
-              return;
-            }
-            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-            resolve(apiClient(originalRequest));
-          });
-        });
+      // 요청이 나간 뒤 다른 경로(마운트 시 재발급 등)가 이미 새 토큰을 store에
+      // 넣었다면 재발급 없이 그 토큰으로 재시도한다.
+      const { accessToken: current } = useAuthStore.getState();
+      let token: string;
+
+      if (
+        current &&
+        originalRequest.headers.Authorization !== `Bearer ${current}`
+      ) {
+        token = current;
+      } else {
+        try {
+          token = await reissueAccessToken();
+          useAuthStore.getState().setAccessToken(token);
+        } catch (refreshError) {
+          redirectToLogin();
+          return Promise.reject(refreshError);
+        }
       }
 
-      // 재발급을 주도하는 요청. 대기자들에게 알린 뒤 자기 요청도 직접 재시도한다.
-      // (onTokenRefreshed 시점엔 자신은 아직 구독 전이라, 구독으로 기다리면
-      //  자기 콜백을 영영 못 받고 타임아웃까지 멈춘다.)
-      isRefreshing = true;
-
-      let newAccessToken: string;
-      try {
-        newAccessToken = await reissueAccessToken();
-        useAuthStore.getState().setAccessToken(newAccessToken);
-      } catch (refreshError) {
-        // 대기 중인 요청들도 같이 풀어줘야 타임아웃까지 매달리지 않는다.
-        onTokenRefreshed(null);
-        redirectToLogin();
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-      }
-
-      onTokenRefreshed(newAccessToken);
-      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+      originalRequest.headers.Authorization = `Bearer ${token}`;
       return apiClient(originalRequest);
     }
 
