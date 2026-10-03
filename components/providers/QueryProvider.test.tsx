@@ -26,13 +26,16 @@ describe('subscribeAuthInvalidation', () => {
     unsubscribe();
   });
 
-  it('로그아웃되면 이전 사용자 데이터를 지운다', () => {
+  // 다시 조회하면 화면에 남은 로그인 전용 쿼리가 토큰 없이 나가 401 → /login으로 튕긴다.
+  it('로그아웃되면 다시 조회하지 않고 이전 사용자 데이터를 지운다', () => {
     useAuthStore.getState().setAccessToken('token');
+    const remove = vi.spyOn(queryClient, 'removeQueries');
     const unsubscribe = subscribeAuthInvalidation(queryClient);
 
     useAuthStore.getState().clear();
 
-    expect(invalidate).toHaveBeenCalledTimes(1);
+    expect(remove).toHaveBeenCalledTimes(1);
+    expect(invalidate).not.toHaveBeenCalled();
     unsubscribe();
   });
 
