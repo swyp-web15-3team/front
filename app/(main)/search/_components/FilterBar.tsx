@@ -1,6 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import {
+  type Dispatch,
+  type SetStateAction,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { FilterChips } from '@/app/(main)/search/_components/FilterChips';
 import {
@@ -20,7 +26,6 @@ import { cn } from '@/lib/utils';
 import { FilterGroupKey, SearchFilters } from '@/types/search';
 import { WhiskySort } from '@/types/whisky';
 
-// TODO: 필터 API 연동 시 filters 값도 useWhiskyListQuery 파라미터로 전달한다
 // TODO: 가격·가격차 정렬은 백엔드 협의 후 sort 값이 추가되면 옵션에 넣는다
 const SORT_OPTIONS: { label: string; value: WhiskySort }[] = [
   { label: '이름순', value: 'name,asc' },
@@ -30,11 +35,17 @@ const SORT_OPTIONS: { label: string; value: WhiskySort }[] = [
 interface FilterBarProps {
   sort: WhiskySort;
   onSortChange: (sort: WhiskySort) => void;
+  filters: SearchFilters;
+  onFiltersChange: Dispatch<SetStateAction<SearchFilters>>;
 }
 
-export function FilterBar({ sort, onSortChange }: FilterBarProps) {
+export function FilterBar({
+  sort,
+  onSortChange,
+  filters,
+  onFiltersChange: setFilters,
+}: FilterBarProps) {
   const [openKey, setOpenKey] = useState<string | null>(null);
-  const [filters, setFilters] = useState<SearchFilters>(EMPTY_SEARCH_FILTERS);
   const { open: openFilterModal } = useFilterModal();
   const filterOptions = useSearchFilterOptions();
 

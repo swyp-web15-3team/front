@@ -6,8 +6,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { FilterBar } from '@/app/(main)/search/_components/FilterBar';
 import { ProductGrid } from '@/components/common/ProductGrid';
-import { useWhiskyListQuery } from '@/hooks/queries/use-whisky';
+import { EMPTY_SEARCH_FILTERS } from '@/constants/search-filter';
+import {
+  useWhiskyCategoryListQuery,
+  useWhiskyListQuery,
+} from '@/hooks/queries/use-whisky';
+import { toWhiskyListParams } from '@/lib/search-filter';
 import { whiskyToProduct } from '@/lib/utils';
+import { SearchFilters } from '@/types/search';
 import { WhiskySort } from '@/types/whisky';
 
 export default function SearchPage() {
@@ -71,6 +77,9 @@ interface SearchResultsProps {
 
 function SearchResults({ query }: SearchResultsProps) {
   const [sort, setSort] = useState<WhiskySort>('name,asc');
+  const [filters, setFilters] = useState<SearchFilters>(EMPTY_SEARCH_FILTERS);
+  const { data: categoryData } = useWhiskyCategoryListQuery();
+
   const {
     data,
     isLoading,
@@ -79,14 +88,23 @@ function SearchResults({ query }: SearchResultsProps) {
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useWhiskyListQuery({ query, sort });
+  } = useWhiskyListQuery({
+    query,
+    sort,
+    ...toWhiskyListParams(filters, categoryData?.categories ?? []),
+  });
 
   const items =
     data?.pages.flatMap((page) => page.content.map(whiskyToProduct)) ?? [];
 
   return (
     <div className="mx-auto max-w-300">
-      <FilterBar sort={sort} onSortChange={setSort} />
+      <FilterBar
+        sort={sort}
+        onSortChange={setSort}
+        filters={filters}
+        onFiltersChange={setFilters}
+      />
       {isLoading ? (
         <div className="flex min-h-100 items-center justify-center">
           <p>불러오는 중...</p>
