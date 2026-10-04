@@ -1,4 +1,6 @@
+import { cache } from 'react';
 import { isAxiosError } from 'axios';
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 
@@ -12,13 +14,31 @@ import { fetchRelatedWhiskies, fetchWhiskyDetail } from '@/lib/api/whisky';
 import { findLowestPriceKrw, formatKrw } from '@/lib/sale-price';
 import { WhiskyCard, WhiskyDetail } from '@/types/whisky';
 
-async function getWhiskyDetail(whiskyId: number): Promise<WhiskyDetail> {
-  try {
-    return await fetchWhiskyDetail(whiskyId);
-  } catch (error) {
-    if (isAxiosError(error) && error.response?.status === 404) notFound();
-    throw error;
+// generateMetadata와 페이지가 같은 요청을 공유하도록 cache로 감싼다 (axios는 fetch처럼 자동 dedupe되지 않음)
+const getWhiskyDetail = cache(
+  async (whiskyId: number): Promise<WhiskyDetail> => {
+    try {
+      return await fetchWhiskyDetail(whiskyId);
+    } catch (error) {
+      if (isAxiosError(error) && error.response?.status === 404) notFound();
+      throw error;
+    }
   }
+);
+
+function parseWhiskyId(id: string) {
+  const whiskyId = Number(id);
+  return Number.isInteger(whiskyId) && whiskyId > 0 ? whiskyId : null;
+}
+
+export async function generateMetadata({
+  params,
+}: PageProps<'/detail/[id]'>): Promise<Metadata> {
+  const whiskyId = parseWhiskyId((await params).id);
+  if (whiskyId === null) return {};
+
+  const whisky = await getWhiskyDetail(whiskyId);
+  return { title: whisky.name };
 }
 
 // 연관 위스키는 부가 정보라 실패해도 상세 화면은 그대로 보여준다
@@ -34,9 +54,8 @@ async function getRelatedWhiskies(whiskyId: number): Promise<WhiskyCard[]> {
 export default async function DetailPage({
   params,
 }: PageProps<'/detail/[id]'>) {
-  const { id } = await params;
-  const whiskyId = Number(id);
-  if (!Number.isInteger(whiskyId) || whiskyId <= 0) notFound();
+  const whiskyId = parseWhiskyId((await params).id);
+  if (whiskyId === null) notFound();
 
   const [whisky, relatedWhiskies] = await Promise.all([
     getWhiskyDetail(whiskyId),
