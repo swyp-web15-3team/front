@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { useWhiskyDetailQuery } from '@/hooks/queries/use-whisky';
-import { cn } from '@/lib/utils';
+import { cn, formatAmount } from '@/lib/utils';
 import { PlannerItemGroup, PlannerListType } from '@/types/planner';
 
 const COLUMNS = [
@@ -143,7 +143,7 @@ function RetailerSelect({
         aria-label="판매처 변경"
         className="text-body-sm text-fg flex items-center gap-1 tabular-nums disabled:opacity-50"
       >
-        {item.price ? `¥${item.price.amount.toLocaleString('ko-KR')}` : '-'}
+        {item.price ? `¥${formatAmount(item.price.amount)}` : '-'}
         <ChevronUpDownIcon />
       </button>
 
@@ -179,7 +179,7 @@ function RetailerSelect({
                 {saleProduct.retailerName}
                 {saleProduct.isDutyFree && ' 면세'}
                 {saleProduct.price &&
-                  ` (¥${saleProduct.price.amount.toLocaleString('ko-KR')})`}
+                  ` (¥${formatAmount(saleProduct.price.amount)})`}
               </button>
             ))
           )}
@@ -335,7 +335,7 @@ function PlannerRow({
       />
       <span className="text-body-sm text-fg text-right tabular-nums">
         {item.price?.amountKrw != null
-          ? `₩${item.price.amountKrw.toLocaleString('ko-KR')}`
+          ? `₩${formatAmount(item.price.amountKrw)}`
           : '-'}
       </span>
       <span className="text-body-sm text-fg text-right tabular-nums">-</span>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { cn } from '@/lib/utils';
+import { cn, formatAmount } from '@/lib/utils';
 import { Product } from '@/types/product';
 
 interface HorizontalCardProps {
@@ -87,10 +87,10 @@ export function HorizontalCard({
                 -{discountRate}%
               </span>
             )}
-            {krPrice?.toLocaleString('ko-KR')}원
+            {formatAmount(krPrice)}원
           </p>
           <p className="text-price-sub text-fg-muted">
-            ¥{jpPriceYen?.toLocaleString('ko-KR') ?? '-'}
+            ¥{formatAmount(jpPriceYen) ?? '-'}
             {volumeMl != null && ` · ${volumeMl}ml`}
           </p>
         </div>
@@ -105,14 +105,14 @@ export function HorizontalCard({
               </span>
             )}
             <span>
-              {jpPrice?.toLocaleString('ko-KR')}원
+              {formatAmount(jpPrice)}원
               <span className="text-price-sub text-fg-muted">
                 (일본 최저가)
               </span>
             </span>
           </div>
           <p className="text-price">
-            {krPrice?.toLocaleString('ko-KR')}원
+            {formatAmount(krPrice)}원
             <span className="text-price-sub text-fg-muted">(한국 최저가)</span>
             {volumeMl != null && (
               <span className="text-price-sub text-fg-muted">

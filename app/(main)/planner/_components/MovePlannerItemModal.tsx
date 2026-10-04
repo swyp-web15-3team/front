@@ -10,7 +10,7 @@ import { MODAL_ID } from '@/constants/modal';
 import { useMovePlannerItemsBulkMutation } from '@/hooks/queries/use-planner';
 import { useWhiskyDetailQuery } from '@/hooks/queries/use-whisky';
 import { useModal } from '@/hooks/use-modal';
-import { cn } from '@/lib/utils';
+import { cn, formatAmount } from '@/lib/utils';
 import { PlannerItemGroup } from '@/types/planner';
 
 interface MovePlannerItemModalProps {
@@ -114,12 +114,12 @@ export function MovePlannerItemModal({
                       </p>
                       <p className="text-price">
                         {item.price?.amountKrw != null
-                          ? `${item.price.amountKrw.toLocaleString('ko-KR')}원`
+                          ? `${formatAmount(item.price.amountKrw)}원`
                           : '-'}
                       </p>
                       <p className="text-price-sub text-fg-muted">
                         {item.price
-                          ? `¥${item.price.amount.toLocaleString('ko-KR')}`
+                          ? `¥${formatAmount(item.price.amount)}`
                           : '-'}
                         {` · ${item.volumeMl}ml`}
                       </p>
