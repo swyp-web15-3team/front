@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useSaveItemModal } from '@/components/common/SaveItemModal';
 import { useSavedWhiskyIds } from '@/hooks/queries/use-collection';
 import { rememberCurrentPath } from '@/lib/login-return';
-import { cn } from '@/lib/utils';
+import { cn, formatAmount } from '@/lib/utils';
 import { useAuthStore } from '@/store/use-auth-store';
 import { Product } from '@/types/product';
 
@@ -96,12 +96,10 @@ export function VerticalCard({
           <p className="text-body-sm text-fg-muted truncate">{originalName}</p>
         )}
         <p className="text-price mt-2">
-          {displayPrice
-            ? `${displayPrice.toLocaleString('ko-KR')}원`
-            : '가격 정보 없음'}
+          {displayPrice ? `${formatAmount(displayPrice)}원` : '가격 정보 없음'}
           {showYen && (
             <span className="text-price-sub text-fg-muted">
-              ({jpPriceYen?.toLocaleString('ko-KR')}엔)
+              ({formatAmount(jpPriceYen)}엔)
             </span>
           )}
         </p>

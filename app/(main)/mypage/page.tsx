@@ -1,10 +1,16 @@
 import BookmarkIcon from '@heroicons/react/24/outline/BookmarkIcon';
 import CalendarDaysIcon from '@heroicons/react/24/outline/CalendarDaysIcon';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { LogoutButton } from '@/app/(main)/mypage/_components/LogoutButton';
 import { ProfileSummary } from '@/app/(main)/mypage/_components/ProfileSummary';
 import { KakaoIcon } from '@/components/ui/KakaoIcon';
+
+// layout에 문자열 title을 두면 하위(콜렉션 등)에 루트 템플릿이 적용되지 않아 page에 둔다
+export const metadata: Metadata = {
+  title: '마이페이지',
+};
 
 /** 프로필 아래 아이콘 바로가기. 기능이 늘면 여기에 추가한다. */
 const SHORTCUTS = [

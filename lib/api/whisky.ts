@@ -15,6 +15,8 @@ export async function fetchWhiskies(
 ): Promise<WhiskyListResponse['data']> {
   const { data } = await apiClient.get<WhiskyListResponse>('/whiskies', {
     params,
+    // 배열은 categoryId[]=1이 아니라 categoryId=1&categoryId=2로 보낸다
+    paramsSerializer: { indexes: null },
   });
   return data.data;
 }

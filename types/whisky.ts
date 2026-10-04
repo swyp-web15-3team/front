@@ -88,8 +88,8 @@ export interface WhiskyDetail extends WhiskyListItem {
 export interface WhiskyListRequest {
   /** 위스키 이름 부분 검색. 앞뒤 공백 제거 */
   query?: string;
-  /** 종류 ID */
-  categoryId?: number;
+  /** 종류 ID. 여러 개면 `?categoryId=1&categoryId=2`로 전달 */
+  categoryId?: number[];
   /** 원산지 ID */
   originId?: number;
   /** 생산 지역 ID */
@@ -100,6 +100,14 @@ export interface WhiskyListRequest {
   countryCode?: CountryCode;
   /** 면세점 판매 여부 */
   isDutyFree?: boolean;
+  /** 최저가(한국·일본 중 낮은 값) 원화 최소 가격 (포함) */
+  minPrice?: number;
+  /** 최저가(한국·일본 중 낮은 값) 원화 최대 가격 (포함) */
+  maxPrice?: number;
+  /** 일본 할인율(%) 최소값 (포함) */
+  minPriceDiffPercent?: number;
+  /** 일본 할인율(%) 최대값 (미포함) */
+  maxPriceDiffPercent?: number;
   /** 정렬 조건 */
   sort?: WhiskySort;
   /** 페이지 번호 */
