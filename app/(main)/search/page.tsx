@@ -2,16 +2,19 @@
 
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { FilterBar } from '@/app/(main)/search/_components/FilterBar';
 import { ProductGrid } from '@/components/common/ProductGrid';
-import { EMPTY_SEARCH_FILTERS } from '@/constants/search-filter';
 import {
   useWhiskyCategoryListQuery,
   useWhiskyListQuery,
 } from '@/hooks/queries/use-whisky';
-import { toWhiskyListParams } from '@/lib/search-filter';
+import {
+  parseSearchFilters,
+  toWhiskyListParams,
+  writeSearchFilters,
+} from '@/lib/search-filter';
 import { whiskyToProduct } from '@/lib/utils';
 import { SearchFilters } from '@/types/search';
 import { WhiskySort } from '@/types/whisky';
@@ -37,7 +40,8 @@ function SearchPageContent() {
   // q는 필수 — 없으면 API를 호출하지 않고 이동 안내만 보여준다
   if (!query) return <MissingQuery />;
 
-  return <SearchResults query={query} />;
+  // 새 검색어로 이동하면 이전 검색의 필터·정렬을 버리고 URL에서 다시 읽는다
+  return <SearchResults key={query} query={query} />;
 }
 
 function MissingQuery() {
@@ -75,9 +79,48 @@ interface SearchResultsProps {
   query: string;
 }
 
+const DEFAULT_SORT: WhiskySort = 'name,asc';
+const SORTS: WhiskySort[] = ['name,asc', 'name,desc', 'id,asc', 'id,desc'];
+
+function parseSort(value: string | null): WhiskySort {
+  return SORTS.find((sort) => sort === value) ?? DEFAULT_SORT;
+}
+
 function SearchResults({ query }: SearchResultsProps) {
-  const [sort, setSort] = useState<WhiskySort>('name,asc');
-  const [filters, setFilters] = useState<SearchFilters>(EMPTY_SEARCH_FILTERS);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // 진입(뒤로가기 포함) 시 URL에서 필터·정렬을 복원한다. 이후 변경은 state가 즉시
+  // 반영하고 URL은 따라서 갱신한다 — URL만 원본으로 두면 연속 클릭 시 이전 값이
+  // 반영되기 전에 다음 변경이 계산돼 선택이 유실된다
+  const [filters, setFiltersState] = useState(() =>
+    parseSearchFilters(searchParams)
+  );
+  const [sort, setSortState] = useState(() =>
+    parseSort(searchParams.get('sort'))
+  );
+
+  // 페이지 이동 없이 주소만 바꾸고, 방문 기록이 쌓이지 않게 replace로 덮어쓴다
+  const syncUrl = (nextFilters: SearchFilters, nextSort: WhiskySort) => {
+    const params = new URLSearchParams({ q: query });
+    if (nextSort !== DEFAULT_SORT) params.set('sort', nextSort);
+    window.history.replaceState(
+      null,
+      '',
+      `${pathname}?${writeSearchFilters(params, nextFilters)}`
+    );
+  };
+
+  const setFilters = (next: SearchFilters) => {
+    setFiltersState(next);
+    syncUrl(next, sort);
+  };
+
+  const setSort = (next: WhiskySort) => {
+    setSortState(next);
+    syncUrl(filters, next);
+  };
+
   const { data: categoryData } = useWhiskyCategoryListQuery();
 
   const {

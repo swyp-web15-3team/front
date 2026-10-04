@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  type Dispatch,
-  type SetStateAction,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { FilterChips } from '@/app/(main)/search/_components/FilterChips';
 import {
@@ -23,7 +17,7 @@ import { useSearchFilterOptions } from '@/hooks/use-search-filter-options';
 import { pushEscapeLayer } from '@/lib/escape-stack';
 import { getFilterChips, toggleFilterOption } from '@/lib/search-filter';
 import { cn } from '@/lib/utils';
-import { FilterGroupKey, SearchFilters } from '@/types/search';
+import { FilterGroupKey, PriceRange, SearchFilters } from '@/types/search';
 import { WhiskySort } from '@/types/whisky';
 
 // TODO: 가격·가격차 정렬은 백엔드 협의 후 sort 값이 추가되면 옵션에 넣는다
@@ -32,11 +26,17 @@ const SORT_OPTIONS: { label: string; value: WhiskySort }[] = [
   { label: '최신순', value: 'id,desc' },
 ];
 
+const PRICE_APPLY_DELAY_MS = 400;
+
+function isSamePrice(a: PriceRange | null, b: PriceRange | null) {
+  return a?.min === b?.min && a?.max === b?.max;
+}
+
 interface FilterBarProps {
   sort: WhiskySort;
   onSortChange: (sort: WhiskySort) => void;
   filters: SearchFilters;
-  onFiltersChange: Dispatch<SetStateAction<SearchFilters>>;
+  onFiltersChange: (filters: SearchFilters) => void;
 }
 
 export function FilterBar({
@@ -56,8 +56,27 @@ export function FilterBar({
   };
 
   const toggleOption = (group: FilterGroupKey, option: string) => {
-    setFilters((prev) => toggleFilterOption(prev, group, option));
+    setFilters(toggleFilterOption(filters, group, option));
   };
+
+  // 가격은 드래그·입력 중 매번 바뀌므로 입력 중엔 draft만 바꾸고, 멈추면 URL에 반영한다
+  const [priceDraft, setPriceDraft] = useState(filters.price);
+  const [prevPrice, setPrevPrice] = useState(filters.price);
+
+  // 칩 삭제·모달 적용 등 밖에서 가격이 바뀌면 draft도 맞춘다 (렌더 중 state 조정 패턴)
+  if (!isSamePrice(filters.price, prevPrice)) {
+    setPrevPrice(filters.price);
+    setPriceDraft(filters.price);
+  }
+
+  useEffect(() => {
+    if (isSamePrice(priceDraft, filters.price)) return;
+    const timer = setTimeout(
+      () => setFilters({ ...filters, price: priceDraft }),
+      PRICE_APPLY_DELAY_MS
+    );
+    return () => clearTimeout(timer);
+  }, [priceDraft, filters, setFilters]);
 
   const renderOptionDropdown = (group: FilterGroupKey) => (
     <FilterDropdown
@@ -109,10 +128,7 @@ export function FilterBar({
           hasActive={filters.price !== null}
         >
           <div className="w-80 p-2">
-            <PriceRangeField
-              value={filters.price}
-              onChange={(price) => setFilters((prev) => ({ ...prev, price }))}
-            />
+            <PriceRangeField value={priceDraft} onChange={setPriceDraft} />
           </div>
         </FilterDropdown>
 

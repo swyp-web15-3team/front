@@ -104,3 +104,63 @@ export function getFilterChips(filters: SearchFilters): FilterChip[] {
 export function isSameFilters(a: SearchFilters, b: SearchFilters) {
   return JSON.stringify(a) === JSON.stringify(b);
 }
+
+// 검색 페이지 URL 쿼리 키. 뒤로가기·새로고침 후에도 필터가 유지되도록 URL에 둔다
+const URL_PARAM = {
+  category: 'category',
+  priceGap: 'priceGap',
+  minPrice: 'minPrice',
+  maxPrice: 'maxPrice',
+} as const;
+
+function parseAmount(value: string | null) {
+  if (value === null || value.trim() === '') return null;
+  const amount = Number(value);
+  return Number.isFinite(amount) && amount >= 0 ? amount : null;
+}
+
+/** URL 쿼리를 필터 상태로 바꾼다. 알 수 없거나 잘못된 값은 버린다 */
+export function parseSearchFilters(
+  params: Pick<URLSearchParams, 'get' | 'getAll'>
+): SearchFilters {
+  const priceGap = params
+    .getAll(URL_PARAM.priceGap)
+    .filter((option) => option in PRICE_GAP_RANGES)
+    .slice(0, 1);
+
+  const min = parseAmount(params.get(URL_PARAM.minPrice));
+  const max = parseAmount(params.get(URL_PARAM.maxPrice));
+  const price =
+    (min === null && max === null) || (min ?? 0) > (max ?? PRICE_MAX)
+      ? null
+      : normalizePriceRange({ min: min ?? 0, max: max ?? PRICE_MAX });
+
+  return {
+    options: { category: params.getAll(URL_PARAM.category), priceGap },
+    price,
+  };
+}
+
+/** 기존 쿼리(q, sort 등)는 유지하고 필터 관련 키만 filters 기준으로 다시 쓴다 */
+export function writeSearchFilters(
+  params: URLSearchParams,
+  filters: SearchFilters
+): URLSearchParams {
+  const next = new URLSearchParams(params);
+  Object.values(URL_PARAM).forEach((key) => next.delete(key));
+
+  filters.options.category.forEach((name) =>
+    next.append(URL_PARAM.category, name)
+  );
+  filters.options.priceGap.forEach((option) =>
+    next.append(URL_PARAM.priceGap, option)
+  );
+  if (filters.price) {
+    if (filters.price.min > 0)
+      next.set(URL_PARAM.minPrice, String(filters.price.min));
+    if (filters.price.max < PRICE_MAX)
+      next.set(URL_PARAM.maxPrice, String(filters.price.max));
+  }
+
+  return next;
+}

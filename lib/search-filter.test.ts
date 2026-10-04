@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import { EMPTY_SEARCH_FILTERS, PRICE_MAX } from '@/constants/search-filter';
-import { toggleFilterOption, toWhiskyListParams } from '@/lib/search-filter';
+import {
+  parseSearchFilters,
+  toggleFilterOption,
+  toWhiskyListParams,
+  writeSearchFilters,
+} from '@/lib/search-filter';
 import { SearchFilters } from '@/types/search';
 
 const categories = [
@@ -86,5 +91,48 @@ describe('toggleFilterOption', () => {
       '20% 미만'
     );
     expect(next.options.priceGap).toEqual([]);
+  });
+});
+
+describe('parseSearchFilters / writeSearchFilters', () => {
+  it('필터를 URL에 쓰고 다시 읽으면 같은 값이 된다', () => {
+    const filters = withOptions(
+      { category: ['버번', '싱글몰트'], priceGap: ['20%-40%'] },
+      { min: 100_000, max: 300_000 }
+    );
+    const params = writeSearchFilters(new URLSearchParams('q=발베니'), filters);
+
+    expect(params.get('q')).toBe('발베니');
+    expect(params.getAll('category')).toEqual(['버번', '싱글몰트']);
+    expect(parseSearchFilters(params)).toEqual(filters);
+  });
+
+  it('필터를 비우면 필터 키만 지우고 나머지 쿼리는 유지한다', () => {
+    const params = writeSearchFilters(
+      new URLSearchParams('q=a&sort=id,desc&category=버번&minPrice=1000'),
+      EMPTY_SEARCH_FILTERS
+    );
+    expect(params.toString()).toBe(
+      new URLSearchParams('q=a&sort=id,desc').toString()
+    );
+  });
+
+  it('가격 한쪽만 있으면 나머지는 열린 끝으로 채운다', () => {
+    expect(
+      parseSearchFilters(new URLSearchParams('minPrice=50000')).price
+    ).toEqual({ min: 50_000, max: PRICE_MAX });
+    expect(
+      parseSearchFilters(new URLSearchParams('maxPrice=50000')).price
+    ).toEqual({ min: 0, max: 50_000 });
+  });
+
+  it('잘못된 값은 버린다', () => {
+    const filters = parseSearchFilters(
+      new URLSearchParams('priceGap=없는구간&minPrice=abc&maxPrice=-1')
+    );
+    expect(filters).toEqual(EMPTY_SEARCH_FILTERS);
+    expect(
+      parseSearchFilters(new URLSearchParams('minPrice=500&maxPrice=100')).price
+    ).toBeNull();
   });
 });
