@@ -19,7 +19,6 @@ import { cn } from '@/lib/utils';
 const SEARCH_PLACEHOLDER_FALLBACK = '위스키를 검색해 보세요';
 
 const SEARCH_PLACEHOLDER_INTERVAL_MS = 3000;
-const SEARCH_PLACEHOLDER_FADE_MS = 200;
 
 interface NavItem {
   href: string;
@@ -51,9 +50,11 @@ const NAV_ITEMS: NavItem[] = [
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
-  const { open: openSearchModal } = useSearchModal();
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  const [isPlaceholderVisible, setIsPlaceholderVisible] = useState(true);
+  const { isOpen: isSearchModalOpen, open: openSearchModal } = useSearchModal();
+  // placeholder를 넘긴 누적 횟수. 0이면 아직 넘기지 않은 상태라 등장 애니메이션을 생략한다
+  const [placeholderTick, setPlaceholderTick] = useState(0);
+  const [isSearchBarHovered, setIsSearchBarHovered] = useState(false);
+  const [isPageHidden, setIsPageHidden] = useState(false);
 
   // 검색어 없이 조회한 추천 검색어를 순서대로 돌려 보여준다.
   // 검색 모달의 빈 입력 상태와 같은 쿼리 키라 캐시를 공유한다.
@@ -73,37 +74,59 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
+    const handleVisibilityChange = () => setIsPageHidden(document.hidden);
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () =>
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  // 탭이 안 보이거나, 검색창에 마우스를 올렸거나, 검색 모달이 열려 있으면 롤링을 멈춘다
+  const isPlaceholderPaused =
+    isPageHidden || isSearchBarHovered || isSearchModalOpen;
+
+  useEffect(() => {
     // 돌려 보여줄 검색어가 2개 이상일 때만 순환한다
-    if (placeholderCount < 2) return;
+    if (placeholderCount < 2 || isPlaceholderPaused) return;
 
-    let fadeTimer: ReturnType<typeof setTimeout>;
+    const interval = setInterval(
+      () => setPlaceholderTick((prev) => prev + 1),
+      SEARCH_PLACEHOLDER_INTERVAL_MS
+    );
+    return () => clearInterval(interval);
+  }, [placeholderCount, isPlaceholderPaused]);
 
-    const interval = setInterval(() => {
-      setIsPlaceholderVisible(false);
+  // 재조회로 목록 길이가 줄어도 범위를 벗어나지 않게 나머지 연산을 한다
+  const currentKeyword =
+    placeholderCount > 0
+      ? placeholderKeywords[placeholderTick % placeholderCount]
+      : undefined;
+  const previousKeyword =
+    placeholderCount > 0 && placeholderTick > 0
+      ? placeholderKeywords[(placeholderTick - 1) % placeholderCount]
+      : undefined;
 
-      fadeTimer = setTimeout(() => {
-        setPlaceholderIndex((prev) => (prev + 1) % placeholderCount);
-        setIsPlaceholderVisible(true);
-      }, SEARCH_PLACEHOLDER_FADE_MS);
-    }, SEARCH_PLACEHOLDER_INTERVAL_MS);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(fadeTimer);
-    };
-  }, [placeholderCount]);
-
+  // tick마다 key가 바뀌어 새로 마운트되므로 등장/퇴장 애니메이션이 매번 다시 재생된다
   const placeholder = (
-    <span
-      className={cn(
-        'text-fg-subtle block truncate transition-opacity',
-        isPlaceholderVisible ? 'opacity-100' : 'opacity-0'
+    <span className="text-fg-subtle relative block overflow-hidden">
+      {previousKeyword && (
+        <span
+          key={`out-${placeholderTick}`}
+          aria-hidden="true"
+          className="animate-placeholder-out absolute inset-0 truncate"
+        >
+          {previousKeyword}
+        </span>
       )}
-      style={{ transitionDuration: `${SEARCH_PLACEHOLDER_FADE_MS}ms` }}
-    >
-      {/* 재조회로 목록 길이가 줄어도 범위를 벗어나지 않게 나머지 연산을 한다 */}
-      {placeholderKeywords[placeholderIndex % placeholderCount] ??
-        SEARCH_PLACEHOLDER_FALLBACK}
+      <span
+        key={`in-${placeholderTick}`}
+        className={cn(
+          'block truncate',
+          placeholderTick > 0 && 'animate-placeholder-in'
+        )}
+      >
+        {currentKeyword ?? SEARCH_PLACEHOLDER_FALLBACK}
+      </span>
     </span>
   );
 
@@ -141,6 +164,8 @@ export default function Header() {
           <button
             type="button"
             onClick={openSearchModal}
+            onMouseEnter={() => setIsSearchBarHovered(true)}
+            onMouseLeave={() => setIsSearchBarHovered(false)}
             id="search-bar"
             aria-label="검색"
             className="bg-surface-sunken/80 hover:bg-surface-sunken text-body-sm flex w-full min-w-0 items-center gap-2 rounded-full py-2 pr-3 pl-5 text-left transition-colors duration-[180ms] sm:max-w-72"

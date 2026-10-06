@@ -123,6 +123,24 @@
   --ease-spring-soft: cubic-bezier(0.32, 1.28, 0.58, 1);
   --ease-out-macos: cubic-bezier(0.22, 0.61, 0.36, 1);
 
+  /* 헤더 검색창 placeholder 세로 롤링: 새 검색어는 아래에서 올라오고, 이전 검색어는 위로 빠진다 */
+  --animate-placeholder-in: placeholder-in 280ms var(--ease-spring-soft);
+  --animate-placeholder-out: placeholder-out 180ms var(--ease-out-macos)
+    forwards;
+
+  @keyframes placeholder-in {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+  }
+  @keyframes placeholder-out {
+    to {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+  }
+
   /* --- z 레이어 ---
      같은 z-50에 크롬과 오버레이가 몰리면 DOM 순서가 승자를 정해버린다.
      역할별로 층을 나눠 둔다. */
