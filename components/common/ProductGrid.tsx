@@ -138,9 +138,6 @@ export function ProductGrid({
 
       <div className="text-body-sm text-fg-muted flex justify-center py-6">
         {isFetchingNextPage && <p>불러오는 중...</p>}
-        {!hasNextPage && !isFetchingNextPage && items.length > 0 && (
-          <>{endContent ?? <p>마지막 상품입니다</p>}</>
-        )}
       </div>
     </div>
   );

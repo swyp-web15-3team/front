@@ -10,9 +10,14 @@ import { useCurrentSearchQuery } from '@/hooks/use-current-search-query';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useRecentKeywords } from '@/hooks/use-recent-keywords';
 import { useWhiskySuggestionsQuery } from '@/hooks/queries/use-whisky';
+import { useSearchStore } from '@/store/use-search-store';
 
 // 시안 기준 추천 검색어 노출 개수. API 응답이 더 많아도 앞에서부터 이만큼만 보여준다
-const MAX_SUGGESTIONS = 5;
+// 헤더 검색창 placeholder도 같은 개수를 쓴다
+export const MAX_SUGGESTIONS = 5;
+
+// 목록 항목이 차례로 등장할 때 항목 사이 간격
+const LIST_STAGGER_MS = 30;
 
 interface IconProps {
   className?: string;
@@ -54,6 +59,33 @@ function CloseIcon({ className }: IconProps) {
   );
 }
 
+interface HighlightedKeywordProps {
+  keyword: string;
+  query: string;
+}
+
+// 추천 검색어에서 입력어와 처음 일치하는 부분을 강조한다
+function HighlightedKeyword({ keyword, query }: HighlightedKeywordProps) {
+  const trimmedQuery = query.trim();
+  const start = trimmedQuery
+    ? keyword.toLowerCase().indexOf(trimmedQuery.toLowerCase())
+    : -1;
+
+  if (start === -1) return keyword;
+
+  const end = start + trimmedQuery.length;
+
+  return (
+    <>
+      {keyword.slice(0, start)}
+      <mark className="text-primary-strong bg-transparent">
+        {keyword.slice(start, end)}
+      </mark>
+      {keyword.slice(end)}
+    </>
+  );
+}
+
 export function useSearchModal() {
   return useModal(MODAL_ID.SEARCH);
 }
@@ -64,11 +96,18 @@ export function SearchModal() {
   const currentQuery = useCurrentSearchQuery();
   const [keyword, setKeyword] = useState('');
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  const presetKeyword = useSearchStore((state) => state.presetKeyword);
+  // 모달은 닫혀도 exit 애니메이션 때문에 DOM에 남는다.
+  // 열 때마다 목록을 새로 마운트해 등장 애니메이션을 다시 재생하려고 key로 쓴다
+  const [openCount, setOpenCount] = useState(0);
 
-  // 모달이 열릴 때 현재 검색어로 input을 채운다 (렌더 중 state 조정 패턴)
+  // 모달이 열릴 때 현재 검색어(없으면 헤더에 보이던 추천 검색어)로 input을 채운다 (렌더 중 state 조정 패턴)
   if (isOpen !== prevIsOpen) {
     setPrevIsOpen(isOpen);
-    if (isOpen) setKeyword(currentQuery);
+    if (isOpen) {
+      setKeyword(currentQuery || presetKeyword);
+      setOpenCount((prev) => prev + 1);
+    }
   }
   const {
     keywords: recentKeywords,
@@ -85,6 +124,8 @@ export function SearchModal() {
   useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus();
+      // 채워 둔 검색어를 전체 선택해 바로 타이핑하면 덮어쓰게 한다
+      inputRef.current?.select();
     }
   }, [isOpen]);
 
@@ -151,59 +192,71 @@ export function SearchModal() {
         </button>
       </form>
 
-      {recentKeywords.length > 0 && (
-        <section className="mt-6">
-          <h2 className="text-body-sm text-fg-muted">최근 검색어</h2>
-          <ul className="mt-3 flex flex-wrap gap-2">
-            {recentKeywords.map((item) => (
-              <li
-                key={item}
-                className="border-border text-body-sm flex max-w-full items-center gap-1.5 rounded-md border px-2.5 py-1.5"
-              >
-                <button
-                  type="button"
-                  onClick={() => handleSearch(item)}
-                  className="min-w-0 truncate"
+      {/* 항목은 키(검색어)별로 마운트될 때 차례로 페이드업된다. 입력으로 추천 검색어가
+          바뀌면 새로 생긴 항목만 등장 애니메이션이 재생된다 */}
+      <div key={openCount}>
+        {recentKeywords.length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-body-sm text-fg-muted">최근 검색어</h2>
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {recentKeywords.map((item, index) => (
+                <li
+                  key={item}
+                  className="border-border text-body-sm animate-fade-up flex max-w-full items-center gap-1.5 rounded-md border px-2.5 py-1.5"
+                  style={{ animationDelay: `${index * LIST_STAGGER_MS}ms` }}
                 >
-                  {item}
-                </button>
-                <button
-                  type="button"
-                  aria-label={`${item} 최근 검색어 삭제`}
-                  onClick={() => removeRecentKeyword(item)}
-                  className="shrink-0"
-                >
-                  <CloseIcon className="size-3.5" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+                  <button
+                    type="button"
+                    onClick={() => handleSearch(item)}
+                    className="min-w-0 truncate"
+                  >
+                    {item}
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`${item} 최근 검색어 삭제`}
+                    onClick={() => removeRecentKeyword(item)}
+                    className="shrink-0"
+                  >
+                    <CloseIcon className="size-3.5" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
-      {suggestions.length > 0 && (
-        <section className="mt-6">
-          <h2 className="text-body-sm text-fg-muted">추천 검색어</h2>
-          <ol className="mt-3 flex flex-col gap-3">
-            {suggestions.map((item, index) => (
-              <li key={item.keyword}>
-                <button
-                  type="button"
-                  onClick={() => handleSearch(item.keyword)}
-                  className="text-body-sm flex w-full items-center gap-3 text-left"
+        {suggestions.length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-body-sm text-fg-muted">추천 검색어</h2>
+            <ol className="mt-3 flex flex-col gap-3">
+              {suggestions.map((item, index) => (
+                <li
+                  key={item.keyword}
+                  className="animate-fade-up"
+                  style={{ animationDelay: `${index * LIST_STAGGER_MS}ms` }}
                 >
-                  <span className="text-fg-muted w-3 shrink-0">
-                    {index + 1}
-                  </span>
-                  <span className="text-body-sm-strong truncate">
-                    {item.keyword}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
+                  <button
+                    type="button"
+                    onClick={() => handleSearch(item.keyword)}
+                    className="text-body-sm flex w-full items-center gap-3 text-left"
+                  >
+                    <span className="text-fg-muted w-3 shrink-0">
+                      {index + 1}
+                    </span>
+                    <span className="text-body-sm-strong truncate">
+                      <HighlightedKeyword
+                        keyword={item.keyword}
+                        query={debouncedKeyword}
+                      />
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+      </div>
     </Modal>
   );
 }

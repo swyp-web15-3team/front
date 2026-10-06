@@ -229,6 +229,7 @@ function FilterDropdown({
       <button
         type="button"
         onClick={onToggle}
+        aria-expanded={isOpen}
         className={cn(
           'text-body-sm relative flex items-center gap-1 whitespace-nowrap',
           variant === 'pill'
@@ -244,19 +245,27 @@ function FilterDropdown({
           <span className="bg-primary absolute -top-0.5 -right-0.5 size-1.5 rounded-full" />
         )}
         <ChevronIcon
-          className={cn('size-3 transition-transform', isOpen && 'rotate-180')}
+          className={cn(
+            'size-3 transition-transform duration-[180ms] ease-[var(--ease-spring-soft)]',
+            isOpen && 'rotate-180'
+          )}
         />
       </button>
-      {isOpen && (
-        <div
-          className={cn(
-            'border-border glass shadow-overlay absolute top-full z-20 mt-2 min-w-40 rounded-lg border p-2',
-            align === 'right' ? 'right-0' : 'left-0'
-          )}
-        >
-          {children}
-        </div>
-      )}
+      {/* 닫힘 애니메이션을 그리려고 패널을 항상 렌더한다. visibility는 트랜지션이 끝날 때
+          바뀌므로 사라지는 동안엔 보이고, 다 닫힌 뒤엔 포커스·클릭·스크린리더에서 빠진다 */}
+      <div
+        className={cn(
+          'border-border glass shadow-overlay absolute top-full z-20 mt-2 min-w-40 rounded-lg border p-2 transition-[opacity,scale,visibility]',
+          align === 'right'
+            ? 'right-0 origin-top-right'
+            : 'left-0 origin-top-left',
+          isOpen
+            ? 'visible scale-100 opacity-100 duration-[280ms] ease-[var(--ease-spring)]'
+            : 'pointer-events-none invisible scale-95 opacity-0 duration-[180ms] ease-[var(--ease-out-macos)]'
+        )}
+      >
+        {children}
+      </div>
     </div>
   );
 }

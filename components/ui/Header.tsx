@@ -5,22 +5,21 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
-import { SearchModal, useSearchModal } from '@/components/common/SearchModal';
+import {
+  MAX_SUGGESTIONS,
+  SearchModal,
+  useSearchModal,
+} from '@/components/common/SearchModal';
+import { useWhiskySuggestionsQuery } from '@/hooks/queries/use-whisky';
 import { useCurrentSearchQuery } from '@/hooks/use-current-search-query';
 import { AuthNavAction } from '@/components/ui/AuthNavAction';
 import { cn } from '@/lib/utils';
+import { useSearchStore } from '@/store/use-search-store';
 
-// 검색창에 표시할 추천 검색어
-// 무신사 UI를 많이 참고하시는 것 같아 같이 구현해봄
-const SEARCH_PLACEHOLDER_KEYWORDS = [
-  '야마자키 12년',
-  '하이볼 레시피',
-  '위스키 입문 추천',
-  '가을 신상 위크 오프라인 단독 할인',
-];
+// 추천 검색어를 아직 못 받았거나 비어 있을 때 보여줄 문구
+const SEARCH_PLACEHOLDER_FALLBACK = '위스키를 검색해 보세요';
 
 const SEARCH_PLACEHOLDER_INTERVAL_MS = 3000;
-const SEARCH_PLACEHOLDER_FADE_MS = 200;
 
 interface NavItem {
   href: string;
@@ -52,9 +51,21 @@ const NAV_ITEMS: NavItem[] = [
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
-  const { open: openSearchModal } = useSearchModal();
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  const [isPlaceholderVisible, setIsPlaceholderVisible] = useState(true);
+  const { isOpen: isSearchModalOpen, open: openSearchModal } = useSearchModal();
+  const setPresetKeyword = useSearchStore((state) => state.setPresetKeyword);
+  // placeholder를 넘긴 누적 횟수. 0이면 아직 넘기지 않은 상태라 등장 애니메이션을 생략한다
+  const [placeholderTick, setPlaceholderTick] = useState(0);
+  const [isSearchBarHovered, setIsSearchBarHovered] = useState(false);
+  const [isPageHidden, setIsPageHidden] = useState(false);
+
+  // 검색어 없이 조회한 추천 검색어를 순서대로 돌려 보여준다.
+  // 검색 모달의 빈 입력 상태와 같은 쿼리 키라 캐시를 공유한다.
+  const { data: suggestionsData } = useWhiskySuggestionsQuery('', true);
+  const placeholderKeywords =
+    suggestionsData?.suggestions
+      .slice(0, MAX_SUGGESTIONS)
+      .map(({ keyword }) => keyword) ?? [];
+  const placeholderCount = placeholderKeywords.length;
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 0);
@@ -65,36 +76,67 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    let fadeTimer: ReturnType<typeof setTimeout>;
+    const handleVisibilityChange = () => setIsPageHidden(document.hidden);
 
-    const interval = setInterval(() => {
-      setIsPlaceholderVisible(false);
-
-      fadeTimer = setTimeout(() => {
-        setPlaceholderIndex(
-          (prev) => (prev + 1) % SEARCH_PLACEHOLDER_KEYWORDS.length
-        );
-        setIsPlaceholderVisible(true);
-      }, SEARCH_PLACEHOLDER_FADE_MS);
-    }, SEARCH_PLACEHOLDER_INTERVAL_MS);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(fadeTimer);
-    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () =>
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
+  // 탭이 안 보이거나, 검색창에 마우스를 올렸거나, 검색 모달이 열려 있으면 롤링을 멈춘다
+  const isPlaceholderPaused =
+    isPageHidden || isSearchBarHovered || isSearchModalOpen;
+
+  useEffect(() => {
+    // 돌려 보여줄 검색어가 2개 이상일 때만 순환한다
+    if (placeholderCount < 2 || isPlaceholderPaused) return;
+
+    const interval = setInterval(
+      () => setPlaceholderTick((prev) => prev + 1),
+      SEARCH_PLACEHOLDER_INTERVAL_MS
+    );
+    return () => clearInterval(interval);
+  }, [placeholderCount, isPlaceholderPaused]);
+
+  // 재조회로 목록 길이가 줄어도 범위를 벗어나지 않게 나머지 연산을 한다
+  const currentKeyword =
+    placeholderCount > 0
+      ? placeholderKeywords[placeholderTick % placeholderCount]
+      : undefined;
+  const previousKeyword =
+    placeholderCount > 0 && placeholderTick > 0
+      ? placeholderKeywords[(placeholderTick - 1) % placeholderCount]
+      : undefined;
+
+  // tick마다 key가 바뀌어 새로 마운트되므로 등장/퇴장 애니메이션이 매번 다시 재생된다
   const placeholder = (
-    <span
-      className={cn(
-        'text-fg-subtle block truncate transition-opacity',
-        isPlaceholderVisible ? 'opacity-100' : 'opacity-0'
+    <span className="text-fg-subtle relative block overflow-hidden">
+      {previousKeyword && (
+        <span
+          key={`out-${placeholderTick}`}
+          aria-hidden="true"
+          className="animate-placeholder-out absolute inset-0 truncate"
+        >
+          {previousKeyword}
+        </span>
       )}
-      style={{ transitionDuration: `${SEARCH_PLACEHOLDER_FADE_MS}ms` }}
-    >
-      {SEARCH_PLACEHOLDER_KEYWORDS[placeholderIndex]}
+      <span
+        key={`in-${placeholderTick}`}
+        className={cn(
+          'block truncate',
+          placeholderTick > 0 && 'animate-placeholder-in'
+        )}
+      >
+        {currentKeyword ?? SEARCH_PLACEHOLDER_FALLBACK}
+      </span>
     </span>
   );
+
+  const handleSearchBarClick = () => {
+    // 보이던 추천 검색어를 모달 입력창에 채워 둔다 (검색 결과 페이지에선 현재 검색어가 우선)
+    setPresetKeyword(currentKeyword ?? '');
+    openSearchModal();
+  };
 
   return (
     <header
@@ -129,7 +171,9 @@ export default function Header() {
         <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-4 md:gap-6">
           <button
             type="button"
-            onClick={openSearchModal}
+            onClick={handleSearchBarClick}
+            onMouseEnter={() => setIsSearchBarHovered(true)}
+            onMouseLeave={() => setIsSearchBarHovered(false)}
             id="search-bar"
             aria-label="검색"
             className="bg-surface-sunken/80 hover:bg-surface-sunken text-body-sm flex w-full min-w-0 items-center gap-2 rounded-full py-2 pr-3 pl-5 text-left transition-colors duration-[180ms] sm:max-w-72"

@@ -78,21 +78,6 @@ describe('ProductGrid', () => {
     expect(screen.getAllByText(/^상품 \d+$/).length).toBeGreaterThan(0);
   });
 
-  it('hasNextPage가 false면 마지막 상품 안내 문구를 보여준다', () => {
-    const items = makeItems(5);
-
-    render(
-      <ProductGrid
-        items={items}
-        hasNextPage={false}
-        isFetchingNextPage={false}
-        onLoadMore={() => {}}
-      />
-    );
-
-    expect(screen.getByText('마지막 상품입니다')).toBeInTheDocument();
-  });
-
   it('isFetchingNextPage면 로딩 문구를 보여준다', () => {
     const items = makeItems(5);
 
