@@ -58,6 +58,33 @@ function CloseIcon({ className }: IconProps) {
   );
 }
 
+interface HighlightedKeywordProps {
+  keyword: string;
+  query: string;
+}
+
+// 추천 검색어에서 입력어와 처음 일치하는 부분을 강조한다
+function HighlightedKeyword({ keyword, query }: HighlightedKeywordProps) {
+  const trimmedQuery = query.trim();
+  const start = trimmedQuery
+    ? keyword.toLowerCase().indexOf(trimmedQuery.toLowerCase())
+    : -1;
+
+  if (start === -1) return keyword;
+
+  const end = start + trimmedQuery.length;
+
+  return (
+    <>
+      {keyword.slice(0, start)}
+      <mark className="text-primary-strong bg-transparent">
+        {keyword.slice(start, end)}
+      </mark>
+      {keyword.slice(end)}
+    </>
+  );
+}
+
 export function useSearchModal() {
   return useModal(MODAL_ID.SEARCH);
 }
@@ -214,7 +241,10 @@ export function SearchModal() {
                       {index + 1}
                     </span>
                     <span className="text-body-sm-strong truncate">
-                      {item.keyword}
+                      <HighlightedKeyword
+                        keyword={item.keyword}
+                        query={debouncedKeyword}
+                      />
                     </span>
                   </button>
                 </li>
