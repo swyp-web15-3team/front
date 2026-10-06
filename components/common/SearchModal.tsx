@@ -10,6 +10,7 @@ import { useCurrentSearchQuery } from '@/hooks/use-current-search-query';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useRecentKeywords } from '@/hooks/use-recent-keywords';
 import { useWhiskySuggestionsQuery } from '@/hooks/queries/use-whisky';
+import { useSearchStore } from '@/store/use-search-store';
 
 // 시안 기준 추천 검색어 노출 개수. API 응답이 더 많아도 앞에서부터 이만큼만 보여준다
 // 헤더 검색창 placeholder도 같은 개수를 쓴다
@@ -95,15 +96,16 @@ export function SearchModal() {
   const currentQuery = useCurrentSearchQuery();
   const [keyword, setKeyword] = useState('');
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  const presetKeyword = useSearchStore((state) => state.presetKeyword);
   // 모달은 닫혀도 exit 애니메이션 때문에 DOM에 남는다.
   // 열 때마다 목록을 새로 마운트해 등장 애니메이션을 다시 재생하려고 key로 쓴다
   const [openCount, setOpenCount] = useState(0);
 
-  // 모달이 열릴 때 현재 검색어로 input을 채운다 (렌더 중 state 조정 패턴)
+  // 모달이 열릴 때 현재 검색어(없으면 헤더에 보이던 추천 검색어)로 input을 채운다 (렌더 중 state 조정 패턴)
   if (isOpen !== prevIsOpen) {
     setPrevIsOpen(isOpen);
     if (isOpen) {
-      setKeyword(currentQuery);
+      setKeyword(currentQuery || presetKeyword);
       setOpenCount((prev) => prev + 1);
     }
   }
@@ -122,6 +124,8 @@ export function SearchModal() {
   useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus();
+      // 채워 둔 검색어를 전체 선택해 바로 타이핑하면 덮어쓰게 한다
+      inputRef.current?.select();
     }
   }, [isOpen]);
 

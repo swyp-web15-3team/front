@@ -14,6 +14,7 @@ import { useWhiskySuggestionsQuery } from '@/hooks/queries/use-whisky';
 import { useCurrentSearchQuery } from '@/hooks/use-current-search-query';
 import { AuthNavAction } from '@/components/ui/AuthNavAction';
 import { cn } from '@/lib/utils';
+import { useSearchStore } from '@/store/use-search-store';
 
 // 추천 검색어를 아직 못 받았거나 비어 있을 때 보여줄 문구
 const SEARCH_PLACEHOLDER_FALLBACK = '위스키를 검색해 보세요';
@@ -51,6 +52,7 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
   const { isOpen: isSearchModalOpen, open: openSearchModal } = useSearchModal();
+  const setPresetKeyword = useSearchStore((state) => state.setPresetKeyword);
   // placeholder를 넘긴 누적 횟수. 0이면 아직 넘기지 않은 상태라 등장 애니메이션을 생략한다
   const [placeholderTick, setPlaceholderTick] = useState(0);
   const [isSearchBarHovered, setIsSearchBarHovered] = useState(false);
@@ -130,6 +132,12 @@ export default function Header() {
     </span>
   );
 
+  const handleSearchBarClick = () => {
+    // 보이던 추천 검색어를 모달 입력창에 채워 둔다 (검색 결과 페이지에선 현재 검색어가 우선)
+    setPresetKeyword(currentKeyword ?? '');
+    openSearchModal();
+  };
+
   return (
     <header
       className={cn(
@@ -163,7 +171,7 @@ export default function Header() {
         <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-4 md:gap-6">
           <button
             type="button"
-            onClick={openSearchModal}
+            onClick={handleSearchBarClick}
             onMouseEnter={() => setIsSearchBarHovered(true)}
             onMouseLeave={() => setIsSearchBarHovered(false)}
             id="search-bar"
