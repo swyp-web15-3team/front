@@ -12,7 +12,8 @@ import { useRecentKeywords } from '@/hooks/use-recent-keywords';
 import { useWhiskySuggestionsQuery } from '@/hooks/queries/use-whisky';
 
 // 시안 기준 추천 검색어 노출 개수. API 응답이 더 많아도 앞에서부터 이만큼만 보여준다
-const MAX_SUGGESTIONS = 5;
+// 헤더 검색창 placeholder도 같은 개수를 쓴다
+export const MAX_SUGGESTIONS = 5;
 
 interface IconProps {
   className?: string;

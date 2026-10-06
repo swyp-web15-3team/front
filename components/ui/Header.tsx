@@ -5,19 +5,18 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
-import { SearchModal, useSearchModal } from '@/components/common/SearchModal';
+import {
+  MAX_SUGGESTIONS,
+  SearchModal,
+  useSearchModal,
+} from '@/components/common/SearchModal';
+import { useWhiskySuggestionsQuery } from '@/hooks/queries/use-whisky';
 import { useCurrentSearchQuery } from '@/hooks/use-current-search-query';
 import { AuthNavAction } from '@/components/ui/AuthNavAction';
 import { cn } from '@/lib/utils';
 
-// 검색창에 표시할 추천 검색어
-// 무신사 UI를 많이 참고하시는 것 같아 같이 구현해봄
-const SEARCH_PLACEHOLDER_KEYWORDS = [
-  '야마자키 12년',
-  '하이볼 레시피',
-  '위스키 입문 추천',
-  '가을 신상 위크 오프라인 단독 할인',
-];
+// 추천 검색어를 아직 못 받았거나 비어 있을 때 보여줄 문구
+const SEARCH_PLACEHOLDER_FALLBACK = '위스키를 검색해 보세요';
 
 const SEARCH_PLACEHOLDER_INTERVAL_MS = 3000;
 const SEARCH_PLACEHOLDER_FADE_MS = 200;
@@ -56,6 +55,15 @@ export default function Header() {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isPlaceholderVisible, setIsPlaceholderVisible] = useState(true);
 
+  // 검색어 없이 조회한 추천 검색어를 순서대로 돌려 보여준다.
+  // 검색 모달의 빈 입력 상태와 같은 쿼리 키라 캐시를 공유한다.
+  const { data: suggestionsData } = useWhiskySuggestionsQuery('', true);
+  const placeholderKeywords =
+    suggestionsData?.suggestions
+      .slice(0, MAX_SUGGESTIONS)
+      .map(({ keyword }) => keyword) ?? [];
+  const placeholderCount = placeholderKeywords.length;
+
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 0);
 
@@ -65,15 +73,16 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
+    // 돌려 보여줄 검색어가 2개 이상일 때만 순환한다
+    if (placeholderCount < 2) return;
+
     let fadeTimer: ReturnType<typeof setTimeout>;
 
     const interval = setInterval(() => {
       setIsPlaceholderVisible(false);
 
       fadeTimer = setTimeout(() => {
-        setPlaceholderIndex(
-          (prev) => (prev + 1) % SEARCH_PLACEHOLDER_KEYWORDS.length
-        );
+        setPlaceholderIndex((prev) => (prev + 1) % placeholderCount);
         setIsPlaceholderVisible(true);
       }, SEARCH_PLACEHOLDER_FADE_MS);
     }, SEARCH_PLACEHOLDER_INTERVAL_MS);
@@ -82,7 +91,7 @@ export default function Header() {
       clearInterval(interval);
       clearTimeout(fadeTimer);
     };
-  }, []);
+  }, [placeholderCount]);
 
   const placeholder = (
     <span
@@ -92,7 +101,9 @@ export default function Header() {
       )}
       style={{ transitionDuration: `${SEARCH_PLACEHOLDER_FADE_MS}ms` }}
     >
-      {SEARCH_PLACEHOLDER_KEYWORDS[placeholderIndex]}
+      {/* 재조회로 목록 길이가 줄어도 범위를 벗어나지 않게 나머지 연산을 한다 */}
+      {placeholderKeywords[placeholderIndex % placeholderCount] ??
+        SEARCH_PLACEHOLDER_FALLBACK}
     </span>
   );
 
