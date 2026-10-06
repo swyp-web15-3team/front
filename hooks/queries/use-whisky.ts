@@ -32,14 +32,23 @@ export const whiskyKeys = {
     [...whiskyKeys.all, 'suggestions', query] as const,
 };
 
+interface WhiskyListQueryOptions {
+  // 조건이 바뀌어 새로 조회하는 동안 이전 결과를 계속 보여준다
+  keepPreviousResults?: boolean;
+}
+
 // 위스키 목록 검색
-export function useWhiskyListQuery(filters: WhiskyListFilters = {}) {
+export function useWhiskyListQuery(
+  filters: WhiskyListFilters = {},
+  { keepPreviousResults = false }: WhiskyListQueryOptions = {}
+) {
   return useInfiniteQuery({
     queryKey: whiskyKeys.list(filters),
     queryFn: ({ pageParam }) => fetchWhiskies({ ...filters, page: pageParam }),
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
       lastPage.page + 1 < lastPage.totalPages ? lastPage.page + 1 : undefined,
+    placeholderData: keepPreviousResults ? keepPreviousData : undefined,
   });
 }
 

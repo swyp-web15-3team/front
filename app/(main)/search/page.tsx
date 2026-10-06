@@ -131,11 +131,16 @@ function SearchResults({ query }: SearchResultsProps) {
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useWhiskyListQuery({
-    query,
-    sort,
-    ...toWhiskyListParams(filters, categoryData?.categories ?? []),
-  });
+  } = useWhiskyListQuery(
+    {
+      query,
+      sort,
+      ...toWhiskyListParams(filters, categoryData?.categories ?? []),
+    },
+    // 필터·정렬을 바꿀 때마다 결과가 "불러오는 중"으로 비었다가 다시 그려지지 않게 한다.
+    // 검색어가 바뀌면 SearchResults가 key로 새로 마운트되므로 이전 검색 결과는 남지 않는다
+    { keepPreviousResults: true }
+  );
 
   const items =
     data?.pages.flatMap((page) => page.content.map(whiskyToProduct)) ?? [];
