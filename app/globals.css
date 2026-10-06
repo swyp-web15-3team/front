@@ -127,6 +127,8 @@
   --animate-placeholder-in: placeholder-in 280ms var(--ease-spring-soft);
   --animate-placeholder-out: placeholder-out 180ms var(--ease-out-macos)
     forwards;
+  /* 목록 항목 등장. 순차 등장은 animation-delay로 준다 */
+  --animate-fade-up: fade-up 280ms var(--ease-spring-soft) both;
 
   @keyframes placeholder-in {
     from {
@@ -137,6 +139,12 @@
   @keyframes placeholder-out {
     to {
       transform: translateY(-100%);
+      opacity: 0;
+    }
+  }
+  @keyframes fade-up {
+    from {
+      transform: translateY(4px);
       opacity: 0;
     }
   }

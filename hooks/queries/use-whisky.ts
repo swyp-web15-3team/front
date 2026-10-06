@@ -1,4 +1,8 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useQuery,
+} from '@tanstack/react-query';
 
 import { searchWhiskyCandidates } from '@/lib/api/test-whisky';
 import {
@@ -81,5 +85,7 @@ export function useWhiskySuggestionsQuery(query: string, enabled: boolean) {
     queryFn: () =>
       fetchWhiskySuggestions(trimmedQuery ? { query: trimmedQuery } : {}),
     enabled,
+    // 입력이 바뀌어 새로 조회하는 동안 이전 목록을 유지해 목록이 사라졌다 나타나는 깜빡임을 막는다
+    placeholderData: keepPreviousData,
   });
 }
