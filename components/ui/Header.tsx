@@ -147,12 +147,7 @@ export default function Header() {
     >
       <div className="mx-auto flex max-w-300 items-center gap-4 px-4 py-3 sm:px-6 md:gap-6">
         <Link href="/" className="shrink-0">
-          <Image
-            src="https://placehold.co/120x31.png"
-            alt="Logo"
-            width={120}
-            height={31}
-          />
+          <Image src="/logo.svg" alt="술케줄" width={80} height={41} />
         </Link>
         <nav className="text-body-sm hidden shrink-0 items-center gap-4 whitespace-nowrap sm:flex md:gap-6">
           {NAV_ITEMS.map(({ href, label, isActive }) => (

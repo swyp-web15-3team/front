@@ -8,12 +8,7 @@ export default function Footer() {
       <div className="flex w-full justify-between">
         <div className="flex flex-col gap-2">
           {/* Logo */}
-          <Image
-            src="https://placehold.co/120x31.png"
-            alt="Logo"
-            width={120}
-            height={31}
-          />
+          <Image src="/logo.svg" alt="술케줄" width={80} height={41} />
           <div className="flex gap-1.5">
             <span>{PROJECT_NAME}</span>
             <span className="text-fg-subtle">|</span>

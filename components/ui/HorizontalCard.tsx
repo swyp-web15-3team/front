@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { DEFAULT_WHISKY_IMAGE } from '@/constants/images';
 import { cn, formatAmount } from '@/lib/utils';
 import { Product } from '@/types/product';
 
@@ -49,32 +50,19 @@ export function HorizontalCard({
           isCompact ? 'w-24' : 'w-32'
         )}
       >
-        {imageUrl && !hasError ? (
-          <Image
-            src={imageUrl}
-            alt={`${name} ${originalName}` || ''}
-            fill
-            sizes={isCompact ? '96px' : '128px'}
-            loading={loading}
-            className={cn(
-              // compact(모달 목록)는 정사각 썸네일로 맞춰 자른다.
-              // 기본형은 상품 전체가 보여야 해서 여백을 남긴다.
-              isCompact
-                ? 'rounded-xl object-cover'
-                : 'rounded-lg object-contain'
-            )}
-            onError={() => setHasError(true)}
-          />
-        ) : (
-          <div
-            className={cn(
-              'bg-surface-sunken text-caption text-fg-subtle flex h-full w-full items-center justify-center text-center',
-              isCompact ? 'rounded-xl' : 'rounded-lg'
-            )}
-          >
-            이미지 로딩 실패
-          </div>
-        )}
+        <Image
+          src={imageUrl && !hasError ? imageUrl : DEFAULT_WHISKY_IMAGE}
+          alt={`${name} ${originalName}` || ''}
+          fill
+          sizes={isCompact ? '96px' : '128px'}
+          loading={loading}
+          className={cn(
+            // compact(모달 목록)는 정사각 썸네일로 맞춰 자른다.
+            // 기본형은 상품 전체가 보여야 해서 여백을 남긴다.
+            isCompact ? 'rounded-xl object-cover' : 'rounded-lg object-contain'
+          )}
+          onError={() => setHasError(true)}
+        />
       </div>
 
       {isCompact ? (

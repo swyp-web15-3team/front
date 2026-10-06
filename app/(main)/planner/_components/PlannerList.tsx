@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { DEFAULT_WHISKY_IMAGE } from '@/constants/images';
 
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
@@ -49,16 +50,10 @@ function RowThumbnail({
   )?.imageUrl;
   const imageUrl = saleProductImage || data?.imageUrl;
 
-  if (!imageUrl || hasError) {
-    return (
-      <div className="border-border bg-surface-sunken size-14 shrink-0 rounded-md border" />
-    );
-  }
-
   return (
     <div className="border-border bg-surface-sunken relative size-14 shrink-0 overflow-hidden rounded-md border">
       <Image
-        src={imageUrl}
+        src={imageUrl && !hasError ? imageUrl : DEFAULT_WHISKY_IMAGE}
         alt={whiskyName}
         fill
         sizes="56px"

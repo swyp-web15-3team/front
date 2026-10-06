@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useSaveItemModal } from '@/components/common/SaveItemModal';
 import { useSavedWhiskyIds } from '@/hooks/queries/use-collection';
 import { rememberCurrentPath } from '@/lib/login-return';
+import { DEFAULT_WHISKY_IMAGE } from '@/constants/images';
 import { cn, formatAmount } from '@/lib/utils';
 import { useAuthStore } from '@/store/use-auth-store';
 import { Product } from '@/types/product';
@@ -60,22 +61,15 @@ export function VerticalCard({
       )}
     >
       <div className="relative aspect-square w-full">
-        {imageUrl && !hasError ? (
-          <Image
-            src={imageUrl}
-            alt={originalName ? `${name} ${originalName}` : name}
-            fill
-            sizes="(max-width: 768px) 50vw, 240px"
-            loading={loading}
-            className="object-contain"
-            onError={() => setHasError(true)}
-          />
-        ) : (
-          <div className="bg-surface-sunken text-body-sm text-fg-subtle flex h-full w-full items-center justify-center text-center">
-            {/* TODO: 이미지 로딩 실패 시 표시할 내용 추가 */}
-            이미지 로딩 실패
-          </div>
-        )}
+        <Image
+          src={imageUrl && !hasError ? imageUrl : DEFAULT_WHISKY_IMAGE}
+          alt={originalName ? `${name} ${originalName}` : name}
+          fill
+          sizes="(max-width: 768px) 50vw, 240px"
+          loading={loading}
+          className="object-contain"
+          onError={() => setHasError(true)}
+        />
         {discountRate !== 0 && (
           <span className="text-primary bg-canvas text-price-discount absolute bottom-0 left-0 rounded-tr-lg px-3 py-1.5">
             {discountRate}%

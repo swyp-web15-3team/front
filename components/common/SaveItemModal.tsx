@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { DEFAULT_WHISKY_IMAGE } from '@/constants/images';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
@@ -303,15 +304,13 @@ function CollectionThumbnail({
         className
       )}
     >
-      {imageUrl && (
-        <Image
-          src={imageUrl}
-          alt={alt}
-          fill
-          sizes="64px"
-          className="object-contain"
-        />
-      )}
+      <Image
+        src={imageUrl || DEFAULT_WHISKY_IMAGE}
+        alt={alt}
+        fill
+        sizes="64px"
+        className="object-contain"
+      />
     </div>
   );
 }
