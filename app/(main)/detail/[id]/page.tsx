@@ -2,6 +2,7 @@ import { cache } from 'react';
 import { isAxiosError } from 'axios';
 import type { Metadata } from 'next';
 import Image from 'next/image';
+import { DEFAULT_WHISKY_IMAGE } from '@/constants/images';
 import { notFound } from 'next/navigation';
 
 import { CommentSection } from '@/app/(main)/detail/_components/CommentSection';
@@ -104,20 +105,14 @@ export default async function DetailPage({
     <div className="flex flex-col gap-12 py-6 sm:gap-16 sm:py-10">
       <section className="grid gap-6 md:grid-cols-2 md:gap-8">
         <div className="border-border bg-canvas relative aspect-square w-full overflow-hidden rounded-lg border">
-          {whisky.imageUrl ? (
-            <Image
-              src={whisky.imageUrl}
-              alt={whisky.name}
-              fill
-              sizes="(max-width: 768px) 100vw, 560px"
-              priority
-              className="object-contain"
-            />
-          ) : (
-            <div className="bg-surface-sunken text-body-sm text-fg-subtle flex h-full items-center justify-center">
-              이미지 준비 중
-            </div>
-          )}
+          <Image
+            src={whisky.imageUrl || DEFAULT_WHISKY_IMAGE}
+            alt={whisky.name}
+            fill
+            sizes="(max-width: 768px) 100vw, 560px"
+            priority
+            className="object-contain"
+          />
         </div>
 
         <div className="flex flex-col md:pt-12">
