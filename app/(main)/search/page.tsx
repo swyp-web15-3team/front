@@ -169,7 +169,6 @@ function SearchResults({ query }: SearchResultsProps) {
         </div>
       ) : (
         <>
-          <p>{items.length}개 불러옴</p>
           <ProductGrid
             items={items}
             hasNextPage={hasNextPage}
