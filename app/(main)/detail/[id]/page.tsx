@@ -3,6 +3,7 @@ import { isAxiosError } from 'axios';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { DEFAULT_WHISKY_IMAGE } from '@/constants/images';
+import { SHARED_OPEN_GRAPH } from '@/constants/site';
 import { notFound } from 'next/navigation';
 
 import { CommentSection } from '@/app/(main)/detail/_components/CommentSection';
@@ -39,7 +40,34 @@ export async function generateMetadata({
   if (whiskyId === null) return {};
 
   const whisky = await getWhiskyDetail(whiskyId);
-  return { title: whisky.name };
+  const lowestPriceKrw = findLowestPriceKrw(
+    whisky.saleProducts.filter((sale) => !sale.isSoldOut)
+  );
+  const description = [
+    whisky.category?.name,
+    whisky.volumeMl ? `${whisky.volumeMl.toLocaleString('ko-KR')}ml` : null,
+    whisky.abv != null ? `${Number(whisky.abv)}%` : null,
+    lowestPriceKrw !== null ? `최저가 ${formatKrw(lowestPriceKrw)}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const title = `${whisky.name} 가격 비교`;
+  const url = `/detail/${whiskyId}`;
+
+  return {
+    title,
+    description: description || undefined,
+    alternates: { canonical: url },
+    openGraph: {
+      ...SHARED_OPEN_GRAPH,
+      title,
+      description: description || undefined,
+      url,
+      images: [
+        { url: whisky.imageUrl || DEFAULT_WHISKY_IMAGE, alt: whisky.name },
+      ],
+    },
+  };
 }
 
 // 연관 위스키는 부가 정보라 실패해도 상세 화면은 그대로 보여준다
