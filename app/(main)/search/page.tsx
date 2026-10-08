@@ -146,7 +146,7 @@ function SearchResults({ query }: SearchResultsProps) {
     data?.pages.flatMap((page) => page.content.map(whiskyToProduct)) ?? [];
 
   return (
-    <div className="mx-auto max-w-300">
+    <div className="mx-auto flex max-w-300 flex-col gap-4">
       <FilterBar
         sort={sort}
         onSortChange={setSort}
