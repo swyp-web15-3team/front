@@ -153,7 +153,7 @@ export function SearchModal() {
       isOpen={isOpen}
       onClose={handleClose}
       panelClassName="max-w-[1200px] rounded-t-none"
-      overlayClassName="items-start"
+      overlayClassName="items-start px-0"
     >
       <form onSubmit={handleSubmit} className="flex gap-2">
         <div className="bg-tertiary flex flex-1 items-center gap-2 rounded-md px-4">

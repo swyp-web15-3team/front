@@ -57,10 +57,10 @@ export function ShopTable({ sales, lowestPriceKrw }: ShopTableProps) {
             <th scope="col" className="pb-3 font-medium">
               판매처
             </th>
-            <th scope="col" className="w-20 pb-3 font-medium sm:w-32">
-              구매 가능 지역
+            <th scope="col" className="w-14 pb-3 font-medium sm:w-32">
+              <span className="hidden sm:inline">구매 가능 </span>지역
             </th>
-            <th scope="col" className="w-32 pb-3 font-medium sm:w-56">
+            <th scope="col" className="w-28 pb-3 font-medium sm:w-56">
               가격
             </th>
           </tr>
@@ -102,15 +102,16 @@ function ShopRow({ sale, isLowest }: { sale: SaleProduct; isLowest: boolean }) {
   return (
     <tr className={cn(sale.isSoldOut && 'opacity-50')}>
       <td className="py-3">
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 items-center gap-1 sm:gap-2">
           {/* TODO: 판매처 로고 필드가 API에 추가되면 이미지로 교체 */}
           <span
             aria-hidden="true"
-            className="border-border bg-surface-sunken text-body-sm-strong text-fg-muted flex size-10 shrink-0 items-center justify-center rounded-sm border"
+            className="border-border bg-surface-sunken text-body-sm-strong text-fg-muted flex size-8 shrink-0 items-center justify-center rounded-sm border sm:size-10"
           >
             {sale.retailerName.slice(0, 1)}
           </span>
-          <span className="text-body text-fg truncate">
+          {/* 이름이 남는 폭을 다 차지해 아이콘이 이름 길이와 상관없이 오른쪽 끝에 정렬된다 */}
+          <span className="text-body text-fg min-w-0 flex-1 truncate">
             {sale.retailerName}
           </span>
           {sale.productUrl && (
@@ -119,7 +120,7 @@ function ShopRow({ sale, isLowest }: { sale: SaleProduct; isLowest: boolean }) {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`${sale.retailerName} 상품 페이지 열기`}
-              className="text-fg hover:text-fg-muted flex size-8 shrink-0 items-center justify-center"
+              className="text-fg hover:text-fg-muted flex size-6 shrink-0 items-center justify-center sm:size-8"
             >
               <ExternalLinkIcon />
             </a>
@@ -135,7 +136,7 @@ function ShopRow({ sale, isLowest }: { sale: SaleProduct; isLowest: boolean }) {
               openGoogleMaps(sale.retailerAddress);
             }}
             aria-label={`${sale.retailerName} 위치 보기`}
-            className="text-fg hover:text-fg-muted -ml-1 flex size-8 shrink-0 items-center justify-center"
+            className="text-fg hover:text-fg-muted flex size-6 shrink-0 items-center justify-center sm:-ml-1 sm:size-8"
           >
             <MapPinIcon />
           </button>
@@ -152,10 +153,16 @@ function ShopRow({ sale, isLowest }: { sale: SaleProduct; isLowest: boolean }) {
         ) : (
           <>
             <p
-              className={cn('text-price', isLowest ? 'text-danger' : 'text-fg')}
+              className={cn(
+                'text-price',
+                isLowest ? 'text-danger max-sm:leading-tight' : 'text-fg'
+              )}
             >
-              {isLowest && '최저가 '}
-              {formatKrw(priceKrw)}
+              {/* 모바일은 칸이 좁아 금액이 중간에서 끊기지 않게 "최저가"를 윗줄로 뺀다 */}
+              {isLowest && (
+                <span className="max-sm:text-t3 block sm:inline">최저가 </span>
+              )}
+              <span className="whitespace-nowrap">{formatKrw(priceKrw)}</span>
             </p>
             {price?.currency === 'JPY' && (
               <p className="text-price-sub text-fg-muted mt-1">

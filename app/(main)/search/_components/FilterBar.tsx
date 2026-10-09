@@ -104,7 +104,7 @@ export function FilterBar({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="relative flex flex-wrap items-center gap-2">
         <button
           type="button"
           aria-label="필터 열기"
@@ -119,6 +119,8 @@ export function FilterBar({
 
         {renderOptionDropdown('category')}
 
+        {/* 패널이 넓어서 버튼 기준으로 붙이면 모바일에서 화면 밖으로 나가 가로 스크롤이 생긴다.
+            모바일에선 필터 줄 기준으로 붙이고 줄 폭을 넘지 않게 한다 */}
         <FilterDropdown
           label="가격대"
           variant="pill"
@@ -126,8 +128,10 @@ export function FilterBar({
           onToggle={() => toggleOpen('price')}
           onClose={() => setOpenKey(null)}
           hasActive={filters.price !== null}
+          className="static sm:relative"
+          panelClassName="max-w-full sm:max-w-none"
         >
-          <div className="w-80 p-2">
+          <div className="w-80 max-w-full p-2">
             <PriceRangeField value={priceDraft} onChange={setPriceDraft} />
           </div>
         </FilterDropdown>
@@ -187,6 +191,7 @@ interface FilterDropdownProps {
   hasActive?: boolean;
   align?: 'left' | 'right';
   className?: string;
+  panelClassName?: string;
   children: React.ReactNode;
 }
 
@@ -199,6 +204,7 @@ function FilterDropdown({
   hasActive = false,
   align = 'left',
   className,
+  panelClassName,
   children,
 }: FilterDropdownProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -261,7 +267,8 @@ function FilterDropdown({
             : 'left-0 origin-top-left',
           isOpen
             ? 'visible scale-100 opacity-100 duration-[280ms] ease-[var(--ease-spring)]'
-            : 'pointer-events-none invisible scale-95 opacity-0 duration-[180ms] ease-[var(--ease-out-macos)]'
+            : 'pointer-events-none invisible scale-95 opacity-0 duration-[180ms] ease-[var(--ease-out-macos)]',
+          panelClassName
         )}
       >
         {children}

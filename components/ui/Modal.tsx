@@ -18,7 +18,7 @@ interface ModalProps {
 }
 
 const DEFAULT_OVERLAY_CLASSNAME =
-  'fixed inset-0 z-[var(--z-overlay)] flex items-center justify-center bg-[var(--glass-tint-scrim)] backdrop-blur-md transition-opacity duration-[280ms] ease-[var(--ease-out-macos)]';
+  'fixed inset-0 z-[var(--z-overlay)] flex items-center justify-center px-4 bg-[var(--glass-tint-scrim)] backdrop-blur-md transition-opacity duration-[280ms] ease-[var(--ease-out-macos)]';
 const DEFAULT_PANEL_CLASSNAME =
   'bg-canvas text-fg shadow-overlay w-full max-w-[800px] rounded-xl p-6 transition-[transform,opacity] duration-[280ms] ';
 
