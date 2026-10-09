@@ -29,7 +29,7 @@ export function ShareButton() {
       variant="secondary"
       onClick={handleShare}
       fullWidth
-      className="gap-1.5 border-transparent"
+      className="gap-1.5"
     >
       {copied ? '링크가 복사되었어요' : '공유하기'}
       <ShareIcon />
