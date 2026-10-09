@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
   { href: '/', label: '홈', icon: '/icons/home.svg' },
-  { href: '/wishlist', label: '콜렉션', icon: '/icons/whisky.svg' },
+  { href: '/mypage/collection', label: '콜렉션', icon: '/icons/whisky.svg' },
   { href: '/planner', label: '플래너', icon: '/icons/calculator.svg' },
   { href: '/mypage', label: '마이', icon: '/icons/user.svg' },
 ] as const;
