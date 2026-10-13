@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import { FALLBACK_RETAILER_ADDRESS } from '@/constants/retailer-address';
 import { openGoogleMaps } from '@/lib/google-maps';
 import { formatKrw, getSalePriceKrw } from '@/lib/sale-price';
 import { cn } from '@/lib/utils';
@@ -128,12 +129,15 @@ function ShopRow({ sale, isLowest }: { sale: SaleProduct; isLowest: boolean }) {
           <button
             type="button"
             onClick={() => {
+              const address =
+                sale.retailerAddress ||
+                FALLBACK_RETAILER_ADDRESS[sale.retailerName];
               // TODO: 공통 토스트 유틸 도입 후 alert 교체
-              if (!sale.retailerAddress) {
+              if (!address) {
                 alert('등록된 매장 주소가 없습니다.');
                 return;
               }
-              openGoogleMaps(sale.retailerAddress);
+              openGoogleMaps(address);
             }}
             aria-label={`${sale.retailerName} 위치 보기`}
             className="text-fg hover:text-fg-muted flex size-6 shrink-0 items-center justify-center sm:-ml-1 sm:size-8"
