@@ -3,79 +3,51 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import { PolicyDocument } from '@/components/common/PolicyDocument';
 import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
+import { PRIVACY_POLICY, TERMS_OF_SERVICE } from '@/constants/policies';
 import { isAlreadySignedUp, useSignUpMutation } from '@/hooks/queries/use-auth';
 import { NICKNAME_MAX_LENGTH } from '@/lib/api/user';
 import { peekLoginReturn } from '@/lib/login-return';
 import type { SignUpRequest } from '@/types/auth';
+import type { PolicyDoc } from '@/types/policy';
 
 import { ChevronRightIcon } from '@heroicons/react/24/solid';
 
-type AgreementKey = Exclude<keyof SignUpRequest, 'nickname'>;
+// 화면에서 받는 동의는 문서가 있는 2개뿐이다. 나머지 요청 필드는 가입 시 고정값으로 보낸다.
+type AgreementKey = 'termsOfServiceAgreed' | 'privacyPolicyAgreed';
 
 interface Term {
   id: AgreementKey;
   label: string;
-  required: boolean;
   /** 상세 보기에 노출할 약관 본문. 링크 대신 인앱으로 보여준다. */
-  detail: string;
+  doc: PolicyDoc;
 }
 
-interface TermGroup {
-  title: string;
-  terms: Term[];
-}
-
-const TERM_GROUPS: TermGroup[] = [
+const TERMS: Term[] = [
   {
-    title: '회원가입 동의',
-    terms: [
-      {
-        id: 'ageOver14Agreed',
-        label: '(필수) 만 14세 이상입니다',
-        required: true,
-        detail:
-          '만 14세 미만 아동은 법정대리인의 동의 없이 서비스를 이용할 수 없습니다. 가입자 본인이 만 14세 이상임을 확인합니다.',
-      },
-      {
-        id: 'termsOfServiceAgreed',
-        label: '(필수) 서비스 이용약관 동의',
-        required: true,
-        detail:
-          '서비스 이용 조건, 회원의 권리와 의무, 게시물 관리 정책 등 서비스 이용 전반에 관한 약관입니다. 회원은 약관에 동의함으로써 서비스를 이용할 수 있습니다.',
-      },
-      {
-        id: 'privacyPolicyAgreed',
-        label: '(필수) 개인정보 수집 및 이용 동의',
-        required: true,
-        detail:
-          '수집 항목: 카카오 계정 식별자, 닉네임. 수집 목적: 회원 식별 및 서비스 제공. 보유 기간: 회원 탈퇴 시까지. 동의를 거부할 수 있으나, 거부 시 회원가입이 제한됩니다.',
-      },
-    ],
+    id: 'termsOfServiceAgreed',
+    label: '(필수) 서비스 이용약관 동의',
+    doc: TERMS_OF_SERVICE,
   },
   {
-    title: '마케팅 수신 동의',
-    terms: [
-      {
-        id: 'marketingAgreed',
-        label: '(선택) 마케팅 정보 수신 동의',
-        required: false,
-        detail:
-          '신규 위스키 입고, 할인 정보 등 마케팅 정보를 수신합니다. 동의하지 않아도 서비스 이용에 제한은 없으며, 가입 후 언제든 변경할 수 있습니다.',
-      },
-    ],
+    id: 'privacyPolicyAgreed',
+    label: '(필수) 개인정보 수집 및 이용 동의',
+    doc: PRIVACY_POLICY,
   },
 ];
 
-const ALL_TERMS = TERM_GROUPS.flatMap((group) => group.terms);
-
 const EMPTY_AGREEMENTS: Record<AgreementKey, boolean> = {
-  ageOver14Agreed: false,
   termsOfServiceAgreed: false,
   privacyPolicyAgreed: false,
-  marketingAgreed: false,
 };
+
+// 별도 문서가 없어 화면에서 받지 않는 항목. 필수(만 14세)는 동의, 선택(마케팅)은 미동의로 보낸다.
+const FIXED_AGREEMENTS = {
+  ageOver14Agreed: true,
+  marketingAgreed: false,
+} satisfies Omit<SignUpRequest, AgreementKey | 'nickname'>;
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -85,21 +57,13 @@ export default function SignUpPage() {
   const [nickname, setNickname] = useState('');
   const { mutate: signUp, isPending } = useSignUpMutation();
 
-  const allChecked = ALL_TERMS.every((term) => agreements[term.id]);
-  const requiredChecked = ALL_TERMS.filter((term) => term.required).every(
-    (term) => agreements[term.id]
-  );
+  const allChecked = TERMS.every((term) => agreements[term.id]);
   const nicknameValid =
     nickname.trim().length > 0 && nickname.trim().length <= NICKNAME_MAX_LENGTH;
 
   const toggleAll = () => {
     const next = !allChecked;
-    setAgreements({
-      ageOver14Agreed: next,
-      termsOfServiceAgreed: next,
-      privacyPolicyAgreed: next,
-      marketingAgreed: next,
-    });
+    setAgreements({ termsOfServiceAgreed: next, privacyPolicyAgreed: next });
   };
 
   const toggle = (id: AgreementKey) =>
@@ -110,9 +74,9 @@ export default function SignUpPage() {
     return (
       <div className="mx-auto flex min-h-full w-full max-w-md flex-1 flex-col px-4 pb-12">
         <h2 className="text-section-title mt-2">{openedTerm.label}</h2>
-        <p className="text-body-sm text-fg-muted mt-4 whitespace-pre-line">
-          {openedTerm.detail}
-        </p>
+        <div className="mt-4">
+          <PolicyDocument doc={openedTerm.doc} />
+        </div>
         <StepFooter
           title="약관 상세"
           onBack={() => setOpenedTerm(null)}
@@ -159,7 +123,7 @@ export default function SignUpPage() {
           disabled={!nicknameValid || isPending}
           onConfirm={() =>
             signUp(
-              { ...agreements, nickname: nickname.trim() },
+              { ...agreements, ...FIXED_AGREEMENTS, nickname: nickname.trim() },
               {
                 onSuccess: () => router.push(peekLoginReturn()?.path ?? '/'),
                 // 이미 가입된 사용자(409)는 훅이 로그인 처리하므로 그대로 복귀시킨다.
@@ -195,31 +159,29 @@ export default function SignUpPage() {
           />
         </Card>
 
-        {TERM_GROUPS.map((group) => (
-          <Card key={group.title}>
-            <h2 className="text-section-title">{group.title}</h2>
-            <div className="border-border mt-4 flex flex-col gap-4 border-t pt-4">
-              {group.terms.map((term) => (
-                <div key={term.id} className="flex items-center gap-2">
-                  <Checkbox
-                    shape="round"
-                    checked={agreements[term.id]}
-                    onChange={() => toggle(term.id)}
-                    label={term.label}
-                  />
-                  <button
-                    type="button"
-                    aria-label={`${term.label} 상세 보기`}
-                    onClick={() => setOpenedTerm(term)}
-                    className="text-fg-muted hover:text-fg ml-auto shrink-0 p-1"
-                  >
-                    <ChevronRightIcon className="size-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </Card>
-        ))}
+        <Card>
+          <h2 className="text-section-title">회원가입 동의</h2>
+          <div className="border-border mt-4 flex flex-col gap-4 border-t pt-4">
+            {TERMS.map((term) => (
+              <div key={term.id} className="flex items-center gap-2">
+                <Checkbox
+                  shape="round"
+                  checked={agreements[term.id]}
+                  onChange={() => toggle(term.id)}
+                  label={term.label}
+                />
+                <button
+                  type="button"
+                  aria-label={`${term.label} 상세 보기`}
+                  onClick={() => setOpenedTerm(term)}
+                  className="text-fg-muted hover:text-fg ml-auto shrink-0 p-1"
+                >
+                  <ChevronRightIcon className="size-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </Card>
       </div>
 
       <StepFooter
@@ -227,7 +189,7 @@ export default function SignUpPage() {
         onBack={() => router.back()}
         step={1}
         label="확인"
-        disabled={!requiredChecked}
+        disabled={!allChecked}
         onConfirm={() => setStep('nickname')}
       />
     </div>
