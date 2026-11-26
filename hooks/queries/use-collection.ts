@@ -18,7 +18,6 @@ import {
   removeCollectionItems,
   renameCollection,
 } from '@/lib/api/collection';
-import { useAuthStore } from '@/store/use-auth-store';
 
 export const collectionKeys = {
   all: ['collections'] as const,
@@ -196,14 +195,12 @@ export function useCopyCollectionItemsMutation() {
  * 로그인한 사용자가 어느 콜렉션에든 담아 둔 위스키 id 모음.
  * 카드의 북마크를 "저장됨"으로 그릴 때 쓴다. 저장 모달과 같은 쿼리 키를 써서
  * 모달에서 담기/빼기를 하면 무효화가 그대로 이어져 카드도 다시 그려진다.
- * 비로그인이면 요청하지 않는다 (401 -> /login 리다이렉트 방지).
+ * 비로그인이면 guest-adapter가 localStorage 콜렉션으로 응답한다.
  */
 export function useSavedWhiskyIds(): Set<number> {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { data } = useQuery({
     queryKey: collectionKeys.lists(),
     queryFn: fetchCollections,
-    enabled: isAuthenticated,
   });
   const collectionIds = data?.collections.map((c) => c.id) ?? [];
 
@@ -211,7 +208,6 @@ export function useSavedWhiskyIds(): Set<number> {
     queries: collectionIds.map((collectionId) => ({
       queryKey: collectionKeys.item(collectionId),
       queryFn: () => fetchCollectionItems(collectionId),
-      enabled: isAuthenticated,
     })),
     combine: (results) =>
       new Set(

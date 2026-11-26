@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 import {
   type SaveItemWhisky,
@@ -9,17 +8,13 @@ import {
 } from '@/components/common/SaveItemModal';
 import { Button } from '@/components/ui/Button';
 import { useSavedWhiskyIds } from '@/hooks/queries/use-collection';
-import { rememberCurrentPath } from '@/lib/login-return';
 import { cn } from '@/lib/utils';
-import { useAuthStore } from '@/store/use-auth-store';
 
 interface SaveButtonProps {
   whisky: SaveItemWhisky;
 }
 
 export function SaveButton({ whisky }: SaveButtonProps) {
-  const router = useRouter();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { open: openSaveItemModal } = useSaveItemModal();
   // TODO: 저장됨 상태 디자인이 나오면 스타일도 구분한다. 지금은 문구와 아이콘만 바꾼다.
   const isSaved = useSavedWhiskyIds().has(whisky.id);
@@ -38,16 +33,11 @@ export function SaveButton({ whisky }: SaveButtonProps) {
     }
   }
 
+  // 비로그인도 localStorage 콜렉션에 담는다 (lib/api/guest-adapter.ts).
   const handleClick = () => {
-    if (isAuthenticated) {
-      setHasRequestedSave(true);
-      // 어느 콜렉션에 담을지는 모달이 정한다(카드의 저장 버튼과 동일).
-      openSaveItemModal(whisky);
-      return;
-    }
-    // 로그인 후 이 페이지로 돌아와 저장 모달이 자동으로 열리게 한다.
-    rememberCurrentPath(whisky);
-    router.push('/login');
+    setHasRequestedSave(true);
+    // 어느 콜렉션에 담을지는 모달이 정한다(카드의 저장 버튼과 동일).
+    openSaveItemModal(whisky);
   };
 
   return (

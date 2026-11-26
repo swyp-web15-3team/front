@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { reissueAccessToken } from '@/lib/api/client';
@@ -17,8 +17,12 @@ import { useAuthStore } from '@/store/use-auth-store';
  */
 export function LoginRedirect() {
   const router = useRouter();
+  const pathname = usePathname();
+  // 콜렉션은 비로그인도 localStorage로 체험할 수 있다 (lib/api/guest-adapter.ts).
+  const isGuestAllowed = pathname.startsWith('/mypage/collection');
 
   useEffect(() => {
+    if (isGuestAllowed) return;
     if (useAuthStore.getState().isAuthenticated) return;
 
     reissueAccessToken()
@@ -29,7 +33,7 @@ export function LoginRedirect() {
         rememberCurrentPath();
         router.replace('/login');
       });
-  }, [router]);
+  }, [router, isGuestAllowed]);
 
   return null;
 }

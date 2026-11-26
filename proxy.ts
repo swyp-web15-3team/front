@@ -15,4 +15,5 @@ export function proxy(request: NextRequest) {
   return NextResponse.redirect(loginUrl);
 }
 
-export const config = { matcher: ['/planner/:path*', '/mypage/:path*'] };
+// 플래너/콜렉션은 비로그인도 localStorage로 체험할 수 있어 막지 않는다 (lib/api/guest-adapter.ts).
+export const config = { matcher: ['/mypage', '/mypage/withdraw'] };

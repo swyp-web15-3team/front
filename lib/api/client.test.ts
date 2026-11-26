@@ -42,7 +42,7 @@ describe('401 처리', () => {
   it('이미 /login이면 재발급 실패해도 다시 이동시키지 않는다', async () => {
     const location = stubLocation('/login');
 
-    await expect(apiClient.get('/collections')).rejects.toBeDefined();
+    await expect(apiClient.get('/whiskies')).rejects.toBeDefined();
 
     expect(location.href).toBe('http://localhost:3000/login');
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
@@ -51,7 +51,7 @@ describe('401 처리', () => {
   it('다른 페이지에서는 재발급 실패 시 /login으로 이동한다', async () => {
     const location = stubLocation('/search');
 
-    await expect(apiClient.get('/collections')).rejects.toBeDefined();
+    await expect(apiClient.get('/whiskies')).rejects.toBeDefined();
 
     expect(location.href).toBe('/login');
   });
@@ -66,7 +66,7 @@ describe('401 -> 재발급 성공', () => {
     stubLocation('/mypage/collection');
     requestLog = [];
     // 토큰이 붙기 전 요청만 401. 재발급 후 재시도는 통과시킨다.
-    unauthorizedPaths = new Set(['/collections']);
+    unauthorizedPaths = new Set(['/whiskies']);
 
     apiClient.defaults.adapter = (config) => {
       const url = config.url ?? '';
@@ -105,20 +105,20 @@ describe('401 -> 재발급 성공', () => {
 
   // 재발급을 주도한 요청이 자기 콜백을 못 받아 타임아웃까지 멈추던 버그.
   it('재발급을 주도한 요청이 새 토큰으로 재시도되어 응답을 받는다', async () => {
-    const response = await apiClient.get('/collections');
+    const response = await apiClient.get('/whiskies');
 
     expect(response.status).toBe(200);
-    expect(requestLog).toEqual(['/collections:anon', '/collections:token']);
+    expect(requestLog).toEqual(['/whiskies:anon', '/whiskies:token']);
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
   });
 
   // 동시에 401을 맞은 요청들은 재발급 한 번을 같이 기다려야 한다.
   it('동시 401은 재발급을 한 번만 하고 모두 재시도된다', async () => {
-    unauthorizedPaths = new Set(['/collections', '/planners']);
+    unauthorizedPaths = new Set(['/whiskies', '/whisky-categories']);
 
     const [a, b] = await Promise.all([
-      apiClient.get('/collections'),
-      apiClient.get('/planners'),
+      apiClient.get('/whiskies'),
+      apiClient.get('/whisky-categories'),
     ]);
 
     expect(a.status).toBe(200);
@@ -128,12 +128,12 @@ describe('401 -> 재발급 성공', () => {
 
   // 재발급이 실패하면 대기 중인 요청도 풀려나야 한다(타임아웃까지 매달리지 않게).
   it('재발급 실패 시 대기 중이던 요청도 즉시 reject된다', async () => {
-    unauthorizedPaths = new Set(['/collections', '/planners']);
+    unauthorizedPaths = new Set(['/whiskies', '/whisky-categories']);
     vi.spyOn(axios, 'post').mockRejectedValue(new Error('refresh failed'));
 
     const results = await Promise.allSettled([
-      apiClient.get('/collections'),
-      apiClient.get('/planners'),
+      apiClient.get('/whiskies'),
+      apiClient.get('/whisky-categories'),
     ]);
 
     expect(results.map((r) => r.status)).toEqual(['rejected', 'rejected']);
@@ -187,7 +187,7 @@ describe('재발급 중복 방지', () => {
       });
     };
 
-    const response = await apiClient.get('/planners');
+    const response = await apiClient.get('/whisky-categories');
 
     expect(response.status).toBe(200);
     expect(post).not.toHaveBeenCalled();
