@@ -1,6 +1,11 @@
 import * as Sentry from '@sentry/nextjs';
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 
+import {
+  guestAdapter,
+  isGuestRoute,
+  rememberWhiskyDetail,
+} from '@/lib/api/guest-adapter';
 import { rememberCurrentPath } from '@/lib/login-return';
 import { useAuthStore } from '@/store/use-auth-store';
 
@@ -14,6 +19,9 @@ apiClient.interceptors.request.use((config) => {
 
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
+  } else if (typeof window !== 'undefined' && isGuestRoute(config.url)) {
+    // 비로그인 체험: 로그인 전용 API는 서버 대신 localStorage로 처리한다.
+    config.adapter = guestAdapter;
   }
 
   return config;
@@ -57,7 +65,13 @@ function showErrorToast(message: string) {
 }
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // 게스트 플래너 추가에 필요한 saleProductId -> 위스키 정보를 모아둔다.
+    if (/^\/whiskies\/\d+$/.test(response.config.url ?? '')) {
+      rememberWhiskyDetail(response.data.data);
+    }
+    return response;
+  },
   async (error: AxiosError) => {
     const { response, config } = error;
     const originalRequest = config as

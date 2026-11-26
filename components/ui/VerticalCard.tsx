@@ -3,13 +3,10 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useSaveItemModal } from '@/components/common/SaveItemModal';
 import { useSavedWhiskyIds } from '@/hooks/queries/use-collection';
-import { rememberCurrentPath } from '@/lib/login-return';
 import { DEFAULT_WHISKY_IMAGE } from '@/constants/images';
 import { cn, formatAmount } from '@/lib/utils';
-import { useAuthStore } from '@/store/use-auth-store';
 import { Product } from '@/types/product';
 
 interface VerticalCardProps {
@@ -127,8 +124,7 @@ function BookmarkButton({
   onUnsave?: () => void;
   isUnsaving?: boolean;
 }) {
-  const router = useRouter();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  // 비로그인도 localStorage 콜렉션에 담는다 (lib/api/guest-adapter.ts).
   const { open: openSaveItemModal } = useSaveItemModal();
   const savedWhiskyIds = useSavedWhiskyIds();
   // prop이 없으면 내 콜렉션에 담겨 있는지로 판단한다
@@ -153,36 +149,6 @@ function BookmarkButton({
       imageUrl: product.imageUrl,
     });
   };
-
-  // 카드 전체가 Link일 수 있어 중첩 <a>를 피하려고 button + router.push로 이동한다
-  const handleLoginRedirect = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    rememberCurrentPath(
-      product.id === undefined
-        ? undefined
-        : {
-            id: product.id,
-            name: product.name,
-            originalName: product.originalName,
-            imageUrl: product.imageUrl,
-          }
-    );
-    router.push('/login');
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <button
-        type="button"
-        onClick={handleLoginRedirect}
-        aria-label="로그인이 필요해요"
-        className="border-border bg-canvas text-fg flex size-8 shrink-0 items-center justify-center rounded-md border"
-      >
-        <BookmarkIcon filled={false} />
-      </button>
-    );
-  }
 
   return (
     <button
